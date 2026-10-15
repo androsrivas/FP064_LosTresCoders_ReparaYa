@@ -1,0 +1,5 @@
+.env
+laravel/vendor
+laravel/.env
+node_modules
+diagnostico.config.aws.php
