@@ -6,5 +6,5 @@ laravel/reparaya/.env
 laravel/reparaya/vendor/
 laravel/reparaya/node_modules/
 laravel/reparaya/storage/logs/*
-www/
+www/wp-config.php
 *.log
