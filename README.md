@@ -23,7 +23,7 @@ reparaya/
 |       └── Dockerfile         # Imagen PHP + Apache
 │       └── 000-default.conf   # Configuración del VirtualHost de Apache
 ├── laravel/
-│   └── reparaya/              # Aplicación Laravel 12 (todo el código)
+│   └── reparaya/              # Aplicación Laravel 13 (todo el código)
 ├── www/
 │   └── index.php              # Web principal (/)
 ├── .env                       # Variables de Docker Compose (NO se sube a Git)
@@ -135,9 +135,9 @@ docker compose exec web bash -c "cd /var/www/laravel/reparaya && php artisan key
 
 # Permisos de escritura
 docker compose exec web bash -c "cd /var/www/laravel/reparaya && \
-    mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache & \
+    mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache && \
     chown -R www-data:www-data storage bootstrap/cache && \
-    chmod -R ug+rmX storage bootstrap/cache"
+    chmod -R ug+rwX storage bootstrap/cache"
 
 # Migraciones (crea las tablas, incluídas cache y sessions)
 docker compose exec web bash -c "cd /var/www/laravel/reparaya && php artisan migrate"
