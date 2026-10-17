@@ -1,5 +1,10 @@
 .env
-laravel/vendor
-laravel/.env
 node_modules
 diagnostico.config.aws.php
+producto2/config/config.php
+laravel/reparaya/.env
+laravel/reparaya/vendor/
+laravel/reparaya/node_modules/
+laravel/reparaya/storage/logs/*
+www/
+*.log
