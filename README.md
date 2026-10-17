@@ -1,6 +1,6 @@
 # ReparaYa
 
-Aplicación web de gestión de reparaciones desarrollada con **Laravel 12** (PHP) y desplegada en contenedores **Docker**. Proyecto de la asignatura *FP.064 - Desarrollo back-end con PHP, framework MVC y gestor de contenidos*.
+Aplicación web de gestión de reparaciones desarrollada con **Laravel 13** (PHP) y desplegada en contenedores **Docker**. Proyecto de la asignatura *FP.064 - Desarrollo back-end con PHP, framework MVC y gestor de contenidos*.
 
 ## Contenidos
 1. [Arquitectura](#arquitectura)
@@ -280,11 +280,11 @@ Es solo un aviso. Para eliminarlo, añade `ServerName localhost` al VirtualHost.
 
 ## Equipo
 
-| Nombre                   | Rol |
-|--------------------------|-----|
-| Sandra Ridao Palahí      |     |
-| Marc de la Riva Perez    |     |
-| Andrea Rs Rivas          |     |
+| Nombre                   |
+|--------------------------|
+| Sandra Ridao Palahí      |
+| Marc de la Riva Perez    |
+| Andrea Rs Rivas          |
 
 ## Entregas del curso
  
