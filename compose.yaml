@@ -46,7 +46,6 @@ services:
     networks:
       - reparaya_net
 
-
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: reparaya_pma
@@ -60,9 +59,29 @@ services:
     networks:
       - reparaya_net
 
+  wordpress:
+    image: wordpress:${WP_VERSION}-php${PHP_VERSION}-apache
+    container_name: reparaya_wp
+    restart: unless-stopped
+    ports:
+      - "${WP_PORT}:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: ${DB_DATABASE}
+      WORDPRESS_DB_USER: ${DB_USERNAME}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - wp_data:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - reparaya_net
+
 networks:
   reparaya_net:
     driver: bridge
 
 volumes:
   db_data:
+  wp_data:
