@@ -4,23 +4,23 @@ Plataforma de gestión de reparaciones domésticas desarrollada en **PHP** y eje
 
 El proyecto evoluciona a lo largo de cuatro productos, todos dentro del mismo repositorio:
 
-| Producto | Contenido                                              | Carpeta                   | URL local      |
-|----------|--------------------------------------------------------|---------------------------|----------------|
-| 1        | Entorno Docker + AWS, Laravel y WordPress instalados   | raíz, `docker/`, `diagnostic/` | `/diagnostic` |
-| 2        | Aplicación en PHP nativo con arquitectura MVC          | `producto2/`              | `/producto2`   |
-| 3        | Aplicación en Laravel 13                               | `laravel/reparaya/`       | `/producto3`   |
-| 4        | Web institucional en WordPress                         | `www/`                    | `/`            |
+| Producto | Contenido                                              | Carpeta                        | URL local      |
+|----------|--------------------------------------------------------|--------------------------------|----------------|
+| 1        | Entorno Docker + AWS, Laravel y WordPress instalados   | raíz, `docker/`, `diagnostic/` | `/diagnostic`  |
+| 2        | Aplicación en PHP nativo con arquitectura MVC          | `producto2/`                   | `/producto2`   |
+| 3        | Aplicación en Laravel 13                               | `laravel/reparaya/`            | `/producto3`   |
+| 4        | Web institucional en WordPress                         | `www/`                         | `/`            |
 
 ## Contenidos
 1. [Arquitectura](#arquitectura)
 2. [Requisitos previos](#requisitos-previos)
 3. [Puesta en marcha](#puesta-en-marcha)
-4. [Preparar cada aplicación](#preparar-cada-aplicacion)
+4. [Preparar cada aplicación](#preparar-cada-aplicación)
 5. [URLs de acceso](#urls-de-acceso)
 6. [Comandos de acceso](#comandos-de-acceso)
 7. [Despliegue en AWS](#despliegue-en-aws)
 8. [Flujo de trabajo con Git](#flujo-de-trabajo-con-git)
-9. [Resolución de problemas](#resolucion-de-problemas)
+9. [Resolución de problemas](#resolución-de-problemas)
 
 ----
 
@@ -70,14 +70,22 @@ volumes:
   - ./diagnostic:/var/www/diagnostic
 ```
 
-### Bases de datos
+### Base de datos única y compartida
 
-Un único servidor MySQL con bases de datos independientes:
+El servidor de AWS ofrece **una sola base de datos**, y el usuario asignado puede crear tablas pero **no crear bases de datos**. Para que el entorno local sea equivalente, el proyecto trabaja con **una única base de datos (`DB_DATABASE`) compartida** por las tres aplicaciones. La convivencia se resuelve con los nombres de las tablas:
 
-| Base de datos        | Usada por                    | Se crea                                              |
-|----------------------|------------------------------|------------------------------------------------------|
-| `DB_DATABASE` (`.env`) | Producto 2 y Producto 3    | Automáticamente al crear el volumen `db_data`        |
-| `reparaya_wp`        | WordPress                    | **A mano**, como `root` (ver [WordPress](#wordpress-www)) |
+| Aplicación  | Tablas                                                                 | Cómo se crean                          |
+|-------------|------------------------------------------------------------------------|----------------------------------------|
+| WordPress   | Todas con el prefijo **`wp_`**                                         | Asistente de instalación de WordPress  |
+| Laravel     | Las que trae por defecto (`users`, `migrations`, `sessions`, `cache`, `jobs`...) y las nuevas, con las convenciones de Laravel | `php artisan migrate` |
+| Producto 2  | Las definidas en `producto2/database/`                                 | Scripts SQL                            |
+
+Consecuencias prácticas:
+
+- WordPress se instala **siempre con el prefijo `wp_`** (ver [WordPress](#wordpress-www)).
+- **No se usa `php artisan migrate:fresh`** (ni `db:wipe`): borran *todas* las tablas de la base de datos, incluidas las de WordPress y las del Producto 2.
+- Si el Producto 2 y Laravel definen tablas con el mismo nombre, hay que acordarlo en equipo antes de ejecutar las migraciones.
+- La base de datos se crea sola al iniciar el volumen `db_data`, con el usuario `DB_USERNAME`, que ya tiene todos los privilegios sobre ella. **No hace falta crear ninguna otra base de datos.**
 
 ### Mapa de rutas Apache
 
@@ -134,9 +142,9 @@ Edita `.env` y revisa, como mínimo:
 |--------------------|------------------------------------------------------------------------|
 | `PHP_VERSION`      | Versión de PHP. **Debe coincidir con la de AWS** (Apache: 8.3.6) y cumplir los requisitos de Laravel y WordPress. Ej.: `8.3` |
 | `WEB_PORT`         | Puerto local de la web (ej. `8080`)                                    |
-| `PMA_PORT`         | Puerto local de phpMyAdmin (ej. `8081`)                                |
+| `PMA_PORT`         | Puerto local de phpMyAdmin (ej. `8081`). Debe ser distinto de `WEB_PORT` |
 | `DB_IMAGE`         | Imagen de la BBDD (ej. `mysql:8.0`; debe ser compatible con AWS)       |
-| `DB_DATABASE`      | Nombre de la base de datos de las aplicaciones                         |
+| `DB_DATABASE`      | Nombre de la **única** base de datos, compartida por WordPress, Producto 2 y Laravel |
 | `DB_USERNAME`      | Usuario de la BBDD                                                     |
 | `DB_PASSWORD`      | Contraseña del usuario                                                 |
 | `DB_ROOT_PASSWORD` | Contraseña de `root`. **Defínela antes del primer arranque**: se aplica solo al crear el volumen |
@@ -164,11 +172,11 @@ Deben aparecer exactamente `reparaya_web`, `reparaya_db` y `reparaya_pma`.
 
 Aplicación en PHP nativo. No usa Composer ni frameworks.
 
-- Importa los scripts de `producto2/database/` (phpMyAdmin o línea de comandos).
+- Importa los scripts de `producto2/database/` en la base de datos `DB_DATABASE` (phpMyAdmin o línea de comandos).
 - Dentro de Docker, la conexión a la BBDD se toma de las variables de entorno de `compose.yaml`.
 - En AWS se crea `producto2/config/config.php` a partir de `config.example.php`. Este archivo **no se sube a Git**.
 
-> Si Laravel comparte la base de datos, **no uses `php artisan migrate:fresh`**: borraría también las tablas del Producto 2.
+> Si Laravel comparte la base de datos, **no uses `php artisan migrate:fresh`**: borraría también las tablas del Producto 2 y de WordPress.
 
 ### Producto 3 (`laravel/reparaya/`)
 
@@ -188,7 +196,7 @@ APP_URL=http://localhost:<WEB_PORT>/producto3   # ajusta el puerto a WEB_PORT
 DB_CONNECTION=mysql
 DB_HOST=db                                # nombre del servicio de Docker, NO localhost
 DB_PORT=3306
-DB_DATABASE=reparaya                      # el mismo que DB_DATABASE de la raíz
+DB_DATABASE=...                           # el mismo que DB_DATABASE de la raíz
 DB_USERNAME=...                           # el mismo que DB_USERNAME de la raíz
 DB_PASSWORD=...                           # el mismo que DB_PASSWORD de la raíz
 ```
@@ -227,7 +235,7 @@ WordPress se instala en la raíz web (`www/` → `/var/www/html`) y se ejecuta e
 |-------------------------|----------------------------------------------------------------------------|
 | Versión de WordPress    | `<indicar la versión instalada>` (se ve en `www/wp-includes/version.php`)   |
 | PHP / extensiones       | Las de la imagen `docker/web/Dockerfile` (`mysqli`, `gd`, `zip`, `mbstring`, `intl`, `exif`...) |
-| Base de datos           | `reparaya_wp`                                                              |
+| Base de datos           | `DB_DATABASE` (la **misma** que usan Producto 2 y Laravel)                 |
 | Servidor de BBDD        | `db` (nombre del servicio, **no** `localhost`)                             |
 | Prefijo de tablas       | `wp_`                                                                      |
 
@@ -255,36 +263,46 @@ Comprueba que el contenedor ve los archivos:
 docker compose exec web sh -c "ls /var/www/html"
 ```
 
-#### 2. Crear la base de datos `reparaya_wp`
+#### 2. Comprobar que la base de datos está lista
 
-El servicio `db` solo crea la base de datos de las aplicaciones (`DB_DATABASE`). La de WordPress se crea a mano con el usuario **`root`** (el usuario de la aplicación no tiene privilegios para crear bases de datos).
+No hay que crear ninguna base de datos: `DB_DATABASE` ya existe y `DB_USERNAME` tiene privilegios sobre ella. Comprueba únicamente que **no quedan tablas `wp_*` de una instalación anterior** (phpMyAdmin → `DB_DATABASE`). Si las hay y quieres empezar de cero, elimina **solo las que empiezan por `wp_`**, sin tocar las de Laravel ni las del Producto 2.
 
-Opción A, en phpMyAdmin (`http://localhost:<PMA_PORT>`): entra con `root` / `DB_ROOT_PASSWORD`, abre la pestaña **SQL** y ejecuta:
-
-Opción B, en terminal: `docker compose exec db mysql -uroot -p` y pega el mismo SQL.
+Si el usuario de la BBDD no tuviera privilegios (por ejemplo, porque el volumen `db_data` se creó con otros valores), entra en phpMyAdmin como `root` / `DB_ROOT_PASSWORD`, pestaña **SQL**:
 
 ```sql
-CREATE DATABASE reparaya_wp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-GRANT ALL PRIVILEGES ON reparaya_wp.* TO '<DB_USERNAME>'@'%';
+GRANT ALL PRIVILEGES ON `<DB_DATABASE>`.* TO '<DB_USERNAME>'@'%';
 FLUSH PRIVILEGES;
 ```
 
-Sustituye `<DB_USERNAME>` por el valor de tu `.env`. Sin el `GRANT`, WordPress mostrará *Error establishing a database connection*.
+Para reproducir en local las restricciones de AWS (crear tablas sí, crear bases de datos no), se puede sustituir `ALL PRIVILEGES` por:
+
+```sql
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, REFERENCES
+ON `<DB_DATABASE>`.* TO '<DB_USERNAME>'@'%';
+FLUSH PRIVILEGES;
+```
 
 #### 3. Ejecutar el asistente de instalación
 
 Abre `http://localhost:<WEB_PORT>/` (como todavía no existe `wp-config.php`, aparece el asistente) e introduce:
 
-| Campo                     | Valor                              |
-|---------------------------|------------------------------------|
-| Nombre de la base de datos| `reparaya_wp`                      |
-| Usuario / Contraseña      | `DB_USERNAME` / `DB_PASSWORD`      |
-| Servidor de la base de datos | `db`                            |
-| Prefijo de tablas         | `wp_`                              |
+| Campo                        | Valor                              |
+|------------------------------|------------------------------------|
+| Nombre de la base de datos   | el valor de `DB_DATABASE`          |
+| Usuario / Contraseña         | `DB_USERNAME` / `DB_PASSWORD`      |
+| Servidor de la base de datos | `db`                               |
+| Prefijo de tablas            | `wp_`                              |
 
 Después, indica título del sitio, usuario administrador, contraseña y correo. **Guarda la contraseña del administrador en un gestor de contraseñas**: el correo de recuperación no funciona en Docker (no hay servidor de correo).
 
 El asistente genera `www/wp-config.php` con las credenciales. Este archivo **no se sube a Git** ni se incluye en ninguna entrega.
+
+Si WordPress ya estuvo instalado con otra URL (por ejemplo, otro puerto) y las tablas `wp_*` se conservaron, la web redirigirá a la URL antigua. Fuerza la correcta en `www/wp-config.php`, antes de la línea «That's all, stop editing!»:
+
+```php
+define('WP_HOME',    'http://localhost:<WEB_PORT>');
+define('WP_SITEURL', 'http://localhost:<WEB_PORT>');
+```
 
 #### 4. Comprobación de la instalación (Producto 1, punto 13)
 
@@ -302,13 +320,13 @@ La persistencia depende de dos cosas: el volumen `db_data` (contenido) y el *bin
 
 #### Recuperar la contraseña del administrador
 
-Si pierdes la contraseña, restablécela en phpMyAdmin (base `reparaya_wp`, pestaña **SQL**):
+Si pierdes la contraseña, restablécela en phpMyAdmin (base `DB_DATABASE`, pestaña **SQL**):
 
 ```sql
 UPDATE wp_users SET user_pass = MD5('NuevaContraseña') WHERE ID = 1;
 ```
 
-WordPress acepta MD5 y la vuelve a guardar con su hash seguro en el primer inicio de sesión.
+WordPress acepta MD5 y la vuelve a guardar con su hash seguro en el primer inicio de sesión. Fíjate en el prefijo: la tabla de WordPress es `wp_users`, distinta de la tabla `users` de Laravel.
 
 ----
 
@@ -325,7 +343,7 @@ Sustituye `<WEB_PORT>` y `<PMA_PORT>` por los valores de tu `.env`.
 | Página de diagnóstico   | `http://localhost:<WEB_PORT>/diagnostic`   |
 | phpMyAdmin              | `http://localhost:<PMA_PORT>`              |
 
-Acceso a phpMyAdmin: usuario y contraseña de la BBDD (`DB_USERNAME` / `DB_PASSWORD`), o `root` con `DB_ROOT_PASSWORD` (necesario para crear bases de datos y conceder privilegios).
+Acceso a phpMyAdmin: usuario y contraseña de la BBDD (`DB_USERNAME` / `DB_PASSWORD`). Solo se necesita `root` con `DB_ROOT_PASSWORD` para modificar privilegios.
 
 > La base de datos **no publica puertos** hacia tu equipo: solo es accesible desde los contenedores y a través de phpMyAdmin.
 
@@ -360,7 +378,8 @@ cd /var/www/html                  # para WordPress
 | Crear un controlador de recurso     | `php artisan make:controller ClientController --resource`      |
 | Ver las rutas                       | `php artisan route:list`                                       |
 | Ejecutar migraciones                | `php artisan migrate`                                          |
-| Rehacer la BBDD desde cero          | `php artisan migrate:fresh --seed` ⚠️                          |
+| Deshacer la última migración        | `php artisan migrate:rollback`                                 |
+| Rehacer la BBDD desde cero          | **No usar** `migrate:fresh` ⛔: borra también las tablas `wp_*` y las del Producto 2 |
 | Limpiar cachés                      | `php artisan optimize:clear`                                   |
 
 (Los comandos `php artisan` se ejecutan dentro del contenedor, en `/var/www/laravel/reparaya`.)
@@ -375,6 +394,7 @@ El servidor AWS es el entorno de **preproducción**: tiene PHP, Apache y MySQL, 
 - No subir nunca `.env`, `config.php` local, `wp-config.php` local, `.git`, `node_modules`, logs ni cachés.
 - La configuración del entorno AWS (credenciales reales) se crea directamente en el servidor.
 - La versión de PHP **de Apache** puede ser distinta a la de **SSH**: comprobar ambas.
+- **Base de datos:** en AWS hay una única base de datos y el usuario no puede crear otras. Las tres aplicaciones comparten esa base de datos con la misma separación por tablas que en local (prefijo `wp_` para WordPress). Al importar datos desde local, importa **solo tablas** (sin `CREATE DATABASE` ni `USE` de otra base) y nunca ejecutes `migrate:fresh` ni elimines tablas que no sean tuyas.
 
 ### Laravel
 
@@ -386,13 +406,15 @@ docker compose exec web bash -c "cd /var/www/laravel/reparaya && composer instal
 
 Se transfiere el código con `vendor/`, `composer.lock` y `public/`. **No se usa `composer update`** en el despliegue. Después, para volver al entorno de desarrollo, ejecuta de nuevo `composer install`.
 
+En el servidor, el `.env` de Laravel se crea a mano con `APP_ENV=production`, `APP_DEBUG=false` y las credenciales de la base de datos de AWS. Las migraciones se ejecutan por SSH con la versión de PHP compatible: `php artisan migrate --force`.
+
 ### WordPress
 
 WordPress queda instalado en la raíz del dominio (o en la ubicación que indique el consultor). Puntos a tener en cuenta en la migración:
 
 - Transferir los archivos de WordPress por SFTP (la misma versión que en local).
-- Crear el `wp-config.php` directamente en el servidor, con las credenciales de la base de datos de AWS. No se copia el de local.
-- Importar la base de datos y cambiar las URL (`home` y `siteurl`) por las del dominio. **No hacer un reemplazo de texto sobre el SQL**: WordPress guarda datos serializados y se corrompen. Usar un plugin de migración o una herramienta que los gestione.
+- Crear el `wp-config.php` directamente en el servidor, con las credenciales de la base de datos de AWS y `$table_prefix = 'wp_';`. No se copia el de local.
+- Importar a la base de datos de AWS **solo las tablas `wp_*`** y cambiar las URL (`home` y `siteurl`) por las del dominio. **No hacer un reemplazo de texto sobre el SQL**: WordPress guarda datos serializados y se corrompen. Usar un plugin de migración o una herramienta que los gestione.
 - Guardar de nuevo los enlaces permanentes (*Ajustes → Enlaces permanentes*) para regenerar el `.htaccess`.
 - Comprobar que los permisos de `wp-content/` permiten subir archivos, sin recurrir a `777`.
 
@@ -483,7 +505,13 @@ docker compose exec web ls -la /var/www/producto2/public
 docker compose exec web ls -la /var/www/laravel/reparaya/public
 ```
 
-Deben salir `index.php` y `.htaccess`. Si no, revisa los volúmenes de `compose.yaml`.
+Deben salir `index.php` y `.htaccess`. Si el contenedor ve la carpeta vacía, revisa qué carpeta del PC está montando realmente:
+
+```bash
+docker inspect reparaya_web --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{println}}{{end}}'
+```
+
+El origen de cada línea debe ser la carpeta correcta (por ejemplo, `.../laravel/reparaya -> /var/www/laravel/reparaya`). Si no lo es, corrige los volúmenes de `compose.yaml` y recrea el contenedor con `docker compose up -d --force-recreate web`: un simple `restart` no aplica los cambios de volúmenes.
 
 ### `tempnam(): file created in the system's temporary directory`
 
@@ -507,7 +535,7 @@ Laravel usa por defecto `CACHE_STORE=database` y `SESSION_DRIVER=database`. Ejec
 
 ### He cambiado la contraseña de la BBDD en el `.env` y no se aplica
 
-MySQL solo lee las credenciales la **primera vez** que crea el volumen. Para recrearlo (⚠️ se borran todos los datos, incluida la base de datos de WordPress, que habrá que volver a crear):
+MySQL solo lee las credenciales la **primera vez** que crea el volumen. Para recrearlo (⚠️ se borran todos los datos, incluidas las tablas de WordPress, que habrá que reinstalar):
 
 ```bash
 docker compose down -v
@@ -516,9 +544,9 @@ docker compose up -d --build
 
 ### El puerto ya está en uso
 
-Cambia `WEB_PORT` o `PMA_PORT` en el `.env` de la raíz y vuelve a ejecutar `docker compose up -d`. Recuerda actualizar también `APP_URL` en el `.env` de Laravel.
+`Bind for 0.0.0.0:XXXX failed: port is already allocated`. Comprueba que `WEB_PORT` y `PMA_PORT` son distintos entre sí y que ningún otro programa o contenedor usa esos puertos (`docker ps`). Cambia `WEB_PORT` o `PMA_PORT` en el `.env` de la raíz y vuelve a ejecutar `docker compose up -d`. Recuerda actualizar también `APP_URL` en el `.env` de Laravel.
 
-Si el error menciona un contenedor `reparaya_wp` (`Bind for 0.0.0.0:XXXX failed: port is already allocated`), es un servicio `wordpress` sobrante en el `compose.yaml`. WordPress no lleva contenedor propio: elimina ese bloque y ejecuta:
+Si el error menciona un contenedor `reparaya_wp`, es un servicio `wordpress` sobrante en el `compose.yaml`. WordPress no lleva contenedor propio: elimina ese bloque y ejecuta:
 
 ```bash
 docker compose down --remove-orphans
@@ -526,7 +554,7 @@ docker rm -f reparaya_wp
 docker compose up -d
 ```
 
-(Sin `-v`, para conservar las bases de datos.) Si ese contenedor llegó a arrancar, borra también `www/wp-config.php`, `www/wp-config-docker.php` y `www/.htaccess`, que habrá generado con credenciales incorrectas.
+(Sin `-v`, para conservar la base de datos.) Si ese contenedor llegó a arrancar y generó su propia instalación, borra también `www/wp-config.php`, `www/wp-config-docker.php` y `www/.htaccess` si se crearon con credenciales incorrectas.
 
 ### Apache avisa de «Could not reliably determine the server's fully qualified domain name»
 
@@ -534,19 +562,25 @@ Es solo un aviso. Para eliminarlo, añade `ServerName localhost` al VirtualHost.
 
 ### WordPress: `Error establishing a database connection`
 
+Si el mensaje incluye `mysqli_real_connect(): (HY000/2002): No such file or directory`, WordPress está intentando conectar con `localhost` por socket: el host de la base de datos debe ser `db`.
+
 Comprueba, por este orden:
 
-1. En `www/wp-config.php`: `DB_HOST` debe ser `db`, `DB_NAME` debe ser `reparaya_wp`, y `DB_USER` / `DB_PASSWORD` deben coincidir con `DB_USERNAME` / `DB_PASSWORD` del `.env`.
-2. Que la base de datos existe y que el usuario tiene privilegios sobre ella (`SHOW DATABASES;` y `SHOW GRANTS FOR '<usuario>'@'%';` como `root`).
+1. En `www/wp-config.php`: `DB_HOST` debe ser `db`, `DB_NAME` debe ser el valor de `DB_DATABASE`, y `DB_USER` / `DB_PASSWORD` deben coincidir con `DB_USERNAME` / `DB_PASSWORD` del `.env`.
+2. Que el usuario tiene privilegios sobre la base de datos (`SHOW GRANTS FOR '<usuario>'@'%';` como `root`).
 3. Prueba de conexión desde el contenedor `web`:
    ```bash
-   docker compose exec web php -r "var_dump(new mysqli('db','<usuario>','<contraseña>','reparaya_wp'));"
+   docker compose exec web php -r "var_dump(new mysqli('db','<usuario>','<contraseña>','<DB_DATABASE>'));"
    ```
 4. Si `wp-config.php` tiene credenciales incorrectas, bórralo (`rm www/wp-config.php`) y vuelve a ejecutar el asistente.
 
+### WordPress redirige a otro puerto o URL
+
+Las tablas `wp_*` de una instalación anterior guardan la URL antigua. Fuerza la correcta con `WP_HOME` y `WP_SITEURL` en `wp-config.php` (ver [WordPress](#wordpress-www)).
+
 ### phpMyAdmin: «No tienes los privilegios» al crear una base de datos
 
-El usuario de la aplicación solo tiene permisos sobre `DB_DATABASE`. Cierra sesión y entra con `root` y `DB_ROOT_PASSWORD`.
+Es el comportamiento esperado: el usuario de la aplicación no puede crear bases de datos, igual que en AWS. El proyecto utiliza una única base de datos compartida (`DB_DATABASE`), así que no hace falta crear ninguna. Para modificar privilegios, entra con `root` y `DB_ROOT_PASSWORD`.
 
 ### No tengo contraseña de `root` en el `.env`
 
