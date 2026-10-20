@@ -8,6 +8,7 @@ diagnostic/diagnostico.config.aws.php
 laravel/reparaya/node_modules/
 laravel/reparaya/storage/logs/*
 laravel/reparaya/bootstrap/cache/*.php
+*.tar.gz
 
 # WordPress: no versionar el núcleo, solo el  propio
 wp-export
