@@ -4,6 +4,7 @@
     </IfModule>
 
     RewriteEngine On
+    RewriteBase /producto3/
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
