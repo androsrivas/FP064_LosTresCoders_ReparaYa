@@ -10,10 +10,10 @@ services:
     ports:
       - "${WEB_PORT}:80"
     volumes:
-      - ./www:/var/www/html                          # WordPress (raíz)
-      - ./producto2:/var/www/producto2               # App PHP nativa
-      - ./laravel/reparaya:/var/www/laravel/reparaya        # Laravel (producto3)
-      - ./diagnostic:/var/www/diagnostic             # Página de diagnóstico
+      - ./www:/var/www/html                             # WordPress (raíz)
+      - ./producto2:/var/www/producto2                  # App PHP nativa
+      - ./laravel/reparaya:/var/www/laravel/reparaya    # Laravel (producto3)
+      - ./diagnostic:/var/www/diagnostic                # Página de diagnóstico
     environment:
       DB_HOST: db
       DB_DATABASE: ${DB_DATABASE}
