@@ -34,11 +34,6 @@ reparaya/
 │       ├── Dockerfile         # Imagen PHP + Apache
 │       └── 000-default.conf   # VirtualHost y Alias de Apache
 ├── producto2/                 # Producto 2: PHP nativo (MVC, sin framework)
-│   ├── public/                # Único directorio accesible desde el navegador
-│   ├── app/                   # Controllers, Models, Views, Services, Core
-│   ├── config/                # Configuración (config.example.php)
-│   ├── database/              # Scripts SQL
-│   └── docs/                  # Documentación del producto
 ├── laravel/
 │   └── reparaya/              # Producto 3: aplicación Laravel 13
 ├── www/                       # Raíz web (/): WordPress (no se versiona, ver más abajo)
