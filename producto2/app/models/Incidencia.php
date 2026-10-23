@@ -120,4 +120,32 @@ class Incidencia {
             ':id'         => $id
         ]);
     }
+
+    /**
+     * Modificacion de una incidencia
+     */
+    public function actualizarIncidencia($id, $datos) {
+        $sql = "UPDATE incidencias SET 
+                    especialidad_id = :especialidad_id,
+                    descripcion     = :descripcion,
+                    direccion       = :direccion,
+                    fecha_servicio  = :fecha_servicio,
+                    tipo_urgencia   = :tipo_urgencia,
+                    estado          = :estado,
+                    tecnico_id      = :tecnico_id
+                WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            ':especialidad_id' => $datos['especialidad_id'],
+            ':descripcion'     => $datos['descripcion'],
+            ':direccion'       => $datos['direccion'],
+            ':fecha_servicio'  => $datos['fecha_servicio'],
+            ':tipo_urgencia'   => $datos['tipo_urgencia'],
+            ':estado'          => $datos['estado'],
+            ':tecnico_id'      => $datos['tecnico_id'] ?? null,
+            ':id'              => $id
+        ]);
+    }
+
 }
