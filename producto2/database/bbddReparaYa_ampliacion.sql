@@ -4,7 +4,7 @@ CREATE TABLE historial_incidencias (
     incidencia_id INT NOT NULL,
     usuario_id INT DEFAULT NULL, -- Usuario que realizó el cambio
     estado_anterior ENUM('Pendiente', 'Asignada', 'Finalizada', 'Cancelada') DEFAULT 'Pendiente',
-    estado_nuevo ENUM('Pendiente', 'Asignada', 'Finalizada', 'Cancelada') DEFAULT 'Asignada',
+    estado_nuevo ENUM('Pendiente', 'Asignada', 'Finalizada', 'Cancelada') NOT NULL,
     comentario TEXT,             -- Motivo del cambio o nota técnica
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (incidencia_id) REFERENCES incidencias(id) ON DELETE CASCADE,
