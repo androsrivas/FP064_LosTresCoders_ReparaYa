@@ -3,7 +3,11 @@
 laravel/reparaya/.env
 www/wp-config.php
 diagnostic/diagnostico.config.aws.php
-*.sh 
+*.sh
+*.log
+
+# Producto 2
+producto2/config/config.php
 
 # Laravel
 laravel/reparaya/node_modules/

@@ -1,15 +1,21 @@
-<<!DOCTYPE html><html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="">
-    </head>
-    <body>
-        <p>Prueba de PR</p>
-        
-        <script src="" async defer></script>
-    </body>
-</html>
+<?php
+declare(strict_types=1);
+
+use App\Core\Env;
+
+define('BASE_PATH', dirname(__DIR__));
+define('APP_PATH', BASE_PATH . '/app');
+
+require APP_PATH . '/core/autoload.php';
+require APP_PATH . '/core/helpers.php';
+
+Env::load(BASE_PATH . '/../.env');
+
+session_start();
+
+use App\Core\Router;
+
+$router = new Router();
+require APP_PATH . '/routes.php';
+
+$router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
