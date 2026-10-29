@@ -16,12 +16,14 @@ services:
       - ./diagnostic:/var/www/diagnostic                # Página de diagnóstico
     environment:
       DB_HOST: db
+      DB_PORT: 3306
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       GROUP_CODE: ${GROUP_CODE}
       STUDENT_NAME: ${STUDENT_NAME}
       APP_ENV: ${APP_ENV}
+      APP_DEBUG: ${APP_DEBUG:-false}
     depends_on:
       db:
         condition: service_healthy
