@@ -6,7 +6,6 @@ namespace App\Models;
 use App\Core\Model;
 use App\Core\Roles;
 use InvalidArgumentException;
-use PDOException;
 
 class Usuario extends Model
 {
@@ -18,7 +17,7 @@ class Usuario extends Model
         );
     }
 
-    public function findById(int $id): ?array
+    public static function findById(int $id): ?array
     {
         return self::fetchOne(
             'SELECT id, nombre, email, rol FROM usuarios WHERE id = :id',
