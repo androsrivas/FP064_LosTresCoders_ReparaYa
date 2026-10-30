@@ -14,7 +14,7 @@ class Session
         
         session_set_cookie_params([
             'lifetime' => 0,
-            'path' => '/',
+            'path' => base_path_url() ?: '/',
             'httponly' => true,
             'secure' => !empty($_SERVER['HTTPS']),
             'samesite' => 'Lax',
