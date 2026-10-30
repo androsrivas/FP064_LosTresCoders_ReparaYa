@@ -21,7 +21,7 @@
 
     <div>
         <label for="password">Contraseña</label>
-        <input type="password" id="password" name="password" ?>" required autocomplete="current-password">
+        <input type="password" id="password" name="password" required autocomplete="current-password">
         <?= field_errors($errors, 'password') ?>
     </div>
 
