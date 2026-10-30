@@ -54,4 +54,12 @@ abstract class Controller
         return is_string($v) ? $v : '';
     }
 
+    protected function requireCsrf(string $backTo): void
+    {
+        if (!Csrf::verify($this->input('_csrf'))) {
+            $this->flash('error', 'El formulario ha caducado o no es válido. Inténtalo de nuevo.');
+            $this->redirect($backTo);
+        }
+    }
+
 }
