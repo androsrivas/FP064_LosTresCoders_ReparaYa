@@ -13,7 +13,7 @@ class Usuario extends Model
     {
         return self::fetchOne(
             'SELECT * FROM usuarios WHERE email = :email LIMIT 1',
-            ['email' => $email]
+            ['email' => self::normalizeEmail($email)]
         );
     }
 
@@ -83,6 +83,12 @@ class Usuario extends Model
     {
         $u = self::findByEmail($email);
         return ($u !== null && password_verify($password, (string) $u['password'])) ? $u : null;
+    }
+
+    public static function verifyPassword(int $id, string $password):bool 
+    {
+        $row = self::fetchOne('SELECT password FROM usuarios WHERE id = :id', ['id' => $id]);
+        return $row !== null && password_verify($password, (string) $row['password']);
     }
 
     private static function normalizeEmail(string $email): string
