@@ -52,7 +52,7 @@ $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         <span class="navbar-user"><?= e((string) Auth::user()['nombre']) ?></span>
         <form method="post" action="<?= e(url('/logout')) ?>">
             <?= csrf_field() ?>
-            <button type="submit">Cerrar sessión</button>
+            <button type="submit">Cerrar sesión</button>
         </form>
     <?php endif; ?>
 </nav>
