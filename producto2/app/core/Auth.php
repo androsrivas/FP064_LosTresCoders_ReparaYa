@@ -21,6 +21,8 @@ final class Auth
     public static function logout(): void
     {
         Session::destroy();
+        Session::start();
+        Session::regenerate();
     }
 
     public static function check(): bool
