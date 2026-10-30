@@ -97,7 +97,7 @@ final class Auth
         }
 
         Session::addFlash('error', $message);
-        header('Location: ' . (defined('BASE_PATH') ? BASE_PATH : '') . $redirectTo);
+        header('Location: ' . url($redirectTo));
         exit;
     }
 }
