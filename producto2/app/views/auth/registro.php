@@ -19,6 +19,7 @@
     <div>
         <label for="email">Correo electrónico</label>
         <input type="email" id="email" name="email" value="<?= e($old['email'] ?? '') ?>" required maxlength="100" autocomplete="email">
+        <?= field_errors($errors, 'email') ?>
     </div>
     
     <div>
