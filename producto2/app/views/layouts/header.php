@@ -13,7 +13,10 @@
 </head>
 <body>
 
-    <?php include_once __DIR__ . '/menu.php'; ?>
+    <!-- Header / Navbar -->
+    <header class="sticky-top bg-dark border-bottom border-secondary border-opacity-25" style="z-index: 1030;">
+        <?php require_once __DIR__ . '/menu.php'; ?>
+    </header>
 
     <!-- Modal de Login -->
     <?php if (!isset($_SESSION['usuario_id'])): ?>
