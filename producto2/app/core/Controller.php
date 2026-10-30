@@ -2,10 +2,9 @@
 declare(strict_types=1);
 
 namespace App\Core;
-
 abstract class Controller 
 {
-    /** Carha app/views/<vista>.php dentro del layout (null = sin layout) */
+    /** Carga app/views/<vista>.php dentro del layout (null = sin layout) */
     protected function view (string $view, array $data = [], ?string $layout = 'layout/main'): void 
     {
         $viewFile = APP_PATH . '/views/' . $view . '.php';
@@ -45,6 +44,41 @@ abstract class Controller
 
     protected function flash(string $type, string $message): void 
     {
-        $_SESSION['flash'][] = ['type' => $type, 'message' => $message];
+        Session::addFlash($type, $message);
+    }
+
+    /** Valor de $_POST garantizado como un string (un array o nada a devolver) */
+    protected function input(string $key): string
+    {
+        $v = $_POST[$key] ?? '';
+        return is_string($v) ? $v : '';
+    }
+
+    protected function requireLogin(): void 
+    {
+        if (!Auth::check()) {
+            $this->flash('error', "Debes iniciar sesión para acceder.");
+            $this->redirect('/login');
+        }
+    }
+
+    protected function requireRole(string ...$roles): void
+    {
+        $this->requireLogin();
+
+        if (!Auth::hasRole(...$roles)) {
+            http_response_code(403);
+            $this->view('errors/403');
+            exit;
+        }
+    }
+
+    protected function dashboardFor(?string $rol): string
+    {
+        return match ($rol) {
+            Roles::ADMIN => '/admin',
+            Roles::TECNICO => '/tecnico',
+            default => '/particular',
+        };
     }
 }
