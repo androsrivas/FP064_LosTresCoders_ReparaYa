@@ -5,7 +5,7 @@ namespace App\Core;
 abstract class Controller 
 {
     /** Carga app/views/<vista>.php dentro del layout (null = sin layout) */
-    protected function view (string $view, array $data = [], ?string $layout = 'layout/main'): void 
+    protected function view (string $view, array $data = [], bool $layout = true): void 
     {
         $viewFile = APP_PATH . '/views/' . $view . '.php';
         if (!is_file($viewFile)) {
@@ -54,31 +54,4 @@ abstract class Controller
         return is_string($v) ? $v : '';
     }
 
-    protected function requireLogin(): void 
-    {
-        if (!Auth::check()) {
-            $this->flash('error', "Debes iniciar sesión para acceder.");
-            $this->redirect('/login');
-        }
-    }
-
-    protected function requireRole(string ...$roles): void
-    {
-        $this->requireLogin();
-
-        if (!Auth::hasRole(...$roles)) {
-            http_response_code(403);
-            $this->view('errors/403');
-            exit;
-        }
-    }
-
-    protected function dashboardFor(?string $rol): string
-    {
-        return match ($rol) {
-            Roles::ADMIN => '/admin',
-            Roles::TECNICO => '/tecnico',
-            default => '/particular',
-        };
-    }
 }
