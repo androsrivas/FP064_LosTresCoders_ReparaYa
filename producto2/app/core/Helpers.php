@@ -53,7 +53,7 @@ function field_errors(array $errors, string $field): string
     return $html;
 }
 
-function crsf_field(): string
+function csrf_field(): string
 {
     return \App\Core\Csrf::field();
 }
