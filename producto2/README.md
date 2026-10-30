@@ -198,17 +198,6 @@ Solo datos **ficticios** para evaluar la aplicación. Las credenciales reales no
 | **B** | `<nombre>` | Base de datos (`database/`). **CRUD B** Incidencias (cliente), historial, máquina de estados (`IncidenciaService`) y front-end estático |
 | **C** | `<nombre>` | **CRUD C** Gestión Admin, calendario, panel técnico y despliegue en AWS |
 
-### Estado de los CRUD
-
-| CRUD | Descripción | Responsable | Estado |
-|---|---|---|---|
-| A | Usuarios: registro, login y perfiles | A | ⬜ |
-| B | Incidencias del cliente: solicitud, regla de 48 h, «Mis avisos», historial | B | ⬜ |
-| C | Gestión Admin: panel, asignación, calendario, filtro, acciones del técnico | C | ⬜ |
-| D | Maestro de técnicos y tipos de servicio | A | ⬜ |
-
----
-
 ## Flujo de trabajo con Git
 
 - Un solo repositorio (raíz del proyecto). Rama por funcionalidad: `feature/<rol>-<tarea>`, p. ej. `feature/b-incidencia-service`.
