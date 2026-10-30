@@ -43,7 +43,7 @@ $e = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
     <ul>
         <?php foreach ($items as [$label, $path]): ?>
             <li>
-                <a href="<?= $e($path) ?>"
+                <a href="<?= $e(url($path)) ?>"
                     <?= str_ends_with((string) $current, $path) ? 'aria-current="page" class="active"' : '' ?>>
                     <?= $e($label) ?>
                 </a>
@@ -53,7 +53,7 @@ $e = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 
     <?php if (Auth::check()): ?>
         <span class="navbar-user"><?= $e((string) Auth::user()['nombre']) ?></span>
-        <form method="post" action="/logout">
+        <form method="post" action="<?= $e(url('/logout')) ?>">
             <button type="submit">Cerrar sessión</button>
         </form>
     <?php endif; ?>
