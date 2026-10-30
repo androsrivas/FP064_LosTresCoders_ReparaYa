@@ -14,7 +14,7 @@ final class AuthController extends Controller
     public function showLogin(): void
     {
         $this->redirectIfLogged();
-        $this->view('ayth/login', ['titulo' => 'Iniciar sesión', 'errors' => [], 'old' => []]);
+        $this->view('auth/login', ['titulo' => 'Iniciar sesión', 'errors' => [], 'old' => []]);
     }
 
     public function login(): void
@@ -26,7 +26,7 @@ final class AuthController extends Controller
         $password = $this->input('password');
 
         $v = (new Validator(['email' => $email, 'password' => $password]))
-            ->required('email', 'password')
+            ->required('email', 'correo')
             ->email('email')
             ->required('password', 'contraseña');
 
@@ -57,7 +57,7 @@ final class AuthController extends Controller
     public function showRegister(): void 
     {
         $this->redirectIfLogged();
-        $this->view('auth/register', ['titulo' => 'Crear cuenta', 'errors' => [], 'old' => []]);
+        $this->view('auth/registro', ['titulo' => 'Crear cuenta', 'errors' => [], 'old' => []]);
     }
 
     public function register(): void
@@ -105,7 +105,7 @@ final class AuthController extends Controller
         }
 
         http_response_code(422);
-        $this->view('auth/register', [
+        $this->view('auth/registro', [
             'titulo' => 'Crear cuenta',
             'errors' => $v->errors(),
             'old' => ['nombre' => $data['nombre'], 'email' => $data['email']],
@@ -114,7 +114,7 @@ final class AuthController extends Controller
 
     public function logout(): void 
     {
-        $this->redirect('/');
+        $this->requireCsrf('/');
 
         Auth::logout();
         $this->flash('success', 'Has cerrado sesión.');
