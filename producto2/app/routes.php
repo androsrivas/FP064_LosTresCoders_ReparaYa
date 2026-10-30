@@ -4,15 +4,16 @@
 // Públicas
 $router->get('/', 'HomeController@index');
 
-// ---- Descomentar cada bloque cuando exista el controlador/acción ----
+// !!! Descomentar cada bloque cuando exista el controlador/acción
+
 // Auth (CRUD A)
-// $router->get('/login',     'AuthController@showLogin');
-// $router->post('/login',    'AuthController@login');
-// $router->get('/registro',  'AuthController@showRegister');
-// $router->post('/registro', 'AuthController@register');
-// $router->post('/logout',   'AuthController@logout');
-// $router->get('/perfil',    'PerfilController@edit');
-// $router->post('/perfil',   'PerfilController@update');
+$router->get('/login',     'AuthController@showLogin');
+$router->post('/login',    'AuthController@login');
+$router->get('/registro',  'AuthController@showRegister');
+$router->post('/registro', 'AuthController@register');
+$router->post('/logout',   'AuthController@logout');
+$router->get('/perfil',    'PerfilController@edit');
+$router->post('/perfil',   'PerfilController@update');
 
 // Particular (CRUD B)  -> Auth::homeFor(particular) = /cliente/avisos
 // $router->get('/cliente/avisos',          'IncidenciaController@index');
