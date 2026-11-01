@@ -7,6 +7,7 @@ use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Validator;
 use App\Models\Usuario;
+use PDOException;
 
 final class PerfilController extends Controller
 {
@@ -49,8 +50,18 @@ final class PerfilController extends Controller
         }
 
         if (!$v->fails()) {
-            // TODO punto 3: Usuario::updatePerfil(Auth::id(), $data['nombre'], $data['email'])
-            // TODO punto 4: Auth::refresh([...]) + flash('success', ...) + redirect('/perfil')
+            try {
+                Usuario::update(Auth::id(), $data['nombre'], $data['email']);
+
+                // TODO punto 4: Auth::refresh(Usuario::findById(Auth::id())) + flash('success', ...) + redirect('/perfil')
+            } catch(PDOException $e) {
+                // 1062 = otra cuenta se quedó ese correo justo antes
+                if (($e->errorInfo[1] ?? 0) !== 1062) {
+                    throw $e;
+                }
+
+                $v->add('email', 'Ya existe una cuenta con ese correo.');
+            }
         }
 
         $this->redirect('/perfil');
@@ -75,12 +86,13 @@ final class PerfilController extends Controller
             ->max('password_nueva', 72, 'nueva contraseña')
             ->matches('password_confirm', 'password_nueva', 'Las contraseñas no coinciden.');
 
-        if ($actual !== '' && Usuario::verifyCredentials((string) Auth::user()['email'], $actual)=== null) {
+        if ($actual !== '' && Usuario::verifyPassword(Auth::id(), $actual)) {
             $v->add('password_actual', 'La contraseña acutal no es correcta.');
         }
         
         if (!$v->fails()) {
-            // TODO punto 3: Usuario::updatePassword(Auth::id(), $nueva) 
+            Usuario::updatePassword(Auth::id(), $nueva);
+             
             // TODO punto 4: Session::regenerate() + flash('success', ...) + redirect('/pefil')
         }
 
