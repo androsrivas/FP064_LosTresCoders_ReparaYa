@@ -31,6 +31,7 @@ final class PerfilController extends Controller
        $data = [
         'nombre' => trim($this->input('nombre')),
         'email' => trim($this->input('email')),
+        'telefono' => trim($this->input('telefono')),
        ];
 
        $actual = $this->input('password_actual');
@@ -49,7 +50,8 @@ final class PerfilController extends Controller
         ->max('nombre', 100, 'nombre')
         ->required('email', 'correo')
         ->email('email')
-        ->max('email', 100, 'correo');
+        ->max('email', 100, 'correo')
+        ->telefono('telefono');
 
         if ($cambiaPassword) {
             $v->required('password_actual', 'contraseña actual')
@@ -74,7 +76,8 @@ final class PerfilController extends Controller
                     (int) Auth::id(), 
                     $data['nombre'], 
                     $data['email'],
-                    $cambiaPassword ? $password : null
+                    $cambiaPassword ? $password : null,
+                    $data['telefono']
                 );
 
                 // Sesión coherente con lo realmente guardado (correo ya normalizado)
@@ -84,7 +87,7 @@ final class PerfilController extends Controller
                     Session::regenerate();
                 }
 
-                $this->flash('succes', 'Tus datos se han actualizado correctamente.');
+                $this->flash('success', 'Tus datos se han actualizado correctamente.');
                 $this->redirect('/perfil');
             } catch(PDOException $e) {
                 if (($e->errorInfo[1] ?? 0) !== 1062) {
@@ -103,7 +106,7 @@ final class PerfilController extends Controller
         http_response_code($status);
         $this->view('perfil/edit', [
             'titulo' => 'Mi perfil',
-            'usuario' => Auth::user(),
+            'usuario' => Usuario::findById((int) Auth::id()),
             'errors' => $errors,
             'old' => $old
         ]);
