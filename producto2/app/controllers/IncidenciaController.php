@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Core\Auth;
 use App\Core\Controller;
-use App\Models\Incidencia;
+use App\Core\Session;
+use App\Models\HistorialEstado;
 use App\Services\IncidenciaService;
 
 class IncidenciaController extends Controller
@@ -22,8 +24,12 @@ class IncidenciaController extends Controller
      */
     public function misServicios(): void
     {
-        $clienteId = (int)($_SESSION['usuario_id'] ?? 0);
-        $servicios = Incidencia::obtenerPorCliente($clienteId);
+        // [REVISION]: Guard de rol y sustitución de $_SESSION por Session::get()
+        Auth::requireRole('Particular');
+
+        $clienteId = (int)Session::get('usuario_id', 0);
+        // [REVISION]: Canalización de la consulta a través del Servicio
+        $servicios = $this->service->obtenerPorCliente($clienteId);
 
         $this->view('mis_servicios', [
             'servicios' => $servicios
@@ -35,23 +41,40 @@ class IncidenciaController extends Controller
      */
     public function crear(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $resultado = $this->service->crearIncidencia($_POST);
-
-            if ($resultado['exito']) {
-                unset($_SESSION['form_data']);
-                $this->flash('success', 'Incidencia registrada con éxito. Localizador: ' . $resultado['localizador']);
-
-                $redirectAction = ($_SESSION['usuario_rol'] ?? '') === 'Administrador' ? 'gestion' : 'mis_servicios';
-                $this->redirect("index.php?action={$redirectAction}");
-            } else {
-                $_SESSION['form_data'] = $_POST;
-                $this->flash('danger', $resultado['mensaje']);
-
-                $redirectAction = ($_SESSION['usuario_rol'] ?? '') === 'Administrador' ? 'gestion' : 'mis_servicios';
-                $this->redirect("index.php?action={$redirectAction}");
-            }
+        // [REVISION]: Evitar pantallas en blanco si la petición no es POST
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?action=mis_servicios');
+            return;
         }
+
+        // [REVISION]: Inyección del cliente_id desde la sesión activa y filtrado de payload (Mass Assignment)
+        $rol = (string)Session::get('usuario_rol', '');
+        $clienteId = (int)Session::get('usuario_id', 0);
+
+        $payload = [
+            'cliente_id'        => ($rol === 'admin' && isset($_POST['cliente_id'])) ? (int)$_POST['cliente_id'] : $clienteId,
+            'tipo_servicio_id'  => (int)($_POST['tipo_servicio_id'] ?? 0),
+            'descripcion'       => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
+            'direccion'         => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : ''
+        ];
+
+        $resultado = $this->service->crearIncidencia($payload);
+
+        if ($resultado['exito']) {
+            Session::forget('form_data');
+            $this->flash('success', 'Incidencia registrada con éxito. Localizador: ' . $resultado['localizador']);
+
+            $redirectAction = $rol === 'admin' ? 'gestion' : 'mis_servicios';
+            $this->redirect("index.php?action={$redirectAction}");
+            return;
+        }
+
+        Session::set('form_data', $payload);
+        $this->flash('danger', $resultado['mensaje']);
+
+        $redirectAction = $rol === 'admin' ? 'gestion' : 'mis_servicios';
+        $this->redirect("index.php?action={$redirectAction}");
+        return;
     }
 
     /**
@@ -60,15 +83,33 @@ class IncidenciaController extends Controller
     public function verDetalle(): void
     {
         $id = (int)($_GET['id'] ?? 0);
-        $incidencia = Incidencia::obtenerPorId($id);
+        $incidencia = $this->service->obtenerPorId($id);
 
         if (!$incidencia) {
             $this->flash('danger', 'Incidencia no encontrada.');
             $this->redirect('index.php?action=mis_servicios');
+            return;
         }
 
+        // [REVISION]: Guard IDOR (Ownership Check) antes de renderizar
+        $usuarioId = (int)Session::get('usuario_id', 0);
+        $rol       = (string)Session::get('usuario_rol', '');
+        $historial = HistorialEstado::obtenerPorIncidencia($id);
+
+        $esPropietario = ((int)$incidencia['cliente_id'] === $usuarioId);
+        $esTecnico     = ((int)($incidencia['tecnico_id'] ?? 0) === $usuarioId);
+        $esAdmin       = ($rol === 'admin');
+
+        if (!$esPropietario && !$esTecnico && !$esAdmin) {
+            $this->flash('danger', 'No tiene permisos para consultar esta incidencia.');
+            $this->redirect('index.php?action=mis_servicios');
+            return;
+        }
+
+        // [REVISION]: Carga e inyección del historial
         $this->view('detalle_servicio', [
-            'incidencia' => $incidencia
+            'incidencia' => $incidencia,
+            'historial' => $historial
         ]);
     }
 
@@ -77,20 +118,31 @@ class IncidenciaController extends Controller
      */
     public function cambiarEstadoTecnico(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $id = (int)($_POST['incidencia_id'] ?? 0);
-            $nuevoEstado = $_POST['nuevo_estado'] ?? '';
+        // [REVISION]: Guard de rol y método POST
+        Auth::requireRole('Tecnico');
 
-            $ok = Incidencia::actualizarEstado($id, $nuevoEstado);
-
-            if ($ok) {
-                $this->flash('success', "Estado actualizado a '{$nuevoEstado}' correctamente.");
-            } else {
-                $this->flash('danger', 'No se pudo actualizar el estado de la incidencia.');
-            }
-
-            $this->redirect("index.php?action=detalle_servicio&id={$id}");
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?action=mis_servicios');
+            return;
         }
+
+        $id = (int)($_POST['incidencia_id'] ?? 0);
+        $tecnicoId   = (int)Session::get('usuario_id', 0);
+
+        // [REVISION]: Control de TypeError para evitar arrays en strict_types
+        $nuevoEstado = is_string($_POST['nuevo_estado'] ?? null) ? trim($_POST['nuevo_estado']) : '';
+
+        // [REVISION]: Delegación completa al Servicio (máquina de estados + trazabilidad + asignación)
+        $resultado = $this->service->cambiarEstadoPorTecnico($id, $tecnicoId, $nuevoEstado);
+
+        if ($resultado['exito']) {
+            $this->flash('success', $resultado['mensaje']);
+        } else {
+            $this->flash('danger', $resultado['mensaje']);
+        }
+
+        $this->redirect("index.php?action=detalle_servicio&id={$id}");
+        return;
     }
 
     /**
@@ -98,10 +150,19 @@ class IncidenciaController extends Controller
      */
     public function cancelarCliente(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // [REVISION]: Guard de rol y método POST
+        Auth::requireRole('Particular');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST'){
+            $this->redirect('index.php?action=mis_servicios');
+            return;
+        }
+
             $incidenciaId = (int)($_POST['incidencia_id'] ?? 0);
-            $clienteId    = (int)($_SESSION['usuario_id'] ?? 0);
-            $motivo       = $_POST['motivo'] ?? '';
+            $clienteId    = (int)Session::get('usuario_id', 0);
+
+            // [REVISION]: Control de TypeError para evitar arrays en strict_types
+            $motivo       = is_string($_POST['motivo'] ?? null) ? trim($_POST['motivo']) : '';
 
             $resultado = $this->service->cancelarPorCliente($incidenciaId, $clienteId, $motivo);
 
@@ -112,7 +173,8 @@ class IncidenciaController extends Controller
             }
 
             $this->redirect('index.php?action=mis_servicios');
-        }
+            return;
+    
     }
 
     /**
@@ -120,21 +182,34 @@ class IncidenciaController extends Controller
      */
     public function modificarAdmin(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $incidenciaId = (int)($_POST['incidencia_id'] ?? 0);
-            $adminUserId  = (int)($_SESSION['usuario_id'] ?? 0);
-
-            $resultado = $this->service->modificarPorAdmin($incidenciaId, $_POST, $adminUserId);
-
-            if ($resultado['exito']) {
-                unset($_SESSION['form_data']);
-                $this->flash('success', $resultado['mensaje']);
-            } else {
-                $_SESSION['form_data'] = $_POST;
-                $this->flash('danger', $resultado['mensaje']);
-            }
-
+        // [REVISION]: Guard de rol y método POST
+        Auth::requireRole('admin');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('index.php?action=gestion');
+            return;
         }
+            
+        $incidenciaId = (int)($_POST['incidencia_id'] ?? 0);
+        $adminUserId  = (int)Session::get('usuario_id', 0);
+
+        // [REVISION]: Filtrado de payload para evitar Mass Assignment
+        $payload = [
+            'tecnico_id'  => isset($_POST['tecnico_id']) ? (int)$_POST['tecnico_id'] : null,
+            'estado'      => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : '',
+            'observaciones' => is_string($_POST['observaciones'] ?? null) ? trim($_POST['observaciones']) : ''
+        ];
+
+        $resultado = $this->service->modificarPorAdmin($incidenciaId, $payload, $adminUserId);
+
+        if ($resultado['exito']) {
+            Session::forget('form_data');
+            $this->flash('success', $resultado['mensaje']);
+        } else {
+            Session::set('form_data', $payload);
+            $this->flash('danger', $resultado['mensaje']);
+        }
+
+        $this->redirect('index.php?action=gestion');
+        return;
     }
 }
