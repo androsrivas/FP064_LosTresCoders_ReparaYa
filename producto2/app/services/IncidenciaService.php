@@ -61,12 +61,6 @@ class IncidenciaService
         $datos['tipo_urgencia'] = $tipoUrgencia;
         $datos['estado'] = self::ESTADO_PENDIENTE;
 
-        // [REVISION] Validación y formateo explícito de cliente_id
-        $clienteId = (int)($datos['cliente_id'] ?? 0);
-        if ($clienteId <= 0) {
-            return ['exito' => false, 'mensaje' => 'El ID del cliente no es válido.'];
-        }
-
         //[REVISION] Cambiado a 19 caracteres con 6 hex y bucle con 5 intentos
         // 2. Generar localizador único (ej. REP-20261101-A1B2C3)
         $intentos = 0;
@@ -79,7 +73,7 @@ class IncidenciaService
             
             try {
                 // [REVISION] Implementación de transacción para atomicidad entre crear() e HistorialEstado::registrar()
-                Incidencia::beginTransaction();
+                Model::beginTransaction();
 
                 // 3. Crear incidencia mediante la llamada estática al modelo
                 $idCreated = Incidencia::crear($datos);
@@ -95,7 +89,7 @@ class IncidenciaService
                     );
 
                     // [REVISION] Confirmar transacción si ambas operaciones son compuestas
-                    Incidencia::commit();
+                    Model::commit();
 
                     return [
                         'exito'       => true, 
@@ -105,11 +99,11 @@ class IncidenciaService
                 }
 
                 // [REVISION] Cancelar transacción si falla la creación
-                Incidencia::rollBack();
+                Model::rollBack();
 
             } catch (\PDOException $e) {
                 // [REVISION] Rollback en captura de PDO
-                Incidencia::rollBack();
+                Model::rollBack();
 
                 // Si colisiona la restricción UNIQUE (código 23000/1062) reintentamos
                 if ($e->getCode() === '23000' && $intentos < $maxIntentos) {
@@ -117,7 +111,7 @@ class IncidenciaService
                 }
                 catch (\Exception $e) {
                     // [REVISION] Rollback ante cualquier otra excepción imprevista
-                    Incidencia::rollBack();
+                    Model::rollBack();
                     return ['exito' => false, 'mensaje' => 'Error al procesar el registro de la incidencia.'];
                 }
             }
