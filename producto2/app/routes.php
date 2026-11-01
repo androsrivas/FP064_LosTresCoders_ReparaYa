@@ -14,7 +14,6 @@ $router->post('/registro', 'AuthController@register');
 $router->post('/logout', 'AuthController@logout');
 $router->get('/perfil', 'PerfilController@edit');
 $router->post('/perfil', 'PerfilController@update');
-$router->post('/perfil/password', 'PerfilController@updatePassword');
 
 // Particular (CRUD B)  -> Auth::homeFor(particular) = /cliente/avisos
 // $router->get('/cliente/avisos',          'IncidenciaController@index');
