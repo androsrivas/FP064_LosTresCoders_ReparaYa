@@ -23,8 +23,8 @@
     </div>
     
     <div>
-        <label for="password">Contraseña (mínimo 9 caracteres)</label>
-        <input type="password" id="pasword" name="password" required minlength="8" maxlength="72" autocomplete="new-password">
+        <label for="password">Contraseña (mínimo 8 caracteres)</label>
+        <input type="password" id="password" name="password" required minlength="8" maxlength="72" autocomplete="new-password">
         <?= field_errors($errors, 'password') ?>
     </div>
     
