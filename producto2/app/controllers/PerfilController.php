@@ -20,9 +20,7 @@ final class PerfilController extends Controller
     /** GET /perfil */
     public function edit(): void
     {
-        $this->view('perfil/edit', [
-            'usuario' => Auth::user(),
-        ]);
+        $this->renderEdit();
     }
 
     /** POST /perfil */
@@ -86,7 +84,7 @@ final class PerfilController extends Controller
                     Session::regenerate();
                 }
 
-                $this->flash('succes', 'Tus datos se han actuali<ado correctamente.');
+                $this->flash('succes', 'Tus datos se han actualizado correctamente.');
                 $this->redirect('/perfil');
             } catch(PDOException $e) {
                 if (($e->errorInfo[1] ?? 0) !== 1062) {
