@@ -192,20 +192,60 @@ class IncidenciaController extends Controller
         $incidenciaId = (int)($_POST['incidencia_id'] ?? 0);
         $adminUserId  = (int)Session::get('usuario_id', 0);
 
-        // [REVISION]: Filtrado de payload para evitar Mass Assignment
+        // [REVISION]: Filtrado de payload para evitar Mass Assignment, Completo para asignación manual de los campos
         $payload = [
-            'tecnico_id'  => isset($_POST['tecnico_id']) ? (int)$_POST['tecnico_id'] : null,
-            'estado'      => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : '',
-            'observaciones' => is_string($_POST['observaciones'] ?? null) ? trim($_POST['observaciones']) : ''
+            'tecnico_id'      => isset($_POST['tecnico_id']) && $_POST['tecnico_id'] !== '' ? (int)$_POST['tecnico_id'] : null,
+            'especialidad_id' => isset($_POST['especialidad_id']) ? (int)$_POST['especialidad_id'] : null,
+            'descripcion'     => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
+            'direccion'       => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : '',
+            'fecha_servicio'  => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : '',
+            'tipo_urgencia'   => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : '',
+            'estado'          => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : ''
         ];
 
-        $resultado = $this->service->modificarPorAdmin($incidenciaId, $payload, $adminUserId);
+        // Llama al método de modificación manual sin automatizaciones filtrando los campos no modificados para no modificar los actuales
+        $resultado = $this->service->modificarPorAdmin($incidenciaId, array_filter($payload, fn($v) => !is_null($v)), $adminUserId);
 
         if ($resultado['exito']) {
             Session::forget('form_data');
             $this->flash('success', $resultado['mensaje']);
         } else {
             Session::set('form_data', $payload);
+            $this->flash('danger', $resultado['mensaje']);
+        }
+
+        $this->redirect('index.php?action=gestion');
+        return;
+    }
+
+    /**
+     * Asignación rápida de técnico por el Administrador.
+     */
+    public function asignarTecnicoAdmin(): void
+    {
+        Auth::requireRole('admin');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?action=gestion');
+            return;
+        }
+
+        $incidenciaId = (int)($_POST['incidencia_id'] ?? 0);
+        $tecnicoId    = (int)($_POST['tecnico_id'] ?? 0);
+        $adminUserId  = (int)Session::get('usuario_id', 0);
+
+        if ($incidenciaId <= 0 || $tecnicoId <= 0) {
+            $this->flash('danger', 'Debe seleccionar una incidencia y un técnico válidos.');
+            $this->redirect('index.php?action=gestion');
+            return;
+        }
+
+        $resultado = $this->service->asignarTecnicoPorAdmin($incidenciaId, $tecnicoId, $adminUserId);
+
+        if ($resultado['exito']) {
+            Session::forget('form_data');
+            $this->flash('success', $resultado['mensaje']);
+        } else {
             $this->flash('danger', $resultado['mensaje']);
         }
 
