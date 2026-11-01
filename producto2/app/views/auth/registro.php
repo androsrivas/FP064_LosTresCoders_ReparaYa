@@ -21,6 +21,12 @@
         <input type="email" id="email" name="email" value="<?= e($old['email'] ?? '') ?>" required maxlength="100" autocomplete="email">
         <?= field_errors($errors, 'email') ?>
     </div>
+
+    <div>
+        <label for="telefono">Teléfono (opcional)</label>
+        <input type="tel" id="telefono" name="telefono" value="<?= e($old['telefono'] ?? '') ?>" maxlength="20" autocomplete="tel">
+        <?= field_errors($errors, 'telefono') ?>
+    </div>
     
     <div>
         <label for="password">Contraseña (mínimo 8 caracteres)</label>
