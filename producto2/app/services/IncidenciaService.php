@@ -242,7 +242,8 @@ class IncidenciaService
     }
 
     /**
-     * Modificación de la incidencia por el Administrador de Negocio.
+     * Modificación de la incidencia por el Administrador de Negocio. Permite cambios de campos generales
+     * y transiciones de estado restringidas a Asignada o Cancelada.
      */
     public function modificarPorAdmin(int $incidenciaId, array $datosAprobar, int $adminUserId): array
     {
@@ -255,6 +256,23 @@ class IncidenciaService
         // Restricción explícita: Modificaciones/cancelaciones por el admin solo en Pendiente o Asignada
         if (!in_array($incidencia['estado'], [self::ESTADO_PENDIENTE, self::ESTADO_ASIGNADA], true)) {
             return ['exito' => false, 'mensaje' => 'El administrador solo puede modificar incidencias en estado Pendiente o Asignada.'];
+        }
+
+        // [REVISION]: Validar que el nuevo estado sea válido (Asignada o Cancelada) si viene en el payload
+        if (!empty($datosAprobar['estado']) && $datosAprobar['estado'] !== $incidencia['estado']) {
+            $estadoSolicitado = $datosAprobar['estado'];
+            $estadosPermitidosAdmin = [self::ESTADO_ASIGNADA, self::ESTADO_CANCELADA];
+
+            if (!in_array($estadoSolicitado, $estadosPermitidosAdmin, true)) {
+                return ['exito' => false, 'mensaje' => 'El administrador solo puede cambiar el estado a Asignada o Cancelada.'];
+            }
+
+            if ($estadoSolicitado === self::ESTADO_ASIGNADA) {
+                $tecnicoIdEvaluado = !empty($datosAprobar['tecnico_id']) ? $datosAprobar['tecnico_id'] : $incidencia['tecnico_id'];
+                if (empty($tecnicoIdEvaluado)) {
+                    return ['exito' => false, 'mensaje' => 'No se puede cambiar el estado a Asignada sin asignar un técnico.'];
+                }
+            }
         }
 
         // 1. Determinar especialidad resultante (si cambia en el form o se mantiene la actual)
@@ -288,6 +306,11 @@ class IncidenciaService
             }
         }
 
+        // [REVISION]: Obtenemos el comentario para la columna 'comentario' de historial_incidencias
+        $comentarioFinal = !empty($datosAprobar['comentario']) 
+            ? $datosAprobar['comentario'] : 'Incidencia modificada manualmente por el Administrador.';
+
+
         $estadoAnterior = $incidencia['estado'];
        // Si no se envía estado nuevo en el payload manual, se preserva el anterior
         $nuevoEstado = $datosAprobar['estado'] ?? $estadoAnterior;
@@ -297,9 +320,16 @@ class IncidenciaService
 
             $filasAfectadas = Incidencia::actualizarIncidencia($incidenciaId, $datosAprobar);
 
-            if ($filasAfectadas <= 0) {
+            // [REVISION]: Solo entra en error si falla la consulta (false) o no devuelve entero
+            if ($filasAfectadas === false) {
                 Model::rollBack();
                 return ['exito' => false, 'mensaje' => 'Error al actualizar la incidencia.'];
+            }
+
+            // Si MySQL devuelve 0 (formulario enviado sin modificar ningún valor en los campos)
+            if ($filasAfectadas === 0) {
+                Model::commit();
+                return ['exito' => true, 'mensaje' => 'No se detectaron cambios en la incidencia.'];
             }
 
             HistorialEstado::registrar(
@@ -307,7 +337,7 @@ class IncidenciaService
                 $estadoAnterior,
                 $nuevoEstado,
                 $adminUserId,
-                'Incidencia modificada manualmente por el Administrador.'
+                $comentarioFinal,
             );
 
             Model::commit();

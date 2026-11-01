@@ -201,6 +201,9 @@ class IncidenciaController extends Controller
             'fecha_servicio'  => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : '',
             'tipo_urgencia'   => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : '',
             'estado'          => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : ''
+            // [REVISION]: Capturamos la nota o motivo para la columna comentario de historial_incidencias
+            'comentario'      => is_string($_POST['comentario'] ?? $_POST['observaciones'] ?? null) 
+                                 ? trim($_POST['comentario'] ?? $_POST['observaciones']) : ''
         ];
 
         // Llama al método de modificación manual sin automatizaciones filtrando los campos no modificados para no modificar los actuales
