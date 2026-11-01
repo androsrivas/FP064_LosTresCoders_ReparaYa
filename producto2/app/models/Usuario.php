@@ -110,12 +110,12 @@ class Usuario extends Model
         );
     }
 
-    private static function normalizeEmail(string $email): string
+    public static function normalizeEmail(string $email): string
     {
         return mb_strtolower(trim($email));
     }
 
-    private static function normalizeTelefono(?string $telefono): ?string
+    public static function normalizeTelefono(?string $telefono): ?string
     {
         $t = preg_replace('/[\s.\-]/', '', trim((string) $telefono)) ?? '';
         $t = preg_replace('/^(?:\+|00)34/', '', $t) ?? '';
