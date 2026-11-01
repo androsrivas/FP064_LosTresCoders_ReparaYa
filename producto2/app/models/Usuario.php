@@ -50,7 +50,7 @@ class Usuario extends Model
             VALUES (:nombre, :email, :password, :rol)',
             [
                 'nombre' => $nombre,
-                'email' => $email,
+                'email' => self::normalizeEmail($email),
                 'password' => password_hash($password, PASSWORD_DEFAULT),
                 'rol' => $rol,
             ]
@@ -89,6 +89,17 @@ class Usuario extends Model
     {
         $row = self::fetchOne('SELECT password FROM usuarios WHERE id = :id', ['id' => $id]);
         return $row !== null && password_verify($password, (string) $row['password']);
+    }
+
+    public static function updatePassword(int $id, string $password): void
+    {
+        self::execute(
+            'UPDATE usuarios SET password = :password WHERE id = :id',
+            [
+                'password' => password_hash($password, PASSWORD_DEFAULT),
+                'id' => $id,
+            ]
+        );
     }
 
     private static function normalizeEmail(string $email): string
