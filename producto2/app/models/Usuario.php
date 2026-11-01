@@ -20,7 +20,7 @@ class Usuario extends Model
     public static function findById(int $id): ?array
     {
         return self::fetchOne(
-            'SELECT id, nombre, email, rol FROM usuarios WHERE id = :id',
+            'SELECT id, nombre, email, rol, telefono FROM usuarios WHERE id = :id',
             ['id' => $id]
         );
     }
@@ -39,20 +39,22 @@ class Usuario extends Model
         string $nombre,
         string $email,
         string $password,
-        string $rol = Roles::PARTICULAR
+        string $rol = Roles::PARTICULAR,
+        ?string $telefono = null
     ): int {
         if (!Roles::isValid($rol)) {
             throw new InvalidArgumentException('Rol no válido.');
         }
 
         return self::insert(
-            'INSERT INTO usuarios (nombre, email, password, rol)
-            VALUES (:nombre, :email, :password, :rol)',
+            'INSERT INTO usuarios (nombre, email, password, rol, telefono)
+            VALUES (:nombre, :email, :password, :rol, :telefono)',
             [
                 'nombre' => $nombre,
                 'email' => self::normalizeEmail($email),
                 'password' => password_hash($password, PASSWORD_DEFAULT),
                 'rol' => $rol,
+                'telefono' => self::normalizeTelefono($telefono),
             ]
         );
     }
@@ -61,7 +63,8 @@ class Usuario extends Model
         int $id, 
         string $nombre, 
         string $email, 
-        ?string $password = null
+        ?string $password = null,
+        ?string $telefono = null
     ): void {
         $params = [
             'nombre' => $nombre,
@@ -74,6 +77,11 @@ class Usuario extends Model
         if ($password !== null && $password !== '') {
             $sql .= ', password = :password';
             $params['password'] = password_hash($password, PASSWORD_DEFAULT);
+        }
+
+        if ($telefono !== null) {
+            $sql .= ', telefono = :telefono';
+            $params['telefono'] = self::normalizeTelefono($telefono);
         }
 
         self::execute($sql . ' WHERE id = :id', $params);
@@ -105,5 +113,13 @@ class Usuario extends Model
     private static function normalizeEmail(string $email): string
     {
         return mb_strtolower(trim($email));
+    }
+
+    private static function normalizeTelefono(?string $telefono): ?string
+    {
+        $t = preg_replace('/[\s.\-]/', '', trim((string) $telefono)) ?? '';
+        $t = preg_replace('/^(?:\+|00)34/', '', $t) ?? '';
+
+        return $t === '' ? null : $t;
     }
 }
