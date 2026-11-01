@@ -2,7 +2,7 @@
 /**
  * @var array<string, string[]> $errors Errores por campo
  * @var array<string, string>   $old    Valores previos del formulario
- * @var array<string, string> $usuario
+ * @var array<string, string|null> $usuario
  */
 ?>
 
@@ -21,6 +21,12 @@
         <label for="email">Correo electrónico</label>
         <input type="email" id="email" name="email" value="<?= e($old['email'] ?? $usuario['email']) ?>" required maxlength="100" autocomplete="email">
         <?= field_errors($errors, 'email') ?>
+    </div>
+
+    <div>
+        <label for="telefono">Teléfono</label>
+        <input type="tel" id="telefono" name="telefono" value="<?= e($old['telefono'] ?? $usuario['telefono'] ?? '') ?>" maxlength="20" autocomplete="tel">
+        <?= field_errors($errors, 'telefono') ?>
     </div>
 
     <fieldset>
