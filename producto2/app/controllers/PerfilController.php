@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Validator;
 use App\Models\Usuario;
 use PDOException;
+use App\Core\Session;
 
 final class PerfilController extends Controller
 {
@@ -53,7 +54,11 @@ final class PerfilController extends Controller
             try {
                 Usuario::update(Auth::id(), $data['nombre'], $data['email']);
 
-                // TODO punto 4: Auth::refresh(Usuario::findById(Auth::id())) + flash('success', ...) + redirect('/perfil')
+                // Sesión coherente con lo realmente guardado (correo ya normalizado)
+                Auth::refresh(Usuario::findById((Auth::id())));
+
+                $this->flash('succes', 'Tus datos se han actualiado correctamente.');
+                $this->redirect('/perfil');
             } catch(PDOException $e) {
                 // 1062 = otra cuenta se quedó ese correo justo antes
                 if (($e->errorInfo[1] ?? 0) !== 1062) {
@@ -93,7 +98,11 @@ final class PerfilController extends Controller
         if (!$v->fails()) {
             Usuario::updatePassword(Auth::id(), $nueva);
              
-            // TODO punto 4: Session::regenerate() + flash('success', ...) + redirect('/pefil')
+            // Cambio de credenciales: nuevo ID de sesión para invalidar el anterior
+            Session::regenerate();
+
+            $this->flash('success', 'Tu contraseña se ha cambiado correctamente.');
+            $this->redirect('/perfil');
         }
 
         // Nunca se devuelven contraseñas en old
