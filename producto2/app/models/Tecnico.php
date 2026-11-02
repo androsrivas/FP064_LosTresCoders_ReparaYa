@@ -63,7 +63,7 @@ class Tecnico extends Model
         // Un solo UPDATE multitabla: es atómico, no necesita transacción.
         // No se declara ':nombre' dos veces porque con prepares nativos no se puede repetir.
         self::execute(
-            'UPDATE tecnicos tecnicos
+            'UPDATE tecnicos t
             JOIN usuarios u ON u.id = t.usuario_id
             SET u.nombre = :nombre, u.email = :email, u.telefono = :telefono, t.nombre_completo = :nombre_completo, t.especialidad_id = :especialidad_id, t.disponible = :disponible
             WHERE t.id = :id AND u.rol = :rol',
@@ -82,9 +82,23 @@ class Tecnico extends Model
 
     public static function delete(int $id): bool
     {
-        return self::execute(
-            'DELETE FROM usuarios WHERE id = :id AND rol = :rol',
-            ['id' => $id, 'rol' => Roles::PARTICULAR]
-        ) > 0;
+        $t = self::fetchOne('SELECT usuario_id FROM tecnicos WHERE id = :id', ['id' => $id]);
+
+        if ($t === null) {
+            return false;
+        }
+
+        self::transaction(function () use ($id, $t): void {
+            self::execute('DELETE FROM tecnicos WHERE id = :id', ['id' => $id]);
+
+            if ($t['usuario_id'] !== null) {
+                self::execute(
+                    'DELETE FROM usuarios WHERE id = :id AND rol = :rol',
+                    ['id' => (int) $t['usuario_id'], 'rol' => Roles::TECNICO]
+                );
+            }
+        });
+
+        return true;
     }
 }
