@@ -32,3 +32,7 @@ CREATE TABLE comentarios_incidencias (
     FOREIGN KEY (incidencia_id) REFERENCES incidencias(id) ON DELETE CASCADE,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
+
+-- Modificar el campo localizador para que quepa el generado
+ALTER TABLE incidencias 
+MODIFY COLUMN localizador VARCHAR(20) NOT NULL;

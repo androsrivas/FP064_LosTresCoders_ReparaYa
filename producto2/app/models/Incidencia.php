@@ -94,6 +94,14 @@ class Incidencia extends Model
      */
     public static function actualizarEstado(int $id, string $nuevoEstado): int
     {
+        // [REVISION] Lista blanca estricta con el ENUM real de la base de datos
+        $estadosPermitidos = ['Pendiente', 'Asignada', 'Finalizada', 'Cancelada'];
+
+        // [REVISION] Control de rowCount
+        if (!in_array($nuevoEstado, $estadosPermitidos, true)) {
+            return 0;
+        }
+
         $sql = "UPDATE incidencias SET estado = :estado WHERE id = :id";
         
         return self::execute($sql, [
@@ -107,12 +115,17 @@ class Incidencia extends Model
      */
     public static function asignarTecnico(int $id, int $tecnicoId): int
     {
-        $sql = "UPDATE incidencias SET tecnico_id = :tecnico_id, estado = 'Asignada' WHERE id = :id";
+        // [REVISION] Control de excepcion PDO
+        try {
+            $sql = "UPDATE incidencias SET tecnico_id = :tecnico_id, estado = 'Asignada' WHERE id = :id";
 
-        return self::execute($sql, [
-            'tecnico_id' => $tecnicoId,
-            'id'         => $id
-        ]);
+            return self::execute($sql, [
+                'tecnico_id' => $tecnicoId,
+                'id'         => $id
+            ]);
+        } catch (\PDOException $e) {
+            return 0;
+        }
     }
 
     /**
@@ -137,7 +150,7 @@ class Incidencia extends Model
             'fecha_servicio'  => $datos['fecha_servicio'],
             'tipo_urgencia'   => $datos['tipo_urgencia'],
             'estado'          => $datos['estado'],
-            'tecnico_id'      => $datos['tecnico_id'] ?? null,
+            'tecnico_id'      => !empty($datos['tecnico_id']) ? (int)$datos['tecnico_id'] : null,
             'id'              => $id
         ]);
     }
