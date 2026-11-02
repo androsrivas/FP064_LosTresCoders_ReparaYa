@@ -38,7 +38,10 @@ class Cliente extends Model
     public static function update(int $id, string $nombre, string $email, ?string $telefono): void
     {
         self::execute(
-            'UPDATE usuarios SET nombre = :nombre, email = :email, telefono = :telefonoWHERE id = :id AND rol = :rol',
+            'UPDATE usuarios 
+            SET nombre = :nombre, email = :email, telefono = :telefono 
+            WHERE id = :id 
+            AND rol = :rol',
             [
                 'nombre' => $nombre,
                 'email' => Usuario::normalizeEmail($email),
