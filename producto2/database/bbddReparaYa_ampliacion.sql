@@ -18,7 +18,7 @@ CREATE TABLE detalles_especialidades (
     descripcion TEXT, -- Descripcion general
     responsabilidades TEXT, -- Responsabilidades asignadas
     salario_base DECIMAL(10,2) DEFAULT 0.00,
-    precio_hora_orientativo DECIMAL(10,2) DEFAULT 0.00, -- Para el calculo de presupuestos
+    precio_base DECIMAL(10,2) DEFAULT 0.00, -- Para el calculo de presupuestos
     FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE CASCADE
 );
 
