@@ -15,12 +15,7 @@ $old = $old ?? \App\Core\Session::get('old', []);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?= url('/assets/css/estilos.css'); ?>" rel="stylesheet">
 </head>
-<body>
-
-    <!-- Header / Navbar -->
-    <header class="sticky-top bg-dark border-bottom border-secondary border-opacity-25" style="z-index: 1030;">
-        <?php require_once __DIR__ . '/menu.php'; ?>
-    </header>
+<body class="bg-dark text-light m-0 p-0">
 
     <!-- Modal de Login -->
     <?php if (!\App\Core\Session::has('usuario_id')): ?>
@@ -90,5 +85,3 @@ $old = $old ?? \App\Core\Session::get('old', []);
         sessionStorage.clear();
     </script>
     <?php endif; ?>
-
-    <main class="container my-5">
