@@ -29,6 +29,17 @@ class Validator
         return $this;
     }
 
+    public function telefono(string $field, string $label = 'telefono'): self
+    {
+        $v = trim($this->value($field));
+
+        if ($v !== '' && preg_match('/^(?:(?:\+|00)34)?[\s.\-]*[6-9](?:[\s.\-]*\d){8}$/', $v) !== 1) {
+            $this->add($field, "El $label no tiene un formato válido (9 dígitos, p.ej. 612 345 678).");
+        }
+
+        return $this;
+    }
+
     public function min(string $field, int $len, string $label): self
     {
         $v = $this->value($field);

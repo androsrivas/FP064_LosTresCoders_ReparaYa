@@ -6,6 +6,7 @@ namespace App\Core;
 
 use PDO;
 use PDOStatement;
+use Throwable;
 
 abstract class Model
 {
@@ -58,5 +59,19 @@ abstract class Model
     public static function rollBack(): void
     {
         if (self::db()->inTransaction()) self::db()->rollBack();
+    }
+
+    protected static function transaction(callable $fn): mixed
+    {
+        self::beginTransaction();
+
+        try {
+            $result = $fn();
+            self::commit();
+            return $result;
+        } catch (Throwable $e) {
+            self::rollBack();
+            throw $e;
+        }
     }
 }
