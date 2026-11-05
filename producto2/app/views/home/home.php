@@ -123,7 +123,12 @@ $isLoggedIn = Auth::check();
             <form action="<?= e(url('/registro')); ?>" method="POST">
                 <?= csrf_field(); ?>
                 <div class="modal-body">
-                    <?= field_errors($errors, 'general'); ?>
+                    <!-- Alerta de error general en rojo -->
+                    <?php if (!empty($errors['general'])): ?>
+                        <div class="alert alert-danger py-2 small fw-bold mb-3" role="alert">
+                            <?= e(is_array($errors['general']) ? implode(' ', $errors['general']) : $errors['general']); ?>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="mb-3">
                         <label for="reg_nombre" class="form-label text-muted small">Nombre completo</label>
@@ -131,14 +136,16 @@ $isLoggedIn = Auth::check();
                             type="text" 
                             name="nombre" 
                             id="reg_nombre" 
-                            class="form-control" 
+                            class="form-control <?= !empty($errors['nombre']) ? 'is-invalid' : ''; ?>" 
                             value="<?= e($old['nombre'] ?? ''); ?>" 
                             required 
                             maxlength="100" 
                             autocomplete="name" 
                             placeholder="Juan Pérez"
                         >
-                        <?= field_errors($errors, 'nombre'); ?>
+                        <div class="text-danger small mt-1 fw-semibold">
+                            <?= is_array($errors['nombre'] ?? null) ? implode(' ', $errors['nombre']) : ($errors['nombre'] ?? ''); ?>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -147,14 +154,16 @@ $isLoggedIn = Auth::check();
                             type="email" 
                             name="email" 
                             id="reg_email" 
-                            class="form-control" 
+                            class="form-control <?= !empty($errors['email']) ? 'is-invalid' : ''; ?>" 
                             value="<?= e($old['email'] ?? ''); ?>" 
                             required 
                             maxlength="100" 
                             autocomplete="email" 
                             placeholder="correo@ejemplo.com"
                         >
-                        <?= field_errors($errors, 'email'); ?>
+                        <div class="text-danger small mt-1 fw-semibold">
+                            <?= is_array($errors['email'] ?? null) ? implode(' ', $errors['email']) : ($errors['email'] ?? ''); ?>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -194,12 +203,14 @@ $isLoggedIn = Auth::check();
                             type="password" 
                             name="password_confirm" 
                             id="reg_password_confirm" 
-                            class="form-control" 
+                            class="form-control <?= !empty($errors['password_confirm']) ? 'is-invalid' : ''; ?>" 
                             required 
                             autocomplete="new-password" 
                             placeholder="******"
                         >
-                        <?= field_errors($errors, 'password_confirm'); ?>
+                        <div class="text-danger small mt-1 fw-semibold">
+                            <?= is_array($errors['password_confirm'] ?? null) ? implode(' ', $errors['password_confirm']) : ($errors['password_confirm'] ?? ''); ?>
+                        </div>
                     </div>
                 </div>
 
@@ -214,7 +225,7 @@ $isLoggedIn = Auth::check();
 <?php endif; ?>
 
 <!-- ==========================================
-     MODAL 2: NUEVA PETICIÓN DE SERVICIO (INCIDENCIA)
+     MODAL 2: NUEVA PETICIÓN DE SERVICIO (INCIDENCIA) -- PENDIENTE DE INCORPORAR EL TROLLER
      ========================================== -->
 <?php if ($isLoggedIn): ?>
 <div class="modal fade" id="nuevaIncidenciaModal" tabindex="-1" aria-labelledby="nuevaIncidenciaModalLabel" aria-hidden="true">
@@ -284,4 +295,18 @@ $isLoggedIn = Auth::check();
         </div>
     </div>
 </div>
+
+<!-- Script JS para reapertura automática del Modal de Registro si hay errores -->
+<?php if (!empty($errors) && (isset($old['nombre']) || isset($errors['nombre']) || isset($errors['email']) || isset($errors['password_confirm']))): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var modalEl = document.getElementById('registroModal');
+            if (modalEl) {
+                var modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
+        });
+    </script>
+<?php endif; ?>
+
 <?php endif; ?>

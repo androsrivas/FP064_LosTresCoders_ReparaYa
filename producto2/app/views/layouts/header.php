@@ -76,27 +76,30 @@ $old = $old ?? \App\Core\Session::get('old', []);
         </div>
     </div>
     <?php endif; ?>
+    
 
-    <!-- JS Session Storage Sync -->
-    <?php if (\App\Core\Session::has('usuario_id')): ?>
-    <script>
-        sessionStorage.setItem('usuario_id', '<?= e((string) \App\Core\Session::get('usuario_id')) ?>');
-        sessionStorage.setItem('usuario_rol', '<?= e((string) \App\Core\Session::get('usuario_rol')) ?>');
-        sessionStorage.setItem('usuario_nombre', '<?= e((string) \App\Core\Session::get('usuario_nombre')) ?>');
-    </script>
-    <?php else: ?>
-    <?php if (!empty($errors)): ?>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
+    <!-- JS Session Storage Sync & Modal Auto-Open -->
+        <?php if (\App\Core\Auth::check()): ?>
+        <?php $user = \App\Core\Auth::user(); ?>
+            <script>
+                sessionStorage.setItem('usuario_id', '<?= e((string) ($user['id'] ?? '')) ?>');
+                sessionStorage.setItem('usuario_rol', '<?= e((string) ($user['rol'] ?? '')) ?>');
+                sessionStorage.setItem('usuario_nombre', '<?= e((string) ($user['nombre'] ?? '')) ?>');
+            </script>
+        <?php else: ?>
+            <script>
+                sessionStorage.clear();
+            </script>
+
+        <?php if (!empty($errors) && !isset($old['nombre'])): ?>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
                 var modalEl = document.getElementById('loginModal');
-                if (modalEl) {
-                    var modal = new bootstrap.Modal(modalEl);
-                    modal.show();
-                }
-            });
-        </script>
-    <?php endif; ?>
-    <script>
-        sessionStorage.clear();
-    </script>
+                    if (modalEl) {
+                        var modal = new bootstrap.Modal(modalEl);
+                        modal.show();
+                    }
+                });
+            </script>
+        <?php endif; ?>
     <?php endif; ?>

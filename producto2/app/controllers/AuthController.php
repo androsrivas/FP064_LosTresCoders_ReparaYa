@@ -64,7 +64,7 @@ final class AuthController extends Controller
     public function register(): void
     {
         $this->redirectIfLogged();
-        $this->requireCsrf('/registro');
+        $this->requireCsrf('/');
 
         $data = [
             'nombre' => trim($this->input('nombre')),
@@ -107,12 +107,13 @@ final class AuthController extends Controller
             }
         }
 
-        http_response_code(422);
-        $this->view('auth/registro', [
-            'titulo' => 'Crear cuenta',
-            'errors' => $v->errors(),
-            'old' => ['nombre' => $data['nombre'], 'email' => $data['email'], 'telefono' => $data['telefono']],
+        \App\Core\Session::set('errors', $v->errors());
+        \App\Core\Session::set('old', [
+            'nombre' => $data['nombre'],
+            'email' => $data['email'],
+            'telefono' => $data['telefono']
         ]);
+        $this->redirect('/');
     }
 
     public function logout(): void 
