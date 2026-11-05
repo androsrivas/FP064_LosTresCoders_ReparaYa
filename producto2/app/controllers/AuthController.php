@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Controller;
+use App\Core\Session;
 use App\Core\Validator;
 use App\Models\Usuario;
 use PDOException;
@@ -14,13 +15,15 @@ final class AuthController extends Controller
     public function showLogin(): void
     {
         $this->redirectIfLogged();
-        $this->view('auth/login', ['titulo' => 'Iniciar sesión', 'errors' => [], 'old' => []]);
+        $this->redirect('/');
     }
 
     public function login(): void
     {
+        // Mantengo la variable $status para posibles usos a futuro, pero debido al cambio a redireccion 
+        // de cabecera, algunos navegadores necesitan recibir por narices '302 Found' o puede dar complicaciones
         $this->redirectIfLogged();
-        $this->requireCsrf('/login');
+        $this->requireCsrf('/');
 
         $email = trim($this->input('email'));
         $password = $this->input('password');
@@ -46,12 +49,10 @@ final class AuthController extends Controller
             $status = 401;
         }
 
-        http_response_code($status);
-        $this->view('auth/login', [
-            'titulo' => 'Iniciar sesión',
-            'errors' => $v->errors(),
-            'old' => ['email' => $email],
-        ]);
+        // Guardar errores y 'old' en Session para enviarlos al modal
+        \App\Core\Session::set('errors', $v->errors());
+        \App\Core\Session::set('old', ['email' => $email]);
+        $this->redirect('/');
     }
 
     public function showRegister(): void 
@@ -120,7 +121,7 @@ final class AuthController extends Controller
 
         Auth::logout();
         $this->flash('success', 'Has cerrado sesión.');
-        $this->redirect('/login');
+        $this->redirect('/');
     }
 
     private function redirectIfLogged(): void

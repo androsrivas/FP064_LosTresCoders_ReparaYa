@@ -18,7 +18,7 @@ $old = $old ?? \App\Core\Session::get('old', []);
 <body class="bg-dark text-light m-0 p-0">
 
     <!-- Modal de Login -->
-    <?php if (!\App\Core\Session::has('usuario_id')): ?>
+    <?php if (!\App\Core\Auth::check()): ?>
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -31,7 +31,11 @@ $old = $old ?? \App\Core\Session::get('old', []);
     
                     <div class="modal-body">
                         <!-- Error general (credenciales incorrectas, etc.) -->
-                        <?= field_errors($errors, 'general'); ?>
+                        <?php if (!empty($errors['general'])): ?>
+                            <div class="alert alert-danger py-2 small fw-bold mb-3" role="alert">
+                                <?= e(is_array($errors['general']) ? implode(' ', $errors['general']) : $errors['general']); ?>
+                            </div>
+                        <?php endif; ?>
 
                         <div class="mb-3">
                             <label for="email" class="form-label text-muted small">Correo Electrónico</label>
@@ -81,6 +85,17 @@ $old = $old ?? \App\Core\Session::get('old', []);
         sessionStorage.setItem('usuario_nombre', '<?= e((string) \App\Core\Session::get('usuario_nombre')) ?>');
     </script>
     <?php else: ?>
+    <?php if (!empty($errors)): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var modalEl = document.getElementById('loginModal');
+                if (modalEl) {
+                    var modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                }
+            });
+        </script>
+    <?php endif; ?>
     <script>
         sessionStorage.clear();
     </script>

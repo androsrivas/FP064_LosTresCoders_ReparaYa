@@ -9,7 +9,7 @@ $menus = [
         ['Home', '/'],
         ['Mi perfil', '/perfil'],
         ['Agenda', '/agenda'],
-        ['Gestión', '/admin'],
+        ['Gestión', '/gestion'],
     ],
 
     Roles::TECNICO => [
