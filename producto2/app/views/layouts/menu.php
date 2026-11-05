@@ -90,11 +90,18 @@ $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 <!-- Mensajes Flash del sistema (Errores / Éxitos globales) -->
 <?php $flashes = \App\Core\Session::pullFlash(); ?>
 <?php if (!empty($flashes)): ?>
-    <div class="container mt-3">
+    <div class="container mt-3" style="max-width: 720px;">
         <?php foreach ($flashes as $flash): ?>
-            <div class="alert alert-<?= $flash['type'] === 'error' ? 'danger' : e($flash['type']); ?> alert-dismissible fade show py-2" role="alert">
-                <?= e($flash['message']); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <?php 
+                $isError = ($flash['type'] === 'error');
+                $borderClass = $isError ? 'border-danger text-danger' : 'border-warning text-warning';
+            ?>
+            <div class="alert bg-dark <?= $borderClass; ?> border border-1 fade show py-2 px-3 shadow-sm rounded d-flex align-items-center d-flex justify-content-between mb-2" role="alert">
+                <div class="d-flex align-items-center gap-2 small fw-semibold">
+                    <span><?= $isError ? '⚠️' : 'ℹ️'; ?></span>
+                    <span><?= e($flash['message']); ?></span>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endforeach; ?>
     </div>

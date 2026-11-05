@@ -9,6 +9,7 @@ use App\Core\Validator;
 use App\Models\Usuario;
 use PDOException;
 use App\Core\Session;
+use App\Services\IncidenciaService;
 
 final class PerfilController extends Controller
 {
@@ -103,10 +104,15 @@ final class PerfilController extends Controller
 
     private function renderEdit(array $errors = [], array $old = [], int $status = 200): void
     {
+        $userId = (int) Auth::id();
+        $incidenciaService = new IncidenciaService();
+        $incidencias = $incidenciaService->obtenerPorCliente($userId);
+
         http_response_code($status);
-        $this->view('perfil/edit', [
+        $this->view('perfil/perfil', [
             'titulo' => 'Mi perfil',
-            'usuario' => Usuario::findById((int) Auth::id()),
+            'usuario' => Usuario::findById($userId),
+            'incidencias' => $incidencias,
             'errors' => $errors,
             'old' => $old
         ]);
