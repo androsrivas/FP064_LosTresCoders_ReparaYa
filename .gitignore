@@ -5,6 +5,7 @@ www/wp-config.php
 diagnostic/diagnostico.config.aws.php
 *.sh
 *.log
+.doc/*
 
 # Producto 2
 producto2/config/config.php
