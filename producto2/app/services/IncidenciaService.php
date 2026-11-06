@@ -4,181 +4,103 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Incidencia;
+use App\Core\Model;
 use App\Models\HistorialEstado;
+use App\Models\Incidencia;
 use App\Models\Tecnico;
-use DateTime;
+use PDOException;
+use Throwable;
 
+/**
+ * Casos de uso de las incidencias: coordina reglas, persistencia e historial.
+ * Las decisiones de negocio están en EstadoIncidencia y ReglasIncidencia.
+ */
 class IncidenciaService
 {
-    // Constantes para el ENUM tipo_urgencia
-        public const URGENCIA_ESTANDAR = 'Estándar';
-        public const URGENCIA_URGENTE  = 'Urgente';
+    private const FORMATO_FECHA_BD = 'Y-m-d H:i:s';
+    private const MAX_INTENTOS_LOCALIZADOR = 5;
+    private const MYSQL_ENTRADA_DUPLICADA = 1062;
+    private const CAMPOS_MODIFICABLES = [
+        'tecnico_id', 'especialidad_id', 'descripcion', 'direccion',
+        'fecha_servicio', 'tipo_urgencia', 'estado',
+    ];
 
-        // Constantes para el ENUM estado
-        public const ESTADO_PENDIENTE  = 'Pendiente';
-        public const ESTADO_ASIGNADA   = 'Asignada';
-        public const ESTADO_FINALIZADA = 'Finalizada';
-        public const ESTADO_CANCELADA  = 'Cancelada';
-        
     /**
-     * Registra una nueva incidencia aplicando reglas de fecha y localizador.
+     * Registra una nueva incidencia en estado Pendiente.
+     *
+     * @param int|null $usuarioId Autor del alta para el historial. Por defecto, el cliente.
      */
-    public function crearIncidencia(array $datos): array
+    public function crearIncidencia(array $datos, ?int $usuarioId = null): array
     {
-        // [REVISION] Normalizamos tipo_urgencia con la constante
-        $tipoUrgencia = $datos['tipo_urgencia'] ?? self::URGENCIA_ESTANDAR;
+        return $this->ejecutar('Error al procesar el registro de la incidencia.', function () use ($datos, $usuarioId): array {
+            ReglasIncidencia::exigirDatosDeAlta($datos);
 
-        // [REVISION] Validar presencia de fecha de servicio y formato valido
-        if (empty($datos['fecha_servicio'])) {
-            return ['exito' => false, 'mensaje' => 'La fecha de servicio es obligatoria.'];
-        }
+            $tipoUrgencia = $datos['tipo_urgencia'] ?? ReglasIncidencia::URGENCIA_ESTANDAR;
+            ReglasIncidencia::exigirUrgenciaValida($tipoUrgencia);
 
-        // [REVISION] Parseo seguro de fechas para evitar Error 500 ante formatos inválidos
-        try {
-            $fechaServicio = new DateTime($datos['fecha_servicio']);
-            $ahora = new DateTime();
-        } catch (\Exception $e) {
-            return ['exito' => false, 'mensaje' => 'El formato de la fecha de servicio no es válido.'];
-        }
+            $fecha = ReglasIncidencia::parsearFecha((string) ($datos['fecha_servicio'] ?? ''));
+            ReglasIncidencia::exigirFechaFutura($fecha);
+            ReglasIncidencia::exigirAntelacionDeAlta($tipoUrgencia, $fecha);
 
-        // [REVISION] Regla general: no se permiten fechas en el pasado (aplica tanto a Estándar como a Urgente)
-        if ($fechaServicio < $ahora) {
-            return ['exito' => false, 'mensaje' => 'La fecha de servicio no puede ser en el pasado.'];
-        }
+            $datos['tipo_urgencia'] = $tipoUrgencia;
+            $datos['fecha_servicio'] = $fecha->format(self::FORMATO_FECHA_BD);
+            $datos['estado'] = EstadoIncidencia::PENDIENTE;
 
-        // 1. Validar regla de 48 horas de antelación si no es urgente
-        if ($tipoUrgencia !== self::URGENCIA_URGENTE) {
-            $diferenciaHoras = ($fechaServicio->getTimestamp() - $ahora->getTimestamp()) / 3600;
-
-            if ($diferenciaHoras <= 48) {
-                return [
-                    'exito'   => false, 
-                    'mensaje' => 'Las solicitudes estándar requieren un mínimo de 48 horas de antelación.'
-                ];
-            }
-        }
-        $datos['tipo_urgencia'] = $tipoUrgencia;
-        $datos['estado'] = self::ESTADO_PENDIENTE;
-
-        //[REVISION] Cambiado a 19 caracteres con 6 hex y bucle con 5 intentos
-        // 2. Generar localizador único (ej. REP-20261101-A1B2C3)
-        $intentos = 0;
-        $maxIntentos = 5;
-
-        do {
-            $intentos++;
-            $hashHex = strtoupper(bin2hex(random_bytes(3))); // 6 caracteres hex
-            $datos['localizador'] = 'REP-' . date('Ymd') . '-' . $hashHex;
-            
-            try {
-                // [REVISION] Implementación de transacción para atomicidad entre crear() e HistorialEstado::registrar()
-                Model::beginTransaction();
-
-                // 3. Crear incidencia mediante la llamada estática al modelo
-                $idCreated = Incidencia::crear($datos);
-
-                if ($idCreated > 0) {
-                    // Trazabilidad inicial
-                    HistorialEstado::registrar(
-                        $idCreated,
-                        null,
-                        self::ESTADO_PENDIENTE,
-                        $clienteId,
-                        'Incidencia registrada por el cliente.'
-                    );
-
-                    // [REVISION] Confirmar transacción si ambas operaciones son compuestas
-                    Model::commit();
-
-                    return [
-                        'exito'       => true, 
-                        'id'          => $idCreated, 
-                        'localizador' => $datos['localizador']
-                    ];
-                }
-
-                // [REVISION] Cancelar transacción si falla la creación
-                Model::rollBack();
-
-            } catch (\PDOException $e) {
-                // [REVISION] Rollback en captura de PDO
-                Model::rollBack();
-
-                // Si colisiona la restricción UNIQUE (código 23000/1062) reintentamos
-                if ($e->getCode() === '23000' && $intentos < $maxIntentos) {
-                    continue;
-                }
-                catch (\Exception $e) {
-                    // [REVISION] Rollback ante cualquier otra excepción imprevista
-                    Model::rollBack();
-                    return ['exito' => false, 'mensaje' => 'Error al procesar el registro de la incidencia.'];
-                }
-            }
-        } while ($intentos < $maxIntentos);
+            return ['exito' => true] + $this->insertarConLocalizadorUnico($datos, $usuarioId ?? (int) $datos['cliente_id']);
+        });
     }
 
     /**
-     * Cancela una incidencia iniciada por el Cliente.
+     * Cancela una incidencia a petición de su cliente.
      */
     public function cancelarPorCliente(int $incidenciaId, int $clienteId, string $motivo = ''): array
     {
-        $incidencia = Incidencia::obtenerPorId($incidenciaId);
+        return $this->ejecutar('Error al procesar la cancelación.', function () use ($incidenciaId, $clienteId, $motivo): array {
+            $incidencia = $this->buscar($incidenciaId);
 
-        // [REVISION] El maldito strict mode
-        if (!$incidencia || (int)$incidencia['cliente_id'] != $clienteId) {
-            return ['exito' => false, 'mensaje' => 'Incidencia no encontrada.'];
-        }
-
-        // Solo cancelable en Pendiente o Asignada
-        if (!in_array($incidencia['estado'], ['Pendiente', 'Asignada'], true)) {
-            return ['exito' => false, 'mensaje' => 'No se puede cancelar una incidencia en estado ' . $incidencia['estado'] . '.'];
-        }
-
-        // Verificar 48 horas de antelación
-        $fechaServicio = new DateTime($incidencia['fecha_servicio']);
-        $ahora = new DateTime();
-        $horasRestantes = ($fechaServicio->getTimestamp() - $ahora->getTimestamp()) / 3600;
-
-        if ($horasRestantes <= 48) {
-            return ['exito' => false, 'mensaje' => 'No es posible cancelar con menos de 48 horas de antelación.'];
-        }
-
-        // Ejecutar cancelación
-        $estadoAnterior = $incidencia['estado'];
-        
-        // [REVISION] Transaccion y comprobacion
-        try {
-            Model::beginTransaction();
-
-            // Usamos la constante en lugar del string hardcodeado 'Cancelada'
-            $resultadoUpdate = Incidencia::actualizarEstado($incidenciaId, self::ESTADO_CANCELADA);
-
-            if ($resultadoUpdate === false) {
-                Model::rollBack();
-                return ['exito' => false, 'mensaje' => 'Error al procesar la cancelación.'];
+            // Mismo mensaje que si no existe, para no revelar incidencias de otros clientes.
+            if ((int) $incidencia['cliente_id'] !== $clienteId) {
+                throw new ReglaNegocioException('Incidencia no encontrada.');
             }
 
-            // Registrar el cambio de estado en el historial
-            HistorialEstado::registrar(
-                $incidenciaId,
-                $estadoAnterior,
-                self::ESTADO_CANCELADA,
+            if (!EstadoIncidencia::esModificable($incidencia['estado'])) {
+                throw new ReglaNegocioException("No se puede cancelar una incidencia en estado {$incidencia['estado']}.");
+            }
+
+            ReglasIncidencia::exigirAntelacionDeCancelacion(ReglasIncidencia::parsearFecha($incidencia['fecha_servicio']));
+
+            $this->cambiarEstado(
+                $incidencia,
+                EstadoIncidencia::CANCELADA,
                 $clienteId,
-                !empty($motivo) ? $motivo : 'Incidencia cancelada por el cliente.'
+                $motivo !== '' ? $motivo : 'Incidencia cancelada por el cliente.'
             );
 
-            Model::commit();
+            return self::ok('Incidencia cancelada con éxito.');
+        });
+    }
 
-            return ['exito' => true, 'mensaje' => 'Incidencia cancelada con éxito.'];
+    /**
+     * Avanza una incidencia asignada al técnico autenticado: Asignada -> En curso -> Finalizada.
+     */
+    public function cambiarEstadoPorTecnico(int $incidenciaId, int $usuarioId, string $nuevoEstado): array
+    {
+        return $this->ejecutar('Error al cambiar el estado de la incidencia.', function () use ($incidenciaId, $usuarioId, $nuevoEstado): array {
+            $incidencia = $this->buscar($incidenciaId);
+            $tecnico = Tecnico::findByUsuarioId($usuarioId);
 
-        } catch (\PDOException $e) {
-            Model::rollBack();
-            return ['exito' => false, 'mensaje' => 'Error de base de datos al cancelar la incidencia.'];
-        } catch (\Exception $e) {
-            Model::rollBack();
-            return ['exito' => false, 'mensaje' => 'Error inesperado al procesar la cancelación.'];
-        }
+            if ($tecnico === null || (int) $incidencia['tecnico_id'] !== (int) $tecnico['id']) {
+                throw new ReglaNegocioException('Incidencia no encontrada.');
+            }
+
+            if (!EstadoIncidencia::puedeAvanzarTecnico($incidencia['estado'], $nuevoEstado)) {
+                throw new ReglaNegocioException("No se puede pasar de {$incidencia['estado']} a {$nuevoEstado}.");
+            }
+
+            $this->cambiarEstado($incidencia, $nuevoEstado, $usuarioId, 'Estado actualizado por el técnico.');
+
+            return self::ok('Estado de la incidencia actualizado.');
+        });
     }
 
     /**
@@ -186,187 +108,195 @@ class IncidenciaService
      */
     public function asignarTecnicoPorAdmin(int $incidenciaId, int $tecnicoId, int $adminUserId): array
     {
-        $incidencia = Incidencia::obtenerPorId($incidenciaId);
+        return $this->ejecutar('Error al asignar el técnico.', function () use ($incidenciaId, $tecnicoId, $adminUserId): array {
+            $incidencia = $this->buscar($incidenciaId);
 
-        if (!$incidencia) {
-            return ['exito' => false, 'mensaje' => 'Incidencia no encontrada.'];
-        }
-
-        // Restricción: Administrador solo puede intervenir si está en Pendiente o Asignada
-        if (!in_array($incidencia['estado'], [self::ESTADO_PENDIENTE, self::ESTADO_ASIGNADA], true)) {
-            return ['exito' => false, 'mensaje' => 'Solo se pueden asignar técnicos a incidencias en estado Pendiente o Asignada.'];
-        }
-
-        // [REVISION] Validación de existencia del técnico y coincidencia de especialidad
-        $tecnico = Tecnico::obtenerPorId($tecnicoId);
-
-        if (!$tecnico) {
-            return ['exito' => false, 'mensaje' => 'El técnico seleccionado no existe.'];
-        }
-
-        if ((int)$tecnico['especialidad_id'] !== (int)$incidencia['especialidad_id']) {
-            return ['exito' => false, 'mensaje' => 'La especialidad del técnico no coincide con la especialidad de la incidencia.'];
-        }
-
-        $estadoAnterior = $incidencia['estado'];
-        try {
-            Model::beginTransaction();
-
-            $filasAfectadas = Incidencia::asignarTecnico($incidenciaId, $tecnicoId);
-
-            if ($filasAfectadas <= 0) {
-                Model::rollBack();
-                return ['exito' => false, 'mensaje' => 'Error al asignar el técnico.'];
+            if (!EstadoIncidencia::esModificable($incidencia['estado'])) {
+                throw new ReglaNegocioException('Solo se pueden asignar técnicos a incidencias en estado Pendiente o Asignada.');
             }
 
-            // Registramos el cambio en la trazabilidad
-            HistorialEstado::registrar(
-                $incidenciaId,
-                $estadoAnterior,
-                self::ESTADO_ASIGNADA,
-                $adminUserId,
-                "Técnico ID {$tecnicoId} asignado por el Administrador."
-            );
+            ReglasIncidencia::exigirTecnicoCompatible(Tecnico::findById($tecnicoId), (int) $incidencia['especialidad_id']);
 
-            Model::commit();
+            $filas = Model::transaction(function () use ($incidencia, $tecnicoId, $adminUserId): int {
+                $filas = Incidencia::asignarTecnico((int) $incidencia['id'], $tecnicoId);
 
-            return ['exito' => true, 'mensaje' => 'Técnico asignado correctamente.'];
+                if ($filas > 0) {
+                    HistorialEstado::registrar(
+                        (int) $incidencia['id'],
+                        $incidencia['estado'],
+                        EstadoIncidencia::ASIGNADA,
+                        $adminUserId,
+                        "Técnico ID {$tecnicoId} asignado por el Administrador."
+                    );
+                }
 
-        } catch (\PDOException $e) {
-            Model::rollBack();
-            return ['exito' => false, 'mensaje' => 'Error de base de datos al asignar el técnico.'];
-        } catch (\Exception $e) {
-            Model::rollBack();
-            return ['exito' => false, 'mensaje' => 'Error inesperado al asignar el técnico.'];
-        }
+                return $filas;
+            });
+
+            return self::ok($filas > 0 ? 'Técnico asignado correctamente.' : 'El técnico ya estaba asignado.');
+        });
     }
 
     /**
-     * Modificación de la incidencia por el Administrador de Negocio. Permite cambios de campos generales
-     * y transiciones de estado restringidas a Asignada o Cancelada.
+     * Modifica los campos generales de una incidencia desde el Administrador de Negocio.
+     * Los campos que no se informan conservan su valor actual.
      */
-    public function modificarPorAdmin(int $incidenciaId, array $datosAprobar, int $adminUserId): array
+    public function modificarPorAdmin(int $incidenciaId, array $datos, int $adminUserId): array
     {
-        $incidencia = Incidencia::obtenerPorId($incidenciaId);
+        return $this->ejecutar('Error al modificar la incidencia.', function () use ($incidenciaId, $datos, $adminUserId): array {
+            $incidencia = $this->buscar($incidenciaId);
 
-        if (!$incidencia) {
-            return ['exito' => false, 'mensaje' => 'Incidencia no encontrada.'];
-        }
-
-        // Restricción explícita: Modificaciones/cancelaciones por el admin solo en Pendiente o Asignada
-        if (!in_array($incidencia['estado'], [self::ESTADO_PENDIENTE, self::ESTADO_ASIGNADA], true)) {
-            return ['exito' => false, 'mensaje' => 'El administrador solo puede modificar incidencias en estado Pendiente o Asignada.'];
-        }
-
-        // [REVISION]: Validar que el nuevo estado sea válido (Asignada o Cancelada) si viene en el payload
-        if (!empty($datosAprobar['estado']) && $datosAprobar['estado'] !== $incidencia['estado']) {
-            $estadoSolicitado = $datosAprobar['estado'];
-            $estadosPermitidosAdmin = [self::ESTADO_ASIGNADA, self::ESTADO_CANCELADA];
-
-            if (!in_array($estadoSolicitado, $estadosPermitidosAdmin, true)) {
-                return ['exito' => false, 'mensaje' => 'El administrador solo puede cambiar el estado a Asignada o Cancelada.'];
+            if (!EstadoIncidencia::esModificable($incidencia['estado'])) {
+                throw new ReglaNegocioException('El administrador solo puede modificar incidencias en estado Pendiente o Asignada.');
             }
 
-            if ($estadoSolicitado === self::ESTADO_ASIGNADA) {
-                $tecnicoIdEvaluado = !empty($datosAprobar['tecnico_id']) ? $datosAprobar['tecnico_id'] : $incidencia['tecnico_id'];
-                if (empty($tecnicoIdEvaluado)) {
-                    return ['exito' => false, 'mensaje' => 'No se puede cambiar el estado a Asignada sin asignar un técnico.'];
+            $resultante = self::camposInformados($datos) + $incidencia;
+
+            ReglasIncidencia::exigirUrgenciaValida($resultante['tipo_urgencia']);
+            $resultante['fecha_servicio'] = self::validarFechaModificada($resultante['fecha_servicio'], $incidencia['fecha_servicio']);
+
+            $tecnicoId = !empty($resultante['tecnico_id']) ? (int) $resultante['tecnico_id'] : null;
+            $resultante['estado'] = EstadoIncidencia::resolverPorAdmin($incidencia['estado'], $resultante['estado'], $tecnicoId);
+
+            // Solo una incidencia Asignada conserva técnico. Se decide antes de validarlo para que el
+            // administrador pueda devolverla a Pendiente aunque el técnico ya no exista o no sea compatible.
+            if ($resultante['estado'] !== EstadoIncidencia::ASIGNADA) {
+                $resultante['tecnico_id'] = null;
+            } else {
+                ReglasIncidencia::exigirTecnicoCompatible(Tecnico::findById($tecnicoId), (int) $resultante['especialidad_id']);
+            }
+
+            $comentario = !empty($datos['comentario'])
+                ? $datos['comentario']
+                : 'Incidencia modificada manualmente por el Administrador.';
+
+            $filas = Model::transaction(function () use ($incidencia, $resultante, $adminUserId, $comentario): int {
+                $filas = Incidencia::actualizarIncidencia((int) $incidencia['id'], $resultante);
+
+                // MySQL devuelve 0 filas si el formulario no cambia ningún valor.
+                if ($filas > 0) {
+                    HistorialEstado::registrar(
+                        (int) $incidencia['id'],
+                        $incidencia['estado'],
+                        $resultante['estado'],
+                        $adminUserId,
+                        $comentario
+                    );
                 }
-            }
-        }
 
-        // 1. Determinar especialidad resultante (si cambia en el form o se mantiene la actual)
-        $especialidadId = isset($datosAprobar['especialidad_id']) 
-            ? (int)$datosAprobar['especialidad_id'] 
-            : (int)$incidencia['especialidad_id'];
+                return $filas;
+            });
 
-        // 2. Si se indica/modifica un técnico, se valida formalmente pero NO se altera el estado automáticamente
-        if (!empty($datosAprobar['tecnico_id'])) {
-            $tecnicoId = (int)$datosAprobar['tecnico_id'];
-            $tecnico = Tecnico::obtenerPorId($tecnicoId);
-
-            if (!$tecnico) {
-                return ['exito' => false, 'mensaje' => 'El técnico seleccionado no existe.'];
-            }
-
-            if ((int)$tecnico['especialidad_id'] !== (int)$incidencia['especialidad_id']) {
-                return ['exito' => false, 'mensaje' => 'La especialidad del técnico no coincide con la de la incidencia.'];
-            }
-        }
-
-        // 3. Validación de la fecha de servicio si se modifica
-        if (!empty($datosAprobar['fecha_servicio'])) {
-            try {
-                $fechaServicio = new DateTime($datosAprobar['fecha_servicio']);
-                if ($fechaServicio < new DateTime()) {
-                    return ['exito' => false, 'mensaje' => 'La fecha de servicio no puede ser en el pasado.'];
-                }
-            } catch (\Exception $e) {
-                return ['exito' => false, 'mensaje' => 'El formato de la fecha de servicio no es válido.'];
-            }
-        }
-
-        // [REVISION]: Obtenemos el comentario para la columna 'comentario' de historial_incidencias
-        $comentarioFinal = !empty($datosAprobar['comentario']) 
-            ? $datosAprobar['comentario'] : 'Incidencia modificada manualmente por el Administrador.';
-
-
-        $estadoAnterior = $incidencia['estado'];
-       // Si no se envía estado nuevo en el payload manual, se preserva el anterior
-        $nuevoEstado = $datosAprobar['estado'] ?? $estadoAnterior;
-
-        try {
-            Model::beginTransaction();
-
-            $filasAfectadas = Incidencia::actualizarIncidencia($incidenciaId, $datosAprobar);
-
-            // [REVISION]: Solo entra en error si falla la consulta (false) o no devuelve entero
-            if ($filasAfectadas === false) {
-                Model::rollBack();
-                return ['exito' => false, 'mensaje' => 'Error al actualizar la incidencia.'];
-            }
-
-            // Si MySQL devuelve 0 (formulario enviado sin modificar ningún valor en los campos)
-            if ($filasAfectadas === 0) {
-                Model::commit();
-                return ['exito' => true, 'mensaje' => 'No se detectaron cambios en la incidencia.'];
-            }
-
-            HistorialEstado::registrar(
-                $incidenciaId,
-                $estadoAnterior,
-                $nuevoEstado,
-                $adminUserId,
-                $comentarioFinal,
-            );
-
-            Model::commit();
-
-            return ['exito' => true, 'mensaje' => 'Incidencia actualizada con éxito.'];
-
-        } catch (\PDOException $e) {
-            Model::rollBack();
-            return ['exito' => false, 'mensaje' => 'Error de base de datos al modificar la incidencia.'];
-        } catch (\Exception $e) {
-            Model::rollBack();
-            return ['exito' => false, 'mensaje' => 'Error inesperado al modificar la incidencia.'];
-        }
+            return self::ok($filas > 0 ? 'Incidencia actualizada con éxito.' : 'No se detectaron cambios en la incidencia.');
+        });
     }
 
-    // [REVISION] Añadida función para convertir tecnico_id al hacer la consulta obtenerPorTecnico() del model Incidencia
+    public function obtenerPorId(int $id): ?array
+    {
+        return Incidencia::obtenerPorId($id);
+    }
+
+    public function obtenerPorCliente(int $clienteId): array
+    {
+        return Incidencia::obtenerPorCliente($clienteId);
+    }
+
     /**
-     * Conversión de tecnico_id a usuario_id para mostrar las incidencias asociadas a un técnico
+     * Incidencias de un técnico a partir de su usuario: incidencias.tecnico_id apunta a tecnicos.id.
      */
     public function obtenerPorUsuarioTecnico(int $usuarioId): array
     {
-        // 1. Traduce el ID de usuario al ID del técnico
-        $tecnicoId = Tecnico::obtenerIdPorUsuario($usuarioId);
+        $tecnico = Tecnico::findByUsuarioId($usuarioId);
 
-        if (!$tecnicoId) {
-            return [];
+        return $tecnico === null ? [] : Incidencia::obtenerPorTecnico((int) $tecnico['id']);
+    }
+
+    /**
+     * Convierte el resultado de un caso de uso en la respuesta que espera el controlador.
+     */
+    private function ejecutar(string $mensajeError, callable $casoDeUso): array
+    {
+        try {
+            return $casoDeUso();
+        } catch (ReglaNegocioException $e) {
+            return ['exito' => false, 'mensaje' => $e->getMessage()];
+        } catch (Throwable $e) {
+            error_log('IncidenciaService: ' . $e->getMessage());
+            return ['exito' => false, 'mensaje' => $mensajeError];
+        }
+    }
+
+    private function buscar(int $incidenciaId): array
+    {
+        return Incidencia::obtenerPorId($incidenciaId)
+            ?? throw new ReglaNegocioException('Incidencia no encontrada.');
+    }
+
+    /**
+     * Reintenta solo si colisiona el localizador. Otros errores de integridad (como una
+     * clave foránea inexistente) comparten SQLSTATE 23000 y no se resuelven reintentando.
+     */
+    private function insertarConLocalizadorUnico(array $datos, int $usuarioId): array
+    {
+        for ($intento = 1; ; $intento++) {
+            $datos['localizador'] = $this->generar();
+
+            try {
+                $id = Model::transaction(function () use ($datos, $usuarioId): int {
+                    $id = Incidencia::crear($datos);
+                    HistorialEstado::registrar($id, null, $datos['estado'], $usuarioId, 'Incidencia registrada.');
+                    return $id;
+                });
+
+                return ['id' => $id, 'localizador' => $datos['localizador']];
+            } catch (PDOException $e) {
+                $esDuplicado = ($e->errorInfo[1] ?? null) === self::MYSQL_ENTRADA_DUPLICADA;
+
+                if (!$esDuplicado || $intento >= self::MAX_INTENTOS_LOCALIZADOR) {
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    private function cambiarEstado(array $incidencia, string $nuevoEstado, int $usuarioId, string $comentario): void
+    {
+        Model::transaction(function () use ($incidencia, $nuevoEstado, $usuarioId, $comentario): void {
+            Incidencia::actualizarEstado((int) $incidencia['id'], $nuevoEstado);
+            HistorialEstado::registrar((int) $incidencia['id'], $incidencia['estado'], $nuevoEstado, $usuarioId, $comentario);
+        });
+    }
+
+    /**
+     * El formulario envía todos los campos: una fecha pasada solo se rechaza si es nueva, para poder corregir otros datos de una incidencia cuya fecha ya ha vencido.
+     */
+    private static function validarFechaModificada(string $fechaNueva, string $fechaActual): string
+    {
+        $nueva = ReglasIncidencia::parsearFecha($fechaNueva);
+
+        if ($nueva != ReglasIncidencia::parsearFecha($fechaActual)) {
+            ReglasIncidencia::exigirFechaFutura($nueva);
         }
 
-        // 2. Consulta las incidencias usando el ID de técnico real
-        return Incidencia::obtenerPorTecnico($tecnicoId);
+        return $nueva->format(self::FORMATO_FECHA_BD);
+    }
+
+    /** El controlador envía '' o 0 en los campos vacíos: no deben sobrescribir los valores actuales. */
+    private static function camposInformados(array $datos): array
+    {
+        return array_filter(
+            array_intersect_key($datos, array_flip(self::CAMPOS_MODIFICABLES)),
+            static fn ($valor): bool => !in_array($valor, [null, '', 0], true)
+        );
+    }
+
+    private static function ok(string $mensaje): array
+    {
+        return ['exito' => true, 'mensaje' => $mensaje];
+    }
+
+    private static function generar(): string
+    {
+        return 'REP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
     }
 }
