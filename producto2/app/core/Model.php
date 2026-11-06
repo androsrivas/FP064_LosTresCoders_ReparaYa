@@ -61,7 +61,7 @@ abstract class Model
         if (self::db()->inTransaction()) self::db()->rollBack();
     }
 
-    protected static function transaction(callable $fn): mixed
+    public static function transaction(callable $fn): mixed
     {
         self::beginTransaction();
 

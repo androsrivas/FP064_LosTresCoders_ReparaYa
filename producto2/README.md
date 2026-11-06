@@ -91,7 +91,7 @@ Se conserva la estructura inicial proporcionada y se amplía desde `database/amp
 | Cambio | Tabla / campo | Motivo |
 |---|---|---|
 | Estado actual de la incidencia | `<tabla>.<campo estado>` | Pendiente, Asignada, En curso, Finalizada, Cancelada |
-| Historial de cambios | `historial_estados` | Incidencia, estado anterior, estado nuevo, usuario responsable, fecha y hora, observación |
+| Historial de cambios | `historial_incidencias` | Incidencia, estado anterior, estado nuevo, usuario responsable, fecha y hora, observación |
 | Precio base por servicio | `<tabla>.precio_base` | Se reutilizará en el Producto 3 para calcular comisiones |
 | Especialidades / categorías | `<tabla>` | `<justificación>` |
 
@@ -112,7 +112,8 @@ El menú y las acciones cambian según el rol. Los permisos se comprueban **en e
 | Registro, login y perfil (nombre, email, contraseña) | ✅ | ✅ | ✅ |
 | Crear solicitud de asistencia | ✅ (alta manual) | ❌ | ✅ |
 | Ver «Mis avisos» y su historial | ❌ | ❌ | ✅ (propios) |
-| Modificar o cancelar incidencias | ✅ (Pendiente/Asignada) | ❌ | Solo cancelar (> 48 h) |
+| Modificar incidencias | ✅ (Pendiente/Asignada) | ❌ | ❌ |
+| Cancelar incidencias | ✅ (solo Pendiente) | ❌ | ✅ (Pendiente/Asignada, > 48 h) |
 | Asignar técnico | ✅ | ❌ | ❌ |
 | Calendario general y filtro por estado | ✅ | ❌ | ❌ |
 | Agenda propia | ❌ | ✅ | ❌ |
@@ -126,21 +127,28 @@ El menú y las acciones cambian según el rol. Los permisos se comprueban **en e
 ```
               asignar técnico            iniciar               finalizar
  Pendiente ───────────────────▶ Asignada ───────▶ En curso ───────▶ Finalizada
+     │      ◀───────────────────   │
+     │       liberar (admin)       │
      │                             │
-     └──────────── cancelar ───────┴────▶ Cancelada
+     ├── cancelar (admin/cliente) ─┼──▶ Cancelada
+     │                             │       ▲
+     │                             └───────┘ cancelar (solo cliente)
 ```
 
 | Transición | Quién | Condición |
 |---|---|---|
 | (alta) → Pendiente | Cliente o Administrador | Estado inicial |
 | Pendiente → Asignada | Administrador | Se produce **automáticamente** al asignar técnico |
+| Asignada → Pendiente | Administrador | Libera la incidencia y quita el técnico (p. ej., el técnico ya no puede atenderla) |
 | Asignada → En curso | Técnico asignado | |
 | En curso → Finalizada | Técnico asignado | |
+| Pendiente → Cancelada | Administrador | |
 | Pendiente / Asignada → Cancelada | Cliente | Solo si faltan **más de 48 h** para la cita |
-| Pendiente / Asignada → Cancelada | Administrador | |
 
+- El administrador no cancela una incidencia Asignada directamente: primero la devuelve a Pendiente y después la cancela. Así el historial deja constancia de que se liberó el técnico.
+- Solo una incidencia **Asignada** tiene técnico: al pasar a Pendiente o Cancelada por el administrador se quita.
 - **Finalizada** y **Cancelada** son estados finales: no pueden volver a modificarse.
-- Cada cambio queda registrado en `historial_estados` y se muestra ordenado cronológicamente en el detalle.
+- Cada cambio queda registrado en `historial_incidencias` y se muestra ordenado cronológicamente en el detalle.
 - `IncidenciaService` rechaza cualquier transición no prevista, aunque se intente saltando la interfaz.
 
 ---
