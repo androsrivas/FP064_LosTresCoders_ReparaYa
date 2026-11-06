@@ -29,12 +29,12 @@ $router->post('/perfil', 'PerfilController@update');
 // $router->get('/admin/servicios',    'TipoServicioController@index');
 
 // Técnicos (admin)  — vistas pendientes: admin/tecnicos/index y admin/tecnicos/form
-$router->get('/admin/tecnicos',                 'TecnicoController@index');
-$router->get('/admin/tecnicos/nuevo',           'TecnicoController@create');
-$router->post('/admin/tecnicos/nuevo',          'TecnicoController@store');
-$router->get('/admin/tecnicos/{id}/editar',     'TecnicoController@edit');
-$router->post('/admin/tecnicos/{id}/editar',    'TecnicoController@update');
-$router->post('/admin/tecnicos/{id}/eliminar',  'TecnicoController@destroy');
+$router->get('/admin/tecnicos', 'TecnicoController@index');
+$router->get('/admin/tecnicos/nuevo', 'TecnicoController@create');
+$router->post('/admin/tecnicos/nuevo', 'TecnicoController@store');
+$router->get('/admin/tecnicos/{id}/editar', 'TecnicoController@edit');
+$router->post('/admin/tecnicos/{id}/editar', 'TecnicoController@update');
+$router->post('/admin/tecnicos/{id}/eliminar', 'TecnicoController@destroy');
 
 // Técnico (CRUD C)  -> Auth::homeFor(tecnico) = /tecnico/agenda
 // $router->get('/tecnico/agenda',      'AgendaController@index');
