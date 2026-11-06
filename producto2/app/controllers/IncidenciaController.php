@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Controller;
+use App\Core\Roles;
 use App\Core\Session;
 use App\Models\HistorialEstado;
 use App\Services\IncidenciaService;
@@ -202,7 +203,7 @@ class IncidenciaController extends Controller
             'direccion'       => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : '',
             'fecha_servicio'  => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : '',
             'tipo_urgencia'   => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : '',
-            'estado'          => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : ''
+            'estado'          => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : '',
             // [REVISION]: Capturamos la nota o motivo para la columna comentario de historial_incidencias
             'comentario'      => is_string($_POST['comentario'] ?? $_POST['observaciones'] ?? null) 
                                  ? trim($_POST['comentario'] ?? $_POST['observaciones']) : ''
