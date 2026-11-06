@@ -28,6 +28,32 @@ abstract class Controller
         }
     }
 
+    /**
+     * Pinta una vista de formulario con sus errores y la entrada anterior.
+     * Los mensajes no ligados a un campo van en $errors['general'].
+     *
+     * @param array<string, string[]> $errors
+     * @param array $extra  Datos propios de la vista (p.ej. 'servicio' => $fila).
+     * @param int|null $status null = se decide según haya errores o no.
+     */
+    protected function form(
+        string $view,
+        string $titulo,
+        array $errors = [],
+        array $old = [],
+        array $extra = [],
+        ?int $status = null
+    ): void {
+        http_response_code($status ?? ($errors ? 422 : 200));
+        $this->view($view,
+            array_merge([
+                'titulo' => $titulo,
+                'errors' => $errors,
+                'old' => $old
+            ], $extra)
+        );
+    }
+
     protected function redirect(string $path): never 
     {
         header('Location: ' . url($path));
