@@ -77,6 +77,7 @@ $telefono = $old['telefono'] ?? $usuario['telefono'] ?? '';
                                     $badgeBg = match($estado) {
                                         'Finalizada' => 'bg-success',
                                         'Asignada'   => 'bg-info text-dark',
+                                        'En curso'   => 'bg-primary',
                                         'Cancelada'  => 'bg-danger',
                                         default      => 'bg-warning text-dark'
                                     };
