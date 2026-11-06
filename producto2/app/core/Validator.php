@@ -40,6 +40,21 @@ class Validator
         return $this;
     }
 
+    public function decimal(string $field, string $label, int $enteros = 8, int $decimales = 2): self 
+    {
+        $v = trim($this->value($field));
+       
+        $patron = $decimales > 0
+            ? '/^\d{1,' . $enteros . '}(?:[.,]\d{1,' . $decimales . '})?$/'
+            : '/^\d{1,' . $enteros . '}$/';
+
+        if ($v !== '' && preg_match($patron, $v) !== 1) {
+            $this->add($field, "El $label no es un número válido (max. $enteros enteros y $decimales decimales, p.ej. 1234,56.");
+        }
+
+        return $this;
+    }
+
     public function min(string $field, int $len, string $label): self
     {
         $v = $this->value($field);
