@@ -42,3 +42,21 @@ function config(string $key, mixed $default = null): mixed
 
     return $value;
 }
+<<<<<<< HEAD
+=======
+
+function field_errors(array $errors, string $field): string 
+{
+    $html = '';
+    foreach ($errors[$field] ?? [] as $message) {
+        $html .= '<p class="field-error" role="alert">' . e($message) . '</p>';
+    }
+
+    return $html;
+}
+
+function csrf_field(): string
+{
+    return \App\Core\Csrf::field();
+}
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e

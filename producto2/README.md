@@ -91,7 +91,11 @@ Se conserva la estructura inicial proporcionada y se amplía desde `database/amp
 | Cambio | Tabla / campo | Motivo |
 |---|---|---|
 | Estado actual de la incidencia | `<tabla>.<campo estado>` | Pendiente, Asignada, En curso, Finalizada, Cancelada |
+<<<<<<< HEAD
 | Historial de cambios | `historial_estados` | Incidencia, estado anterior, estado nuevo, usuario responsable, fecha y hora, observación |
+=======
+| Historial de cambios | `historial_incidencias` | Incidencia, estado anterior, estado nuevo, usuario responsable, fecha y hora, observación |
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 | Precio base por servicio | `<tabla>.precio_base` | Se reutilizará en el Producto 3 para calcular comisiones |
 | Especialidades / categorías | `<tabla>` | `<justificación>` |
 
@@ -112,7 +116,12 @@ El menú y las acciones cambian según el rol. Los permisos se comprueban **en e
 | Registro, login y perfil (nombre, email, contraseña) | ✅ | ✅ | ✅ |
 | Crear solicitud de asistencia | ✅ (alta manual) | ❌ | ✅ |
 | Ver «Mis avisos» y su historial | ❌ | ❌ | ✅ (propios) |
+<<<<<<< HEAD
 | Modificar o cancelar incidencias | ✅ (Pendiente/Asignada) | ❌ | Solo cancelar (> 48 h) |
+=======
+| Modificar incidencias | ✅ (Pendiente/Asignada) | ❌ | ❌ |
+| Cancelar incidencias | ✅ (solo Pendiente) | ❌ | ✅ (Pendiente/Asignada, > 48 h) |
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 | Asignar técnico | ✅ | ❌ | ❌ |
 | Calendario general y filtro por estado | ✅ | ❌ | ❌ |
 | Agenda propia | ❌ | ✅ | ❌ |
@@ -126,14 +135,24 @@ El menú y las acciones cambian según el rol. Los permisos se comprueban **en e
 ```
               asignar técnico            iniciar               finalizar
  Pendiente ───────────────────▶ Asignada ───────▶ En curso ───────▶ Finalizada
+<<<<<<< HEAD
      │                             │
      └──────────── cancelar ───────┴────▶ Cancelada
+=======
+     │      ◀───────────────────   │
+     │       liberar (admin)       │
+     │                             │
+     ├── cancelar (admin/cliente) ─┼──▶ Cancelada
+     │                             │       ▲
+     │                             └───────┘ cancelar (solo cliente)
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 ```
 
 | Transición | Quién | Condición |
 |---|---|---|
 | (alta) → Pendiente | Cliente o Administrador | Estado inicial |
 | Pendiente → Asignada | Administrador | Se produce **automáticamente** al asignar técnico |
+<<<<<<< HEAD
 | Asignada → En curso | Técnico asignado | |
 | En curso → Finalizada | Técnico asignado | |
 | Pendiente / Asignada → Cancelada | Cliente | Solo si faltan **más de 48 h** para la cita |
@@ -141,6 +160,18 @@ El menú y las acciones cambian según el rol. Los permisos se comprueban **en e
 
 - **Finalizada** y **Cancelada** son estados finales: no pueden volver a modificarse.
 - Cada cambio queda registrado en `historial_estados` y se muestra ordenado cronológicamente en el detalle.
+=======
+| Asignada → Pendiente | Administrador | Libera la incidencia y quita el técnico (p. ej., el técnico ya no puede atenderla) |
+| Asignada → En curso | Técnico asignado | |
+| En curso → Finalizada | Técnico asignado | |
+| Pendiente → Cancelada | Administrador | |
+| Pendiente / Asignada → Cancelada | Cliente | Solo si faltan **más de 48 h** para la cita |
+
+- El administrador no cancela una incidencia Asignada directamente: primero la devuelve a Pendiente y después la cancela. Así el historial deja constancia de que se liberó el técnico.
+- Solo una incidencia **Asignada** tiene técnico: al pasar a Pendiente o Cancelada por el administrador se quita.
+- **Finalizada** y **Cancelada** son estados finales: no pueden volver a modificarse.
+- Cada cambio queda registrado en `historial_incidencias` y se muestra ordenado cronológicamente en el detalle.
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 - `IncidenciaService` rechaza cualquier transición no prevista, aunque se intente saltando la interfaz.
 
 ---
@@ -198,6 +229,7 @@ Solo datos **ficticios** para evaluar la aplicación. Las credenciales reales no
 | **B** | `<nombre>` | Base de datos (`database/`). **CRUD B** Incidencias (cliente), historial, máquina de estados (`IncidenciaService`) y front-end estático |
 | **C** | `<nombre>` | **CRUD C** Gestión Admin, calendario, panel técnico y despliegue en AWS |
 
+<<<<<<< HEAD
 ### Estado de los CRUD
 
 | CRUD | Descripción | Responsable | Estado |
@@ -209,6 +241,8 @@ Solo datos **ficticios** para evaluar la aplicación. Las credenciales reales no
 
 ---
 
+=======
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 ## Flujo de trabajo con Git
 
 - Un solo repositorio (raíz del proyecto). Rama por funcionalidad: `feature/<rol>-<tarea>`, p. ej. `feature/b-incidencia-service`.

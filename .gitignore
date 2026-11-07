@@ -5,6 +5,10 @@ www/wp-config.php
 diagnostic/diagnostico.config.aws.php
 *.sh
 *.log
+<<<<<<< HEAD
+=======
+.doc/*
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 
 # Producto 2
 producto2/config/config.php

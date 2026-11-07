@@ -68,6 +68,10 @@ final class AuthController extends Controller
         $data = [
             'nombre' => trim($this->input('nombre')),
             'email' => trim($this->input('email')),
+<<<<<<< HEAD
+=======
+            'telefono' => trim($this->input('telefono')),
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
             'password' => $this->input('password'),
             'password_confirm' => $this->input('password_confirm'),
         ];
@@ -78,6 +82,10 @@ final class AuthController extends Controller
             ->required('email', 'correo')
             ->email('email')
             ->max('email', 100, 'correo')
+<<<<<<< HEAD
+=======
+            ->telefono('telefono')
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
             ->required('password', 'contraseña')
             ->min('password', 8, 'contraseña')
             ->max('password', 72, 'contraseña')
@@ -89,7 +97,11 @@ final class AuthController extends Controller
 
         if (!$v->fails()) {
             try {
+<<<<<<< HEAD
                 $id = Usuario::create($data['nombre'], $data['email'], $data['password']);
+=======
+                $id = Usuario::create($data['nombre'], $data['email'], $data['password'], telefono: $data['telefono']);
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
                 $usuario = Usuario::findById($id);
 
                 Auth::login($usuario);
@@ -108,7 +120,11 @@ final class AuthController extends Controller
         $this->view('auth/registro', [
             'titulo' => 'Crear cuenta',
             'errors' => $v->errors(),
+<<<<<<< HEAD
             'old' => ['nombre' => $data['nombre'], 'email' => $data['email']],
+=======
+            'old' => ['nombre' => $data['nombre'], 'email' => $data['email'], 'telefono' => $data['telefono']],
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
         ]);
     }
 

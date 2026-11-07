@@ -6,6 +6,10 @@ namespace App\Core;
 
 use PDO;
 use PDOStatement;
+<<<<<<< HEAD
+=======
+use Throwable;
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 
 abstract class Model
 {
@@ -59,4 +63,21 @@ abstract class Model
     {
         if (self::db()->inTransaction()) self::db()->rollBack();
     }
+<<<<<<< HEAD
+=======
+
+    public static function transaction(callable $fn): mixed
+    {
+        self::beginTransaction();
+
+        try {
+            $result = $fn();
+            self::commit();
+            return $result;
+        } catch (Throwable $e) {
+            self::rollBack();
+            throw $e;
+        }
+    }
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 }

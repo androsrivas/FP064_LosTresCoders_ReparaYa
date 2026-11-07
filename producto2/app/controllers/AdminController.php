@@ -1,11 +1,15 @@
 <?php
+<<<<<<< HEAD
 
+=======
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 declare(strict_types=1);
 
 namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Auth;
+<<<<<<< HEAD
 use App\Models\Incidencia;
 use App\Core\Session;
 use App\Models\HistorialEstado;
@@ -218,5 +222,14 @@ class AdminController extends Controller
 
         Session::addFlash('success', 'Incidencia cancelada correctamente.');
         $this->redirect('/admin/incidencias');
+=======
+use App\Core\Roles;
+
+final class AdminController extends Controller
+{
+    public function __construct() 
+    {
+        Auth::requireRole(Roles::ADMIN);
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
     }
 }

@@ -2,11 +2,18 @@
 declare(strict_types=1);
 
 namespace App\Core;
+<<<<<<< HEAD
 
 abstract class Controller 
 {
     /** Carha app/views/<vista>.php dentro del layout (null = sin layout) */
     protected function view (string $view, array $data = [], ?string $layout = 'layout/main'): void 
+=======
+abstract class Controller 
+{
+    /** Carga app/views/<vista>.php dentro del layout (null = sin layout) */
+    protected function view (string $view, array $data = [], bool $layout = true): void 
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
     {
         $viewFile = APP_PATH . '/views/' . $view . '.php';
         if (!is_file($viewFile)) {
@@ -45,6 +52,27 @@ abstract class Controller
 
     protected function flash(string $type, string $message): void 
     {
+<<<<<<< HEAD
         $_SESSION['flash'][] = ['type' => $type, 'message' => $message];
     }
+=======
+        Session::addFlash($type, $message);
+    }
+
+    /** Valor de $_POST garantizado como un string (un array o nada a devolver) */
+    protected function input(string $key): string
+    {
+        $v = $_POST[$key] ?? '';
+        return is_string($v) ? $v : '';
+    }
+
+    protected function requireCsrf(string $backTo): void
+    {
+        if (!Csrf::verify($this->input('_csrf'))) {
+            $this->flash('error', 'El formulario ha caducado o no es válido. Inténtalo de nuevo.');
+            $this->redirect($backTo);
+        }
+    }
+
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 }

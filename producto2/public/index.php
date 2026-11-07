@@ -2,16 +2,29 @@
 declare(strict_types=1);
 
 use App\Core\Env;
+<<<<<<< HEAD
+=======
+use App\Core\Session;
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 
 define('BASE_PATH', dirname(__DIR__));
 define('APP_PATH', BASE_PATH . '/app');
 
+<<<<<<< HEAD
 require APP_PATH . '/core/autoload.php';
 require APP_PATH . '/core/helpers.php';
 
 Env::load(BASE_PATH . '/../.env');
 
 session_start();
+=======
+require APP_PATH . '/core/Autoload.php';
+require APP_PATH . '/core/Helpers.php';
+
+Env::load(BASE_PATH . '/../.env');
+
+Session::start();
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
 
 use App\Core\Router;
 
