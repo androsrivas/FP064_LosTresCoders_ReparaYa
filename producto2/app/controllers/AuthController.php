@@ -50,8 +50,8 @@ final class AuthController extends Controller
         }
 
         // Guardar errores y 'old' en Session para enviarlos al modal
-        \App\Core\Session::set('errors', $v->errors());
-        \App\Core\Session::set('old', ['email' => $email]);
+        Session::set('errors', $v->errors());
+        Session::set('old', ['email' => $email]);
         $this->redirect('/');
     }
 
@@ -107,8 +107,8 @@ final class AuthController extends Controller
             }
         }
 
-        \App\Core\Session::set('errors', $v->errors());
-        \App\Core\Session::set('old', [
+        Session::set('errors', $v->errors());
+        Session::set('old', [
             'nombre' => $data['nombre'],
             'email' => $data['email'],
             'telefono' => $data['telefono']

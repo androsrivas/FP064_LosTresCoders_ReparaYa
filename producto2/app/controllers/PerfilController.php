@@ -99,16 +99,15 @@ final class PerfilController extends Controller
             }
         }
 
-        $this->renderEdit($v->errors(), $data, 422);
-    }  
+        $this->renderEdit($v->errors(), $data);
+    }
 
-    private function renderEdit(array $errors = [], array $old = [], int $status = 200): void
+    private function renderEdit(array $errors = [], array $old = []): void
     {
         $userId = (int) Auth::id();
         $incidenciaService = new IncidenciaService();
         $incidencias = $incidenciaService->obtenerPorCliente($userId);
 
-        http_response_code($status);
         $this->view('perfil/perfil', [
             'titulo' => 'Mi perfil',
             'usuario' => Usuario::findById($userId),
