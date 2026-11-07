@@ -6,9 +6,13 @@ diagnostic/diagnostico.config.aws.php
 *.sh
 *.log
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 .doc/*
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+.doc/*
+>>>>>>> origin/main
 
 # Producto 2
 producto2/config/config.php

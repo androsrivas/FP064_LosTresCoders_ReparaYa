@@ -7,9 +7,13 @@ namespace App\Core;
 use PDO;
 use PDOStatement;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 use Throwable;
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+use Throwable;
+>>>>>>> origin/main
 
 abstract class Model
 {
@@ -64,7 +68,10 @@ abstract class Model
         if (self::db()->inTransaction()) self::db()->rollBack();
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> origin/main
 
     public static function transaction(callable $fn): mixed
     {
@@ -79,5 +86,8 @@ abstract class Model
             throw $e;
         }
     }
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
 }

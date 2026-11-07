@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 use App\Core\Controller;
 use App\Core\Auth;
 use App\Models\Incidencia;
@@ -32,6 +33,8 @@ class IncidenciaController extends Controller
         ]);
     }
 =======
+=======
+>>>>>>> origin/main
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Session;
@@ -285,5 +288,8 @@ class IncidenciaController extends Controller
         $this->redirect('index.php?action=gestion');
         return;
     }
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
 }

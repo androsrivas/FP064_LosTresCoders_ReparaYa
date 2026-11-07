@@ -8,6 +8,7 @@ $router->get('/', 'HomeController@index');
 
 // Auth (CRUD A)
 <<<<<<< HEAD
+<<<<<<< HEAD
 $router->get('/login',     'AuthController@showLogin');
 $router->post('/login',    'AuthController@login');
 $router->get('/registro',  'AuthController@showRegister');
@@ -16,6 +17,8 @@ $router->post('/logout',   'AuthController@logout');
 $router->get('/perfil',    'PerfilController@edit');
 $router->post('/perfil',   'PerfilController@update');
 =======
+=======
+>>>>>>> origin/main
 $router->get('/login', 'AuthController@showLogin');
 $router->post('/login', 'AuthController@login');
 $router->get('/registro', 'AuthController@showRegister');
@@ -23,7 +26,10 @@ $router->post('/registro', 'AuthController@register');
 $router->post('/logout', 'AuthController@logout');
 $router->get('/perfil', 'PerfilController@edit');
 $router->post('/perfil', 'PerfilController@update');
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
 
 // Particular (CRUD B)  -> Auth::homeFor(particular) = /cliente/avisos
 // $router->get('/cliente/avisos',          'IncidenciaController@index');
@@ -34,17 +40,23 @@ $router->post('/perfil', 'PerfilController@update');
 
 // Admin (CRUD C y D)  -> Auth::homeFor(admin) = /admin
 <<<<<<< HEAD
+<<<<<<< HEAD
 $router->get('/admin',              'AdminController@index');
 $router->get('/admin/incidencias',  'AdminController@incidencias');
 =======
 // $router->get('/admin',              'AdminController@index');
 // $router->get('/admin/incidencias',  'AdminController@incidencias');
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+// $router->get('/admin',              'AdminController@index');
+// $router->get('/admin/incidencias',  'AdminController@incidencias');
+>>>>>>> origin/main
 // $router->get('/admin/calendario',   'CalendarioController@index');
 // $router->get('/admin/tecnicos',     'TecnicoController@index');
 // $router->get('/admin/servicios',    'TipoServicioController@index');
 
 // Técnico (CRUD C)  -> Auth::homeFor(tecnico) = /tecnico/agenda
+<<<<<<< HEAD
 <<<<<<< HEAD
 $router->get('/tecnico/agenda',      'AgendaController@index');
 $router->get('/tecnico/incidencias', 'AgendaController@incidencias');
@@ -52,3 +64,7 @@ $router->get('/tecnico/incidencias', 'AgendaController@incidencias');
 // $router->get('/tecnico/agenda',      'AgendaController@index');
 // $router->get('/tecnico/incidencias', 'AgendaController@incidencias');
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+// $router->get('/tecnico/agenda',      'AgendaController@index');
+// $router->get('/tecnico/incidencias', 'AgendaController@incidencias');
+>>>>>>> origin/main

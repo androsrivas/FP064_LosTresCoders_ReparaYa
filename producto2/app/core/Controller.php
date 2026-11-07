@@ -3,17 +3,23 @@ declare(strict_types=1);
 
 namespace App\Core;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 abstract class Controller 
 {
     /** Carha app/views/<vista>.php dentro del layout (null = sin layout) */
     protected function view (string $view, array $data = [], ?string $layout = 'layout/main'): void 
 =======
+=======
+>>>>>>> origin/main
 abstract class Controller 
 {
     /** Carga app/views/<vista>.php dentro del layout (null = sin layout) */
     protected function view (string $view, array $data = [], bool $layout = true): void 
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
     {
         $viewFile = APP_PATH . '/views/' . $view . '.php';
         if (!is_file($viewFile)) {
@@ -53,9 +59,12 @@ abstract class Controller
     protected function flash(string $type, string $message): void 
     {
 <<<<<<< HEAD
+<<<<<<< HEAD
         $_SESSION['flash'][] = ['type' => $type, 'message' => $message];
     }
 =======
+=======
+>>>>>>> origin/main
         Session::addFlash($type, $message);
     }
 
@@ -74,5 +83,8 @@ abstract class Controller
         }
     }
 
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
 }

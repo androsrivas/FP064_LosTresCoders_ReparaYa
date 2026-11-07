@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Core\Model;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 class Incidencia extends Model
 {
@@ -18,6 +19,8 @@ class Incidencia extends Model
                     (localizador, cliente_id, especialidad_id, descripcion, direccion, fecha_servicio, tipo_urgencia, estado) 
                 VALUES 
 =======
+=======
+>>>>>>> origin/main
 use InvalidArgumentException;
 
 class Incidencia extends Model
@@ -28,7 +31,10 @@ class Incidencia extends Model
         $sql = "INSERT INTO incidencias
                     (localizador, cliente_id, especialidad_id, descripcion, direccion, fecha_servicio, tipo_urgencia, estado)
                 VALUES
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
                     (:localizador, :cliente_id, :especialidad_id, :descripcion, :direccion, :fecha_servicio, :tipo_urgencia, :estado)";
 
         return self::insert($sql, [
@@ -44,11 +50,14 @@ class Incidencia extends Model
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     /**
      * Buscar Incidencia por ID
      */
 =======
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
     public static function obtenerPorId(int $id): ?array
     {
         $sql = "SELECT i.*, e.nombre_especialidad, u.nombre AS nombre_cliente, t.nombre_completo AS nombre_tecnico
@@ -62,6 +71,7 @@ class Incidencia extends Model
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     /**
      * Buscar Incidencia por Cliente
      */
@@ -73,6 +83,11 @@ class Incidencia extends Model
     {
         $sql = "SELECT i.*, e.nombre_especialidad
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+    public static function obtenerPorCliente(int $clienteId): array
+    {
+        $sql = "SELECT i.*, e.nombre_especialidad
+>>>>>>> origin/main
                 FROM incidencias i
                 INNER JOIN especialidades e ON i.especialidad_id = e.id
                 WHERE i.cliente_id = :cliente_id
@@ -82,11 +97,14 @@ class Incidencia extends Model
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     /**
      * Buscar todas las Incidencias asignadas a un técnico específico
      */
 =======
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
     public static function obtenerPorTecnico(int $tecnicoId): array
     {
         $sql = "SELECT i.*, e.nombre_especialidad, u.nombre AS nombre_cliente
@@ -100,12 +118,16 @@ class Incidencia extends Model
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     /**
      * Buscar Incidencias sin técnico asignado (tecnico_id IS NULL)
      */
 =======
     /** Incidencias pendientes de asignar (las canceladas también tienen tecnico_id NULL). */
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+    /** Incidencias pendientes de asignar (las canceladas también tienen tecnico_id NULL). */
+>>>>>>> origin/main
     public static function obtenerSinAsignar(): array
     {
         $sql = "SELECT i.*, e.nombre_especialidad, u.nombre AS nombre_cliente
@@ -114,14 +136,19 @@ class Incidencia extends Model
                 INNER JOIN usuarios u ON i.cliente_id = u.id
                 WHERE i.tecnico_id IS NULL
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                   AND i.estado = 'Pendiente'
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+                  AND i.estado = 'Pendiente'
+>>>>>>> origin/main
                 ORDER BY i.created_at DESC";
 
         return self::fetchAll($sql);
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     /**
      * Obtiene el listado de incidencias filtrado por estado
@@ -165,6 +192,8 @@ class Incidencia extends Model
         $sql = "UPDATE incidencias SET estado = :estado WHERE id = :id";
         
 =======
+=======
+>>>>>>> origin/main
     public static function actualizarEstado(int $id, string $nuevoEstado): int
     {
         $estadosPermitidos = ['Pendiente', 'Asignada', 'En curso', 'Finalizada', 'Cancelada'];
@@ -175,13 +204,17 @@ class Incidencia extends Model
 
         $sql = "UPDATE incidencias SET estado = :estado WHERE id = :id";
 
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
         return self::execute($sql, [
             'estado' => $nuevoEstado,
             'id'     => $id
         ]);
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     /**
      * Asignar un técnico a una Incidencia
@@ -208,6 +241,8 @@ class Incidencia extends Model
     {
         $sql = "UPDATE incidencias SET 
 =======
+=======
+>>>>>>> origin/main
     /** Asigna el técnico y pasa la incidencia a estado Asignada. */
     public static function asignarTecnico(int $id, int $tecnicoId): int
     {
@@ -223,7 +258,10 @@ class Incidencia extends Model
     public static function actualizarIncidencia(int $id, array $datos): int
     {
         $sql = "UPDATE incidencias SET
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
                     especialidad_id = :especialidad_id,
                     descripcion     = :descripcion,
                     direccion       = :direccion,
@@ -245,6 +283,7 @@ class Incidencia extends Model
         ]);
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     /**
      * Genera un localizador único de incidencia con formato REP-YYYY-XXXX 
@@ -260,3 +299,6 @@ class Incidencia extends Model
 =======
 }
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+}
+>>>>>>> origin/main

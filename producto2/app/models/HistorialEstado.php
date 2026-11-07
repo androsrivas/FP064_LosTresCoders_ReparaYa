@@ -10,6 +10,7 @@ class HistorialEstado extends Model
 {
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * Registra un evento en la tabla historial_incidencias
      */
     public static function crear(int $incidenciaId, ?string $estadoAnterior, string $estadoNuevo, int $usuarioId, ?string $observacion = null): int
@@ -26,6 +27,8 @@ class HistorialEstado extends Model
             'usuario_id'      => $usuarioId,
             'observacion'     => $observacion
 =======
+=======
+>>>>>>> origin/main
      * Registra un cambio de estado o evento en el historial de la incidencia.
      */
     public static function registrar(
@@ -46,11 +49,15 @@ class HistorialEstado extends Model
             'estado_anterior' => $estadoAnterior,
             'estado_nuevo'    => $estadoNuevo,
             'comentario'      => $comentario
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
         ]);
     }
 
     /**
+<<<<<<< HEAD
 <<<<<<< HEAD
      * Obtiene el historial completo de una incidencia ordenado cronológicamente
      */
@@ -80,6 +87,8 @@ class HistorialEstado extends Model
     }
 
 =======
+=======
+>>>>>>> origin/main
      * Obtiene el historial completo de cambios de una incidencia junto con los datos del usuario.
      */
     public static function obtenerPorIncidencia(int $incidenciaId): array
@@ -92,5 +101,8 @@ class HistorialEstado extends Model
 
         return self::fetchAll($sql, ['incidencia_id' => $incidenciaId]);
     }
+<<<<<<< HEAD
 >>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
 }
