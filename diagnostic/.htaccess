@@ -1,0 +1,3 @@
+<Files "diagnostico.config.aws.php">
+    Require all denied
+</Files>

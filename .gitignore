@@ -1,0 +1,34 @@
+# Secretos y configuración local
+.env
+laravel/reparaya/.env
+www/wp-config.php
+diagnostic/diagnostico.config.aws.php
+*.sh
+*.log
+
+# Producto 2
+producto2/config/config.php
+
+# Laravel
+laravel/reparaya/node_modules/
+laravel/reparaya/storage/logs/*
+laravel/reparaya/bootstrap/cache/*.php
+*.tar.gz
+
+# WordPress: no versionar el núcleo, solo el  propio
+wp-export
+wp-export/*
+www/wp-admin/
+www/wp-includes/
+www/wp-content/uploads/
+www/wp-content/plugins/*
+www/wp-content/themes/*
+www/wp-content/index.php
+www/wp-content/languages/*
+www/.htaccess
+www/wp-*.php
+www/index.php
+www/xmlrpc.php
+www/license.txt
+www/readme.html
+reparaya.sql
