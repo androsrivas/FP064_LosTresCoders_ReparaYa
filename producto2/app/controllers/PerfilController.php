@@ -98,17 +98,13 @@ final class PerfilController extends Controller
             }
         }
 
-        $this->renderEdit($v->errors(), $data, 422);
-    }  
+        $this->renderEdit($v->errors(), $data);
+    }
 
-    private function renderEdit(array $errors = [], array $old = [], int $status = 200): void
+    private function renderEdit(array $errors = [], array $old = []): void
     {
-        http_response_code($status);
-        $this->view('perfil/edit', [
-            'titulo' => 'Mi perfil',
+        $this->form('perfil/edit', 'Mi perfil', $errors, $old, [
             'usuario' => Usuario::findById((int) Auth::id()),
-            'errors' => $errors,
-            'old' => $old
         ]);
     }
 }

@@ -46,12 +46,7 @@ final class AuthController extends Controller
             $status = 401;
         }
 
-        http_response_code($status);
-        $this->view('auth/login', [
-            'titulo' => 'Iniciar sesión',
-            'errors' => $v->errors(),
-            'old' => ['email' => $email],
-        ]);
+        $this->form('auth/login', 'Iniciar sesión', $v->errors(), ['email' => $email], status: $status);
     }
 
     public function showRegister(): void 
@@ -106,11 +101,10 @@ final class AuthController extends Controller
             }
         }
 
-        http_response_code(422);
-        $this->view('auth/registro', [
-            'titulo' => 'Crear cuenta',
-            'errors' => $v->errors(),
-            'old' => ['nombre' => $data['nombre'], 'email' => $data['email'], 'telefono' => $data['telefono']],
+        $this->form('auth/registro', 'Crear cuenta', $v->errors(), [
+            'nombre' => $data['nombre'],
+            'email' => $data['email'],
+            'telefono' => $data['telefono'],
         ]);
     }
 
