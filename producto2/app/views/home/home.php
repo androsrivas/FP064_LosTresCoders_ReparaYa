@@ -113,7 +113,7 @@ $isLoggedIn = Auth::check();
      MODAL 1: REGISTRO DE USUARIOS (CREAR CUENTA)
      ========================================== -->
 <?php if (!$isLoggedIn): ?>
-<div class="modal fade <?= !empty($errors) && isset($old['nombre']) ? 'show d-block' : '' ?>" id="registroModal" tabindex="-1" aria-labelledby="registroModalLabel" aria-hidden="true">
+<div class="modal fade" id="registroModal" tabindex="-1" aria-labelledby="registroModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -235,10 +235,15 @@ $isLoggedIn = Auth::check();
                 <h5 class="modal-title fw-bold" id="nuevaIncidenciaModalLabel">Solicitar <span class="text-yellow">Nuevo Servicio</span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?= e(url('/incidencias/crear')); ?>" method="POST">
+            <form action="<?= e(url('/cliente/nueva')); ?>" method="POST">
                 <?= csrf_field(); ?>
                 <div class="modal-body">
-                    <?= field_errors($errors, 'general'); ?>
+                    <?php if (!empty($errors['general'])): ?>
+                        <div class="alert alert-danger py-2 px-3 small fw-bold mb-3 border-0 bg-danger bg-opacity-25 text-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <?= e(is_array($errors['general']) ? implode(' ', $errors['general']) : $errors['general']); ?>
+                        </div>
+                    <?php endif; ?>
                     
                     <div class="row g-3">
                         <!-- Especialidad -->
@@ -248,8 +253,7 @@ $isLoggedIn = Auth::check();
                                 <option value="" disabled selected>Selecciona una opción...</option>
                                 <option value="1" <?= ($old['especialidad_id'] ?? '') === '1' ? 'selected' : ''; ?>>Fontanería</option>
                                 <option value="2" <?= ($old['especialidad_id'] ?? '') === '2' ? 'selected' : ''; ?>>Electricidad</option>
-                                <option value="3" <?= ($old['especialidad_id'] ?? '') === '3' ? 'selected' : ''; ?>>Cerrajería</option>
-                                <option value="4" <?= ($old['especialidad_id'] ?? '') === '4' ? 'selected' : ''; ?>>Climatización<option>
+                                <option value="3" <?= ($old['especialidad_id'] ?? '') === '3' ? 'selected' : ''; ?>>Climatización</option>
                             </select>
                             <?= field_errors($errors, 'especialidad_id'); ?>
                         </div>
@@ -296,17 +300,42 @@ $isLoggedIn = Auth::check();
     </div>
 </div>
 
+<?php endif; ?>
+
 <!-- Script JS para reapertura automática del Modal de Registro si hay errores -->
-<?php if (!empty($errors) && (isset($old['nombre']) || isset($errors['nombre']) || isset($errors['email']) || isset($errors['password_confirm']))): ?>
+<?php 
+$camposRegistro = ['nombre', 'email', 'telefono', 'password', 'password_confirm'];
+$esErrorRegistro = !empty(array_intersect_key(array_flip($camposRegistro), $errors)) || isset($old['nombre']);
+?>
+
+<?php if ($esErrorRegistro): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var modalEl = document.getElementById('registroModal');
-            if (modalEl) {
-                var modal = new bootstrap.Modal(modalEl);
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
             }
         });
     </script>
 <?php endif; ?>
+<!-- Script JS para reapertura automática del Modal de Incidencias si hay errores -->
+<?php 
+$camposIncidencia = ['especialidad_id', 'tipo_urgencia', 'fecha_servicio', 'direccion', 'descripcion'];
+$errorEnCampo = !empty(array_intersect_key(array_flip($camposIncidencia), $errors));
+$errorGeneralIncidencia = !empty($errors['general']) && (isset($old['direccion']) || isset($old['descripcion']));
 
+$esErrorIncidencia = $errorEnCampo || $errorGeneralIncidencia;
+?>
+
+<?php if ($isLoggedIn && $esErrorIncidencia): ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var modalEl = document.getElementById('nuevaIncidenciaModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+    });
+</script>
 <?php endif; ?>

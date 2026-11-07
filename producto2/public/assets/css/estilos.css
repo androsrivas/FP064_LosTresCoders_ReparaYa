@@ -125,3 +125,51 @@ p {
     color: var(--accent-yellow) !important;
     border: 1px solid rgba(255, 183, 3, 0.3) !important;
 }
+
+/* Panel principal contenedor */
+.perfil-panel {
+    background-color: #161922 !important; /* Un tono más oscuro que contrasta con el fondo */
+    border: 1px solid #2e3444 !important; /* Borde bien definido */
+    border-radius: 12px !important;
+}
+
+/* Línea divisoria del título */
+.perfil-panel-header {
+    border-bottom: 1px solid #2e3444 !important;
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 1.25rem !important;
+}
+
+/* Detalle de acento superior amarillo */
+.perfil-panel-accent {
+    border-top: 3px solid var(--accent-yellow) !important;
+}
+
+/* Ajuste para los elementos de la lista dentro del panel */
+.perfil-panel .list-group-item {
+    background-color: #1e222d !important; /* Mantiene el fondo oscuro en cada bloque de dato */
+    border: 1px solid #2e3444 !important;
+    border-radius: 8px !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* Badges de estado con fondo semi-transparente y borde */
+.badge-status {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid currentColor !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    padding: 0.4em 0.75em !important;
+    border-radius: 6px !important;
+}
+
+/* Colores según el estado */
+.badge-status-finalizada { color: #2ecc71 !important; border-color: rgba(46, 204, 113, 0.4) !important; }
+.badge-status-asignada   { color: #00d2d3 !important; border-color: rgba(0, 210, 211, 0.4) !important; }
+.badge-status-en-curso   { color: #54a0ff !important; border-color: rgba(84, 160, 255, 0.4) !important; }
+.badge-status-cancelada  { color: #ff6b6b !important; border-color: rgba(255, 107, 107, 0.4) !important; }
+.badge-status-pendiente  { color: #f1c40f !important; border-color: rgba(241, 196, 15, 0.4) !important; }
+
+/* Estilos traslúcidos para tipos de urgencia */
+.badge-urgencia-urgente { color: #ff4757 !important; border-color: rgba(255, 71, 87, 0.4) !important; }
+.badge-urgencia-estandar { color: #a4b0be !important; border-color: rgba(164, 176, 190, 0.3) !important; }

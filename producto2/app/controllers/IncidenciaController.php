@@ -45,17 +45,27 @@ class IncidenciaController extends Controller
     {
         // [REVISION]: Evitar pantallas en blanco si la petición no es POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('index.php?action=mis_servicios');
+            $referer = $_SERVER['HTTP_REFERER'] ?? '/perfil';
+            $this->redirect($referer);
             return;
         }
 
         // [REVISION]: Inyección del cliente_id desde la sesión activa y filtrado de payload (Mass Assignment)
         $rol = (string)Session::get('usuario_rol', '');
-        $clienteId = (int)Session::get('usuario_id', 0);
+        $clienteId = 0;
+        if (class_exists('App\Core\Auth') && Auth::check()) {
+            $user = Auth::user();
+            $clienteId = (int) ($user['id'] ?? $user['usuario_id'] ?? 0);
+        }
+        if ($clienteId === 0) {
+            $clienteId = (int) (Session::get('usuario_id') ?? Session::get('user_id') ?? 0);
+        }
 
         $payload = [
             'cliente_id'        => ($rol === 'admin' && isset($_POST['cliente_id'])) ? (int)$_POST['cliente_id'] : $clienteId,
-            'tipo_servicio_id'  => (int)($_POST['tipo_servicio_id'] ?? 0),
+            'especialidad_id'   => (int)($_POST['especialidad_id'] ?? 0),
+            'tipo_urgencia'     => trim($_POST['tipo_urgencia'] ?? 'Estándar'),
+            'fecha_servicio'    => trim($_POST['fecha_servicio'] ?? ''),
             'descripcion'       => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
             'direccion'         => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : ''
         ];
@@ -63,19 +73,20 @@ class IncidenciaController extends Controller
         $resultado = $this->service->crearIncidencia($payload);
 
         if ($resultado['exito']) {
-            Session::forget('form_data');
+            Session::forget('old');
+            Session::forget('errors');
             $this->flash('success', 'Incidencia registrada con éxito. Localizador: ' . $resultado['localizador']);
 
-            $redirectAction = $rol === 'admin' ? 'gestion' : 'mis_servicios';
-            $this->redirect("index.php?action={$redirectAction}");
+            $redirectAction = $rol === 'admin' ? 'gestion' : 'perfil';
+            $this->redirect("/{$redirectAction}");
             return;
         }
 
-        Session::set('form_data', $payload);
-        $this->flash('danger', $resultado['mensaje']);
+        Session::set('errors', ['general' => [$resultado['mensaje']]]);
+        Session::set('old', $payload);
 
-        $redirectAction = $rol === 'admin' ? 'gestion' : 'mis_servicios';
-        $this->redirect("index.php?action={$redirectAction}");
+        $redirectAction = $rol === 'admin' ? 'gestion' : '';
+        $this->redirect("/{$redirectAction}");
         return;
     }
 

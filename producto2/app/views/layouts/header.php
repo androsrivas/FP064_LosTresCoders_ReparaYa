@@ -15,7 +15,7 @@ $old = $old ?? \App\Core\Session::get('old', []);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="<?= url('/assets/css/estilos.css'); ?>" rel="stylesheet">
 </head>
-<body class="bg-dark text-light m-0 p-0">
+<body class="bg-dark text-light m-0 p-0 d-flex flex-column min-vh-100">
 
     <!-- Modal de Login -->
     <?php if (!\App\Core\Auth::check()): ?>
@@ -95,8 +95,8 @@ $old = $old ?? \App\Core\Session::get('old', []);
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
                 var modalEl = document.getElementById('loginModal');
-                    if (modalEl) {
-                        var modal = new bootstrap.Modal(modalEl);
+                    if (modalEl && typeof bootstrap !== 'undefined') {
+                        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                         modal.show();
                     }
                 });

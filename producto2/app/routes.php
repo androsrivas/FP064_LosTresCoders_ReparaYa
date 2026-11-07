@@ -16,11 +16,11 @@ $router->get('/perfil', 'PerfilController@edit');
 $router->post('/perfil', 'PerfilController@update');
 
 // Particular (CRUD B)  -> Auth::homeFor(particular) = /cliente/avisos
-// $router->get('/cliente/avisos',          'IncidenciaController@index');
-// $router->get('/cliente/nueva',           'IncidenciaController@create');
-// $router->post('/cliente/nueva',          'IncidenciaController@store');
-// $router->get('/cliente/avisos/{id}',     'IncidenciaController@show');
-// $router->post('/cliente/avisos/{id}/cancelar', 'IncidenciaController@cancel');
+$router->get('/cliente/avisos',          'IncidenciaController@index');
+$router->get('/cliente/nueva',           'IncidenciaController@crear');
+$router->post('/cliente/nueva',          'IncidenciaController@crear');
+$router->get('/cliente/avisos/{id}',     'IncidenciaController@show');
+$router->post('/cliente/avisos/{id}/cancelar', 'IncidenciaController@cancel');
 
 // Admin (CRUD C y D)  -> Auth::homeFor(admin) = /admin
 // $router->get('/admin',              'AdminController@index');

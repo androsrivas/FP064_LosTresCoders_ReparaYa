@@ -108,4 +108,4 @@ $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 <?php endif; ?>
 
 <!-- Inicio del contenedor principal de vistas -->
-<main class="container py-4">
+<main class="container py-4 flex-grow-1">
