@@ -2,24 +2,10 @@
 declare(strict_types=1);
 
 namespace App\Core;
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-abstract class Controller 
-{
-    /** Carha app/views/<vista>.php dentro del layout (null = sin layout) */
-    protected function view (string $view, array $data = [], ?string $layout = 'layout/main'): void 
-=======
-=======
->>>>>>> origin/main
 abstract class Controller 
 {
     /** Carga app/views/<vista>.php dentro del layout (null = sin layout) */
     protected function view (string $view, array $data = [], bool $layout = true): void 
-<<<<<<< HEAD
->>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
-=======
->>>>>>> origin/main
     {
         $viewFile = APP_PATH . '/views/' . $view . '.php';
         if (!is_file($viewFile)) {
@@ -42,6 +28,32 @@ abstract class Controller
         }
     }
 
+    /**
+     * Pinta una vista de formulario con sus errores y la entrada anterior.
+     * Los mensajes no ligados a un campo van en $errors['general'].
+     *
+     * @param array<string, string[]> $errors
+     * @param array $extra  Datos propios de la vista (p.ej. 'servicio' => $fila).
+     * @param int|null $status null = se decide según haya errores o no.
+     */
+    protected function form(
+        string $view,
+        string $titulo,
+        array $errors = [],
+        array $old = [],
+        array $extra = [],
+        ?int $status = null
+    ): void {
+        http_response_code($status ?? ($errors ? 422 : 200));
+        $this->view($view,
+            array_merge([
+                'titulo' => $titulo,
+                'errors' => $errors,
+                'old' => $old
+            ], $extra)
+        );
+    }
+
     protected function redirect(string $path): never 
     {
         header('Location: ' . url($path));
@@ -58,13 +70,6 @@ abstract class Controller
 
     protected function flash(string $type, string $message): void 
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        $_SESSION['flash'][] = ['type' => $type, 'message' => $message];
-    }
-=======
-=======
->>>>>>> origin/main
         Session::addFlash($type, $message);
     }
 
@@ -83,8 +88,4 @@ abstract class Controller
         }
     }
 
-<<<<<<< HEAD
->>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
-=======
->>>>>>> origin/main
 }

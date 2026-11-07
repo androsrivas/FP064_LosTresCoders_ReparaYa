@@ -37,19 +37,9 @@ CREATE TABLE incidencias (
     direccion VARCHAR(255) NOT NULL,
     fecha_servicio DATETIME NOT NULL, -- Campo clave para la regla de las 48h
     tipo_urgencia ENUM('Estándar', 'Urgente') DEFAULT 'Estándar',
-<<<<<<< HEAD
-<<<<<<< HEAD
-    estado ENUM('Pendiente', 'Asignada', 'en curso', 'Finalizada', 'Cancelada') DEFAULT 'Pendiente',
-=======
     estado ENUM('Pendiente', 'Asignada', 'Finalizada', 'Cancelada') DEFAULT 'Pendiente',
->>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
-=======
-    estado ENUM('Pendiente', 'Asignada', 'Finalizada', 'Cancelada') DEFAULT 'Pendiente',
->>>>>>> origin/main
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
     FOREIGN KEY (tecnico_id) REFERENCES tecnicos(id),
     FOREIGN KEY (especialidad_id) REFERENCES especialidades(id)
 );
-
-
