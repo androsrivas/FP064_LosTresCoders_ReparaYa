@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+-- Tabla para registrar cada cambio de estado o modificación en las incidencias
+CREATE TABLE historial_incidencias (
+=======
+=======
+>>>>>>> origin/main
 -- Ampliaciones bbddReparaYa.sql.
 -- Se ejecuta después del script base. Sirve para una instalación nueva y para una base
 -- de datos con una versión anterior de este archivo, y se puede ejecutar más de una vez.
@@ -11,6 +18,10 @@ MODIFY COLUMN localizador VARCHAR(20) NOT NULL;
 
 -- Tabla para registrar cada cambio de estado o modificación en las incidencias
 CREATE TABLE IF NOT EXISTS historial_incidencias (
+<<<<<<< HEAD
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
     id INT AUTO_INCREMENT PRIMARY KEY,
     incidencia_id INT NOT NULL,
     usuario_id INT DEFAULT NULL, -- Usuario que realizó el cambio
@@ -22,6 +33,24 @@ CREATE TABLE IF NOT EXISTS historial_incidencias (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+-- Tabla complementaria para extender la información de especialidades
+CREATE TABLE detalles_especialidades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    especialidad_id INT NOT NULL UNIQUE, -- Relación 1:1 con especialidades
+    descripcion TEXT, -- Descripcion general
+    responsabilidades TEXT, -- Responsabilidades asignadas
+    salario_base DECIMAL(10,2) DEFAULT 0.00,
+    precio_hora_orientativo DECIMAL(10,2) DEFAULT 0.00, -- Para el calculo de presupuestos
+    FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE CASCADE
+);
+
+-- Tabla para la mensajeria entre cliente y tecnico sobre una incidencia
+CREATE TABLE comentarios_incidencias (
+=======
+=======
+>>>>>>> origin/main
 -- Si la tabla ya existía, CREATE no la cambia: se actualizan aquí sus estados.
 ALTER TABLE historial_incidencias
 MODIFY COLUMN estado_anterior ENUM('Pendiente', 'Asignada', 'En curso', 'Finalizada', 'Cancelada') DEFAULT 'Pendiente',
@@ -50,6 +79,10 @@ DROP TABLE IF EXISTS detalles_especialidades;
 
 -- Tabla para la mensajeria entre cliente y tecnico sobre una incidencia
 CREATE TABLE IF NOT EXISTS comentarios_incidencias (
+<<<<<<< HEAD
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
     id INT AUTO_INCREMENT PRIMARY KEY,
     incidencia_id INT NOT NULL, -- Incidencia relacionada
     usuario_id INT NOT NULL, -- Usuario que comenta
@@ -57,4 +90,12 @@ CREATE TABLE IF NOT EXISTS comentarios_incidencias (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (incidencia_id) REFERENCES incidencias(id) ON DELETE CASCADE,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+<<<<<<< HEAD
+<<<<<<< HEAD
 );
+=======
+);
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+);
+>>>>>>> origin/main

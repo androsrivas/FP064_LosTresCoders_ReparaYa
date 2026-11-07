@@ -42,6 +42,11 @@ function config(string $key, mixed $default = null): mixed
 
     return $value;
 }
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> origin/main
 
 function field_errors(array $errors, string $field): string 
 {
@@ -57,3 +62,7 @@ function csrf_field(): string
 {
     return \App\Core\Csrf::field();
 }
+<<<<<<< HEAD
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main

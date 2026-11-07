@@ -4,6 +4,37 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+use App\Core\Controller;
+use App\Core\Auth;
+use App\Models\Incidencia;
+use App\Models\HistorialEstado;
+
+class IncidenciaController extends Controller
+{
+    public function __construct()
+    {
+        // Requerir autenticació per a qualsevol acció sobre les incidències
+        Auth::requireLogin();
+    }
+
+    /**
+     * Mostra el detall d'una incidència amb el seu historial
+     */
+    public function detalle(int $id): void
+    {
+        $incidencia = Incidencia::obtenerPorId($id);
+        $historial  = HistorialEstado::obtenerPorIncidencia($id);
+
+        $this->view('admin/detalle', [
+            'incidencia' => $incidencia,
+            'historial'  => $historial
+        ]);
+    }
+=======
+=======
+>>>>>>> origin/main
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Session;
@@ -257,4 +288,8 @@ class IncidenciaController extends Controller
         $this->redirect('index.php?action=gestion');
         return;
     }
+<<<<<<< HEAD
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+>>>>>>> origin/main
 }

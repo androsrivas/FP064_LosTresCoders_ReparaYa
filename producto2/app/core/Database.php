@@ -19,7 +19,15 @@ final class Database
 
         $c = config('database');
         $dsn = sprintf(
+<<<<<<< HEAD
+<<<<<<< HEAD
+            'mysql:host=%s;port=%s;dbanme=%s;charset=utf8mb4',
+=======
             'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+>>>>>>> 010b90a606fac36e09090f711f2161148af91a4e
+=======
+            'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+>>>>>>> origin/main
             $c['host'],
             $c['port'],
             $c['dbname']
