@@ -186,22 +186,24 @@ class IncidenciaController extends Controller
     /**
      * Cancelación de incidencia solicitada por el Cliente
      */
-    public function cancelarCliente(): void
+    public function cancelarCliente($id = 0): void
     {
         // [REVISION]: Guard de rol y método POST
         Auth::requireRole('Particular');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('index.php?action=mis_servicios');
+            $this->redirect(url('/perfil'));
             return;
         }
 
-        $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
-        $clienteId = (int) Session::get('usuario_id', 0);
+        // Tomar la ID de la URL o como fallback del $_POST
+        $incidenciaId = (int) ($id ?: ($_POST['incidencia_id'] ?? 0));
+        $clienteId = (int) (Session::get('usuario_id') ?? Session::get('user_id') ?? 0);
 
         // [REVISION]: Control de TypeError para evitar arrays en strict_types
         $motivo = is_string($_POST['motivo'] ?? null) ? trim($_POST['motivo']) : '';
 
+        // Llamada al servicio que valida las 48h y cambia el estado
         $resultado = $this->service->cancelarPorCliente($incidenciaId, $clienteId, $motivo);
 
         if ($resultado['exito']) {
@@ -210,7 +212,8 @@ class IncidenciaController extends Controller
             $this->flash('danger', $resultado['mensaje']);
         }
 
-        $this->redirect('index.php?action=mis_servicios');
+        // Redirección limpia a la vista de perfil/servicios del cliente
+        $this->redirect(url('/perfil'));
         return;
 
     }
