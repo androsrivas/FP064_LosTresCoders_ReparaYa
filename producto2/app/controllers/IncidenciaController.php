@@ -188,34 +188,54 @@ class IncidenciaController extends Controller
      */
     public function cancelarCliente($id = 0): void
     {
-        // [REVISION]: Guard de rol y método POST
-        Auth::requireRole('Particular');
+        // 1. Asegurar sesión activa si no se activó en middleware
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // 2. Comprobar rol permitiendo minúsculas/mayúsculas ('particular' vs 'Particular')
+        $rolActual = strtolower((string) (
+            Auth::user()['rol']
+            ?? Session::get('usuario_rol')
+            ?? Session::get('user_rol')
+            ?? ($_SESSION['usuario_rol'] ?? $_SESSION['user_rol'] ?? $_SESSION['user']['rol'] ?? '')
+        ));
+
+        if ($rolActual !== 'particular') {
+            $this->flash('danger', 'No tienes permiso para acceder a esta sección.');
+            $this->redirect('/perfil');
+            return;
+        }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect(url('/perfil'));
             return;
         }
 
-        // Tomar la ID de la URL o como fallback del $_POST
+        // 3. Recuperar IDs (URL o POST fallback)
         $incidenciaId = (int) ($id ?: ($_POST['incidencia_id'] ?? 0));
-        $clienteId = (int) (Session::get('usuario_id') ?? Session::get('user_id') ?? 0);
+        $clienteId = (int) (
+            Auth::id()
+            ?? Auth::user()['id']
+            ?? Session::get('usuario_id')
+            ?? Session::get('user_id')
+            ?? ($_SESSION['usuario_id'] ?? $_SESSION['user_id'] ?? 0)
+        );
 
-        // [REVISION]: Control de TypeError para evitar arrays en strict_types
         $motivo = is_string($_POST['motivo'] ?? null) ? trim($_POST['motivo']) : '';
 
-        // Llamada al servicio que valida las 48h y cambia el estado
+        // 4. Ejecutar validación de 48h y cancelación en el servicio
         $resultado = $this->service->cancelarPorCliente($incidenciaId, $clienteId, $motivo);
 
-        if ($resultado['exito']) {
-            $this->flash('success', $resultado['mensaje']);
+        if (!empty($resultado['exito'])) {
+            $this->flash('success', $resultado['mensaje'] ?? 'Incidencia cancelada con éxito.');
         } else {
-            $this->flash('danger', $resultado['mensaje']);
+            $this->flash('danger', $resultado['mensaje'] ?? 'Error al cancelar la incidencia.');
         }
 
-        // Redirección limpia a la vista de perfil/servicios del cliente
-        $this->redirect(url('/perfil'));
+        // 5. Redireccionar directamente a Mi Perfil
+        $this->redirect('/perfil');
         return;
-
     }
 
     /**
