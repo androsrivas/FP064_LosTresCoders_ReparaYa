@@ -126,10 +126,12 @@ $telefono = $old['telefono'] ?? $usuario['telefono'] ?? '';
                                     </div>
 
                                     <div>
-                                        <a href="<?= e(url('/index.php?action=detalle_servicio&id=' . $incidencia['id'])); ?>"
-                                            class="btn btn-warning btn-sm fw-bold px-3">
+                                        <!-- BOTÓN ADAPTADO PARA ABRIR EL MODAL VÍA AJAX -->
+                                        <button type="button"
+                                            class="btn btn-warning btn-sm fw-bold px-3 btn-ver-incidencia"
+                                            data-incidencia-id="<?= (int)$incidencia['id']; ?>">
                                             Ver Detalle
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -241,6 +243,52 @@ $telefono = $old['telefono'] ?? $usuario['telefono'] ?? '';
         </div>
     </div>
 </div>
+
+<!-- INCLUSIÓN DEL MODAL REUTILIZABLE DE DETALLE DE INCIDENCIA -->
+<?php require __DIR__ . '/../incidencias/_modal_detalle.php'; ?>
+
+<!-- SCRIPT GENERAL PARA LA CARGA DINÁMICA DEL DETALLE VÍA AJAX -->
+<script>
+document.addEventListener('click', function (e) {
+    const trigger = e.target.closest('.btn-ver-incidencia');
+    if (!trigger) return;
+
+    const incidenciaId = trigger.dataset.incidenciaId;
+    if (!incidenciaId) return;
+
+    const modalEl = document.getElementById('detalleIncidenciaModal');
+    const contenedorContent = document.getElementById('contenidoDetalleIncidencia');
+
+    if (!modalEl || !contenedorContent) return;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    // Muestra spinner inicial
+    contenedorContent.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-warning" role="status"></div>
+            <p class="text-muted small mt-2">Cargando información del servicio...</p>
+        </div>`;
+
+    modal.show();
+
+    // Petición AJAX al controlador (Sintaxis corregida)
+    fetch(`<?= e(url('/incidencia/detalle/')); ?>${incidenciaId}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Error de permisos o servicio');
+            return response.text();
+        })
+        .then(html => {
+            contenedorContent.innerHTML = html;
+        })
+        .catch(err => {
+            contenedorContent.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="bi bi-exclamation-octagon me-2"></i>No se pudo cargar la información del servicio.
+                </div>`;
+        });
+});
+</script>
 
 <!-- Re-apertura automática del Modal si hay errores tras enviar POST -->
 <?php if (!empty($errors)): ?>

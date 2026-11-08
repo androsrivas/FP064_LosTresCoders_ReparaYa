@@ -21,7 +21,6 @@ $menus = [
     Roles::PARTICULAR => [
         ['Home', '/'],
         ['Mi perfil', '/perfil'],
-        ['Mis servicios', '/mis-servicios'],
     ],
 
     'guest' => [
