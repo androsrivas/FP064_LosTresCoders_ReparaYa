@@ -53,7 +53,7 @@ final class Auth
     public static function requireLogin(): void
     {
         if (!self::check()) {
-            self::deny(401, '/login', 'Debes iniciar sesión para continuar.');
+            self::deny(401, '/', 'Debes iniciar sesión para continuar.');
         }
     }
 
@@ -69,10 +69,10 @@ final class Auth
     public static function homeFor(?string $rol): string
     {
         return match ($rol) {
-            Roles::ADMIN => '/admin',
-            Roles::TECNICO => '/tecnico/agenda',
-            Roles::PARTICULAR => '/particular/avisos',
-            default => '/login',
+            Roles::ADMIN => '/gestion',
+            Roles::TECNICO => '/agenda',
+            Roles::PARTICULAR => '/',
+            default => '/',
         };
     }
 

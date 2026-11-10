@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Controller;
+use App\Core\Session;
 use App\Core\Validator;
 use App\Models\Usuario;
 use PDOException;
@@ -14,13 +15,15 @@ final class AuthController extends Controller
     public function showLogin(): void
     {
         $this->redirectIfLogged();
-        $this->view('auth/login', ['titulo' => 'Iniciar sesión', 'errors' => [], 'old' => []]);
+        $this->redirect('/');
     }
 
     public function login(): void
     {
+        // Mantengo la variable $status para posibles usos a futuro, pero debido al cambio a redireccion 
+        // de cabecera, algunos navegadores necesitan recibir por narices '302 Found' o puede dar complicaciones
         $this->redirectIfLogged();
-        $this->requireCsrf('/login');
+        $this->requireCsrf('/');
 
         $email = trim($this->input('email'));
         $password = $this->input('password');
@@ -46,7 +49,10 @@ final class AuthController extends Controller
             $status = 401;
         }
 
-        $this->form('auth/login', 'Iniciar sesión', $v->errors(), ['email' => $email], status: $status);
+        // Guardar errores y 'old' en Session para enviarlos al modal
+        Session::set('errors', $v->errors());
+        Session::set('old', ['email' => $email]);
+        $this->redirect('/');
     }
 
     public function showRegister(): void 
@@ -58,7 +64,7 @@ final class AuthController extends Controller
     public function register(): void
     {
         $this->redirectIfLogged();
-        $this->requireCsrf('/registro');
+        $this->requireCsrf('/');
 
         $data = [
             'nombre' => trim($this->input('nombre')),
@@ -101,11 +107,13 @@ final class AuthController extends Controller
             }
         }
 
-        $this->form('auth/registro', 'Crear cuenta', $v->errors(), [
+        Session::set('errors', $v->errors());
+        Session::set('old', [
             'nombre' => $data['nombre'],
             'email' => $data['email'],
-            'telefono' => $data['telefono'],
+            'telefono' => $data['telefono']
         ]);
+        $this->redirect('/');
     }
 
     public function logout(): void 
@@ -114,7 +122,7 @@ final class AuthController extends Controller
 
         Auth::logout();
         $this->flash('success', 'Has cerrado sesión.');
-        $this->redirect('/login');
+        $this->redirect('/');
     }
 
     private function redirectIfLogged(): void

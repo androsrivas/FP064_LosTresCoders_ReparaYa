@@ -30,7 +30,7 @@ class IncidenciaController extends Controller
         // [REVISION]: Guard de rol y sustitución de $_SESSION por Session::get()
         Auth::requireRole('Particular');
 
-        $clienteId = (int)Session::get('usuario_id', 0);
+        $clienteId = (int) Session::get('usuario_id', 0);
         // [REVISION]: Canalización de la consulta a través del Servicio
         $servicios = $this->service->obtenerPorCliente($clienteId);
 
@@ -46,74 +46,109 @@ class IncidenciaController extends Controller
     {
         // [REVISION]: Evitar pantallas en blanco si la petición no es POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('index.php?action=mis_servicios');
+            $referer = $_SERVER['HTTP_REFERER'] ?? '/perfil';
+            $this->redirect($referer);
             return;
         }
 
         // [REVISION]: Inyección del cliente_id desde la sesión activa y filtrado de payload (Mass Assignment)
-        $rol = (string)Session::get('usuario_rol', '');
-        $clienteId = (int)Session::get('usuario_id', 0);
+        $rol = (string) Session::get('usuario_rol', '');
+        $clienteId = 0;
+        if (class_exists('App\Core\Auth') && Auth::check()) {
+            $user = Auth::user();
+            $clienteId = (int) ($user['id'] ?? $user['usuario_id'] ?? 0);
+        }
+        if ($clienteId === 0) {
+            $clienteId = (int) (Session::get('usuario_id') ?? Session::get('user_id') ?? 0);
+        }
 
         $payload = [
-            'cliente_id'        => ($rol === 'admin' && isset($_POST['cliente_id'])) ? (int)$_POST['cliente_id'] : $clienteId,
-            'tipo_servicio_id'  => (int)($_POST['tipo_servicio_id'] ?? 0),
-            'descripcion'       => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
-            'direccion'         => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : ''
+            'cliente_id' => ($rol === 'admin' && isset($_POST['cliente_id'])) ? (int) $_POST['cliente_id'] : $clienteId,
+            'especialidad_id' => (int) ($_POST['especialidad_id'] ?? 0),
+            'tipo_urgencia' => trim($_POST['tipo_urgencia'] ?? 'Estándar'),
+            'fecha_servicio' => trim($_POST['fecha_servicio'] ?? ''),
+            'descripcion' => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
+            'direccion' => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : ''
         ];
 
         $resultado = $this->service->crearIncidencia($payload);
 
         if ($resultado['exito']) {
-            Session::forget('form_data');
+            Session::forget('old');
+            Session::forget('errors');
             $this->flash('success', 'Incidencia registrada con éxito. Localizador: ' . $resultado['localizador']);
 
-            $redirectAction = $rol === 'admin' ? 'gestion' : 'mis_servicios';
-            $this->redirect("index.php?action={$redirectAction}");
+            $redirectAction = $rol === 'admin' ? 'gestion' : 'perfil';
+            $this->redirect("/{$redirectAction}");
             return;
         }
 
-        Session::set('form_data', $payload);
-        $this->flash('danger', $resultado['mensaje']);
+        Session::set('errors', ['general' => [$resultado['mensaje']]]);
+        Session::set('old', $payload);
 
-        $redirectAction = $rol === 'admin' ? 'gestion' : 'mis_servicios';
-        $this->redirect("index.php?action={$redirectAction}");
+        $redirectAction = $rol === 'admin' ? 'gestion' : '';
+        $this->redirect("/{$redirectAction}");
         return;
     }
 
     /**
      * Carga los datos y renderiza la ficha/detalle de una incidencia
      */
-    public function verDetalle(): void
+    public function verDetalle($id = 0): void
     {
-        $id = (int)($_GET['id'] ?? 0);
+        // 1. Asegurar sesión activa si no se usó middleware
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $id = (int) $id;
+        if ($id <= 0) {
+            $id = (int) ($_GET['id'] ?? 0);
+        }
+
         $incidencia = $this->service->obtenerPorId($id);
 
         if (!$incidencia) {
-            $this->flash('danger', 'Incidencia no encontrada.');
-            $this->redirect('index.php?action=mis_servicios');
+            http_response_code(404);
+            echo '<div class="alert alert-warning mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Incidencia no encontrada.</div>';
             return;
         }
 
-        // [REVISION]: Guard IDOR (Ownership Check) antes de renderizar
-        $usuarioId = (int)Session::get('usuario_id', 0);
-        $rol       = (string)Session::get('usuario_rol', '');
-        $historial = HistorialEstado::obtenerPorIncidencia($id);
+        // 2. Obtención de usuario utilizando la clase Auth o revisando claves alternativas de la sesión
+        $usuarioId = (int) (
+            Auth::id()
+            ?? Auth::user()['id']
+            ?? Session::get('usuario_id')
+            ?? Session::get('user_id')
+            ?? ($_SESSION['usuario_id'] ?? $_SESSION['user_id'] ?? $_SESSION['user']['id'] ?? 0)
+        );
 
-        $esPropietario = ((int)$incidencia['cliente_id'] === $usuarioId);
-        $esTecnico     = ((int)($incidencia['tecnico_id'] ?? 0) === $usuarioId);
-        $esAdmin       = ($rol === 'admin');
+        $rol = (string) (
+            Auth::user()['rol']
+            ?? Session::get('usuario_rol')
+            ?? Session::get('user_rol')
+            ?? ($_SESSION['usuario_rol'] ?? $_SESSION['user_rol'] ?? $_SESSION['user']['rol'] ?? '')
+        );
+
+        $clienteIdIncidencia = (int) ($incidencia['cliente_id'] ?? $incidencia['usuario_id'] ?? 0);
+        $tecnicoIdIncidencia = (int) ($incidencia['tecnico_id'] ?? 0);
+
+        $esPropietario = ($clienteIdIncidencia === $usuarioId && $usuarioId > 0);
+        $esTecnico = ($tecnicoIdIncidencia === $usuarioId && $usuarioId > 0);
+        $esAdmin = (strtolower($rol) === 'admin');
 
         if (!$esPropietario && !$esTecnico && !$esAdmin) {
-            $this->flash('danger', 'No tiene permisos para consultar esta incidencia.');
-            $this->redirect('index.php?action=mis_servicios');
+            http_response_code(403);
+            echo '<div class="alert alert-danger mb-0"><i class="bi bi-shield-lock me-2"></i>No tiene permisos para consultar esta incidencia.</div>';
             return;
         }
 
-        // [REVISION]: Carga e inyección del historial
-        $this->view('detalle_servicio', [
-            'incidencia' => $incidencia,
-            'historial' => $historial
-        ]);
+        $historial = HistorialEstado::obtenerPorIncidencia($id) ?? [];
+        // $mensajes = $this->service->obtenerMensajesForo($id) ?? [];
+
+        $userRol = $rol;
+        $userId = $usuarioId;
+
+        require __DIR__ . '/../views/incidencias/_contenido_detalle.php';
     }
 
     /**
@@ -129,8 +164,8 @@ class IncidenciaController extends Controller
             return;
         }
 
-        $id = (int)($_POST['incidencia_id'] ?? 0);
-        $tecnicoId   = (int)Session::get('usuario_id', 0);
+        $id = (int) ($_POST['incidencia_id'] ?? 0);
+        $tecnicoId = (int) Session::get('usuario_id', 0);
 
         // [REVISION]: Control de TypeError para evitar arrays en strict_types
         $nuevoEstado = is_string($_POST['nuevo_estado'] ?? null) ? trim($_POST['nuevo_estado']) : '';
@@ -151,33 +186,56 @@ class IncidenciaController extends Controller
     /**
      * Cancelación de incidencia solicitada por el Cliente
      */
-    public function cancelarCliente(): void
+    public function cancelarCliente($id = 0): void
     {
-        // [REVISION]: Guard de rol y método POST
-        Auth::requireRole('Particular');
+        // 1. Asegurar sesión activa si no se activó en middleware
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST'){
-            $this->redirect('index.php?action=mis_servicios');
+        // 2. Comprobar rol permitiendo minúsculas/mayúsculas ('particular' vs 'Particular')
+        $rolActual = strtolower((string) (
+            Auth::user()['rol']
+            ?? Session::get('usuario_rol')
+            ?? Session::get('user_rol')
+            ?? ($_SESSION['usuario_rol'] ?? $_SESSION['user_rol'] ?? $_SESSION['user']['rol'] ?? '')
+        ));
+
+        if ($rolActual !== 'particular') {
+            $this->flash('danger', 'No tienes permiso para acceder a esta sección.');
+            $this->redirect('/perfil');
             return;
         }
 
-            $incidenciaId = (int)($_POST['incidencia_id'] ?? 0);
-            $clienteId    = (int)Session::get('usuario_id', 0);
-
-            // [REVISION]: Control de TypeError para evitar arrays en strict_types
-            $motivo       = is_string($_POST['motivo'] ?? null) ? trim($_POST['motivo']) : '';
-
-            $resultado = $this->service->cancelarPorCliente($incidenciaId, $clienteId, $motivo);
-
-            if ($resultado['exito']) {
-                $this->flash('success', $resultado['mensaje']);
-            } else {
-                $this->flash('danger', $resultado['mensaje']);
-            }
-
-            $this->redirect('index.php?action=mis_servicios');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url('/perfil'));
             return;
-    
+        }
+
+        // 3. Recuperar IDs (URL o POST fallback)
+        $incidenciaId = (int) ($id ?: ($_POST['incidencia_id'] ?? 0));
+        $clienteId = (int) (
+            Auth::id()
+            ?? Auth::user()['id']
+            ?? Session::get('usuario_id')
+            ?? Session::get('user_id')
+            ?? ($_SESSION['usuario_id'] ?? $_SESSION['user_id'] ?? 0)
+        );
+
+        $motivo = is_string($_POST['motivo'] ?? null) ? trim($_POST['motivo']) : '';
+
+        // 4. Ejecutar validación de 48h y cancelación en el servicio
+        $resultado = $this->service->cancelarPorCliente($incidenciaId, $clienteId, $motivo);
+
+        if (!empty($resultado['exito'])) {
+            $this->flash('success', $resultado['mensaje'] ?? 'Incidencia cancelada con éxito.');
+        } else {
+            $this->flash('danger', $resultado['mensaje'] ?? 'Error al cancelar la incidencia.');
+        }
+
+        // 5. Redireccionar directamente a Mi Perfil
+        $this->redirect('/perfil');
+        return;
     }
 
     /**
@@ -191,22 +249,22 @@ class IncidenciaController extends Controller
             $this->redirect('index.php?action=gestion');
             return;
         }
-            
-        $incidenciaId = (int)($_POST['incidencia_id'] ?? 0);
-        $adminUserId  = (int)Session::get('usuario_id', 0);
+
+        $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
+        $adminUserId = (int) Session::get('usuario_id', 0);
 
         // [REVISION]: Filtrado de payload para evitar Mass Assignment, Completo para asignación manual de los campos
         $payload = [
-            'tecnico_id'      => isset($_POST['tecnico_id']) && $_POST['tecnico_id'] !== '' ? (int)$_POST['tecnico_id'] : null,
-            'especialidad_id' => isset($_POST['especialidad_id']) ? (int)$_POST['especialidad_id'] : null,
-            'descripcion'     => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
-            'direccion'       => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : '',
-            'fecha_servicio'  => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : '',
-            'tipo_urgencia'   => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : '',
-            'estado'          => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : '',
+            'tecnico_id' => isset($_POST['tecnico_id']) && $_POST['tecnico_id'] !== '' ? (int) $_POST['tecnico_id'] : null,
+            'especialidad_id' => isset($_POST['especialidad_id']) ? (int) $_POST['especialidad_id'] : null,
+            'descripcion' => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
+            'direccion' => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : '',
+            'fecha_servicio' => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : '',
+            'tipo_urgencia' => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : '',
+            'estado' => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : '',
             // [REVISION]: Capturamos la nota o motivo para la columna comentario de historial_incidencias
-            'comentario'      => is_string($_POST['comentario'] ?? $_POST['observaciones'] ?? null) 
-                                 ? trim($_POST['comentario'] ?? $_POST['observaciones']) : ''
+            'comentario' => is_string($_POST['comentario'] ?? $_POST['observaciones'] ?? null)
+                ? trim($_POST['comentario'] ?? $_POST['observaciones']) : ''
         ];
 
         // Llama al método de modificación manual sin automatizaciones filtrando los campos no modificados para no modificar los actuales
@@ -236,9 +294,9 @@ class IncidenciaController extends Controller
             return;
         }
 
-        $incidenciaId = (int)($_POST['incidencia_id'] ?? 0);
-        $tecnicoId    = (int)($_POST['tecnico_id'] ?? 0);
-        $adminUserId  = (int)Session::get('usuario_id', 0);
+        $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
+        $tecnicoId = (int) ($_POST['tecnico_id'] ?? 0);
+        $adminUserId = (int) Session::get('usuario_id', 0);
 
         if ($incidenciaId <= 0 || $tecnicoId <= 0) {
             $this->flash('danger', 'Debe seleccionar una incidencia y un técnico válidos.');

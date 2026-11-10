@@ -7,6 +7,6 @@ class HomeController extends Controller
 {
     public function index(): void 
     {
-        $this->view('home/index', ['titulo' => 'ReparaYa']);
+        $this->view('home/home', ['titulo' => 'ReparaYa']);
     }
 }
