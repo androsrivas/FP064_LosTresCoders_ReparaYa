@@ -4,228 +4,175 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Core\Controller;
 use App\Core\Auth;
-use App\Models\Incidencia;
+use App\Core\Controller;
+use App\Core\Roles;
 use App\Core\Session;
 use App\Models\HistorialEstado;
-use App\Core\Roles;
+use App\Models\Incidencia;
+use App\Models\Tecnico;
+use App\Services\IncidenciaService;
 
 class AdminController extends Controller
 {
+    private IncidenciaService $service;
+
     public function __construct()
     {
-        //Restricción de seguridad (comprueba que el usuario ingresa con perfil administrador)
-        Auth::requireRole('admin');
+        //Validación de rol: solo administradores
+        Auth::requireRole(Roles::ADMIN);
+        $this->service = new IncidenciaService();
     }
 
-    /** Muestra el panel principal de administración */
-    public function index(): void
-    {
-        $this->incidencias();
-    }
-
-    /** Listado de incidencias con filtro por estado */
+    /**
+     * Muestra el panel principal de administración con el listado completo de incidencias.
+     */
     public function incidencias(): void
     {
-        $estadoFiltro = isset($_GET['estado']) ? (string) $_GET['estado'] : 'Todas';
-        $incidencias = Incidencia::obtenerPorEstado($estadoFiltro);
+        // Obtenemos todas las incidencias 
+        $incidencias = Incidencia::obtenerPorEstado('Todas');
+        $tecnicos    = Tecnico::obtenerTodos(); 
 
         $this->view('admin/index', [
-            'titulo'       => 'Gestión de Incidencias',
-            'incidencias'  => $incidencias,
-            'estadoActual' => $estadoFiltro,
+            'titulo'      => 'Gestión de Incidencias',
+            'incidencias' => $incidencias,
+            'tecnicos'    => $tecnicos
         ]);
     }
 
-    /** 
-     * Procesa la creación manual de una incidencia por el Administrador
+    /**
+     * Alta manual de avisos realizada por el Administrador.
+     * Delega la validación de 48h, fecha futura y generación de localizador al Servicio.
      */
     public function store(): void
     {
-        $this->requireCsrf('/admin/incidencias');
-
-        $clienteId      = (int) $this->input('cliente_id');
-        $especialidadId = (int) $this->input('especialidad_id');
-        $descripcion    = trim((string) $this->input('descripcion'));
-        $direccion      = trim((string) $this->input('direccion'));
-        $fechaServicio  = (string) $this->input('fecha_servicio');
-        $tipoUrgencia   = (string) $this->input('tipo_urgencia');
-
-        if ($tipoUrgencia === 'Estándar') {
-            $horasAntelacion = (strtotime($fechaServicio) - time()) / 3600; 
-            if ($horasAntelacion < 48) {
-                Session::addFlash('error', 'Las solicitudes estándar requieren un mínimo de 48 horas de antelación.');
-                $this->redirect('/admin/incidencias');
-            }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?action=incidencias');
+            return;
         }
 
-        $localizador = Incidencia::generarLocalizador();
-        $adminUser   = Auth::user();
+        $adminUserId = Auth::id() ?? (int) Session::get('usuario_id', 0);
 
-        $incidenciaId = Incidencia::crear([
-            'localizador'     => $localizador,
-            'cliente_id'      => $clienteId,
-            'especialidad_id' => $especialidadId,
-            'descripcion'    => $descripcion,
-            'direccion'      => $direccion,
-            'fecha_servicio'  => $fechaServicio,
-            'tipo_urgencia'   => $tipoUrgencia,
-            'estado'          => 'Pendiente'
-        ]);
+        $payload = [
+            'cliente_id'       => (int) ($_POST['cliente_id'] ?? 0),
+            'especialidad_id'  => (int) ($_POST['especialidad_id'] ?? 0),
+            'tipo_servicio_id' => (int) ($_POST['tipo_servicio_id'] ?? 0),
+            'tipo_urgencia'    => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : 'Estándar',
+            'fecha_servicio'   => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : '',
+            'descripcion'      => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
+            'direccion'        => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : ''
+        ];
 
-        if ($incidenciaId > 0) {
-            HistorialEstado::crear(
-                $incidenciaId, 
-                null, 
-                'Pendiente', 
-                (int) $adminUser['id'], 
-                'Incidencia dada de alta por el Administrador'
-            );
-            Session::addFlash('success', "Incidencia {$localizador} creada correctamente.");
+        //Se le pasa $adminUserId para que en el historial quede a nombre del admin
+        $resultado = $this->service->crearIncidencia($payload, $adminUserId);
+
+        if ($resultado['exito']) {
+            Session::addFlash('success', 'Incidencia registrada con éxito. Localizador: ' . $resultado['localizador']);
         } else {
-            Session::addFlash('error', 'Error al crear la incidencia.');
+            Session::addFlash('error', $resultado['mensaje']);
         }
 
-        $this->redirect('/admin/incidencias');
+        $this->redirect('index.php?action=incidencias');
     }
 
     /**
-     * Asignar un técnico a una incidencia
-     * Regla: Solo si la incidencia está en 'Pendiente' o 'Asignada'.
+     * Asignación de técnico a una incidencia.
+     * Transición automática: Cambia de Pendiente a Asignada y registra trazabilidad.
      */
     public function asignar(): void
     {
-        $this->requireCsrf('/admin/incidencias');
-
-        $incidenciaId = (int) $this->input('incidencia_id');
-        $tecnicoId    = (int) $this->input('tecnico_id');
-        $adminUser    = Auth::user();
-
-        $incidencia = Incidencia::obtenerPorId($incidenciaId);
-        if (!$incidencia) {
-            Session::addFlash('error', 'La incidencia no existe.');
-            $this->redirect('/admin/incidencias');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?action=incidencias');
+            return;
         }
 
-        $estadoAnterior = $incidencia['estado'];
+        $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
+        $tecnicoId    = (int) ($_POST['tecnico_id'] ?? 0);
+        $adminUserId  = Auth::id() ?? (int) Session::get('usuario_id', 0);
 
-        //Validación de transición
-        if (!in_array($estadoAnterior, ['Pendiente', 'Asignada'], true)) {
-            Session::addFlash('error', "No se puede asignar un técnico en estado '{$estadoAnterior}'.");
-            $this->redirect('/admin/incidencias');
+        if ($incidenciaId <= 0 || $tecnicoId <= 0) {
+            Session::addFlash('error', 'Debe seleccionar una incidencia y un técnico válidos.');
+            $this->redirect('index.php?action=incidencias');
+            return;
         }
 
-        //Asignar en BBDD (cambia el estado a 'Asignada')
-        Incidencia::asignarTecnico($incidenciaId, $tecnicoId);
+        $resultado = $this->service->asignarTecnicoPorAdmin($incidenciaId, $tecnicoId, $adminUserId);
 
-        //Auditoría en el historial
-        HistorialEstado::crear(
-            $incidenciaId,
-            $estadoAnterior,
-            'Asignada',
-            (int) $adminUser['id'],
-            'Técnico asignado por el Administrador'
-        );
+        if ($resultado['exito']) {
+            Session::addFlash('success', $resultado['mensaje']);
+        } else {
+            Session::addFlash('error', $resultado['mensaje']);
+        }
 
-        Session::addFlash('success', 'Técnico asignado correctamente.');
-        $this->redirect('/admin/incidencias');
+        $this->redirect('index.php?action=incidencias');
     }
 
     /**
-     * Modificar datos de una incidencia
-     * Regla: Solo si la incidencia está en 'Pendiente' o 'Asignada'
+     * Modificación de datos generales de una incidencia (Solo en estados Pendiente o Asignada).
      */
     public function actualizar(): void
     {
-        $this->requireCsrf('/admin/incidencias');
-
-        $incidenciaId = (int) $this->input('incidencia_id');
-        $adminUser    = Auth::user();
-
-        $incidencia = Incidencia::obtenerPorId($incidenciaId);
-        if (!$incidencia) {
-            Session::addFlash('error', 'La incidencia no existe.');
-            $this->redirect('/admin/incidencias');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?action=incidencias');
+            return;
         }
 
-        $estadoAnterior = $incidencia['estado'];
+        $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
+        $adminUserId  = Auth::id() ?? (int) Session::get('usuario_id', 0);
 
-        //Validación de transición
-        if (!in_array($estadoAnterior, ['Pendiente', 'Asignada'], true)) {
-            Session::addFlash('error', "No se pueden modificar incidencias en estado '{$estadoAnterior}'.");
-            $this->redirect('/admin/incidencias');
-        }
-
-        $datosActualizados = [
-            'especialidad_id' => (int) $this->input('especialidad_id'),
-            'descripcion'     => trim((string) $this->input('descripcion')),
-            'direccion'       => trim((string) $this->input('direccion')),
-            'fecha_servicio'   => (string) $this->input('fecha_servicio'),
-            'tipo_urgencia'    => (string) $this->input('tipo_urgencia'),
-            'estado'          => $estadoAnterior, // Mantiene el estado
-            'tecnico_id'      => $incidencia['tecnico_id']
+        $payload = [
+            'tecnico_id'      => isset($_POST['tecnico_id']) && $_POST['tecnico_id'] !== '' ? (int) $_POST['tecnico_id'] : null,
+            'especialidad_id' => isset($_POST['especialidad_id']) ? (int) $_POST['especialidad_id'] : null,
+            'descripcion'     => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : null,
+            'direccion'       => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : null,
+            'fecha_servicio'  => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : null,
+            'tipo_urgencia'   => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : null,
+            'estado'          => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : null,
+            'comentario'      => is_string($_POST['comentario'] ?? $_POST['observaciones'] ?? null) 
+                                 ? trim($_POST['comentario'] ?? $_POST['observaciones']) : 'Modificado por el Administrador'
         ];
 
-        Incidencia::actualizarIncidencia($incidenciaId, $datosActualizados);
+        //Filtramos valores nulos para conservar la información previa de campos no informados
+        $datosFiltrados = array_filter($payload, static fn($v) => !is_null($v));
 
-        //Auditoría opcional de modificación
-        HistorialEstado::crear(
-            $incidenciaId,
-            $estadoAnterior,
-            $estadoAnterior,
-            (int) $adminUser['id'],
-            'Datos de la incidencia modificados por el Administrador'
-        );
+        $resultado = $this->service->modificarPorAdmin($incidenciaId, $datosFiltrados, $adminUserId);
 
-        Session::addFlash('success', 'Incidencia modificada correctamente.');
-        $this->redirect('/admin/incidencias');
+        if ($resultado['exito']) {
+            Session::addFlash('success', $resultado['mensaje']);
+        } else {
+            Session::addFlash('error', $resultado['mensaje']);
+        }
+
+        $this->redirect('index.php?action=incidencias');
     }
 
     /**
-     * Cancelación de incidencias por el Administrador
-     * Regla: Se permite cancelar solo si la incidencia está en 'Pendiente' o 'Asignada'
+     * Cancelación de la incidencia por parte del Administrador.
      */
     public function cancelar(): void
     {
-        $this->requireCsrf('/admin/incidencias');
-
-        $incidenciaId = (int) $this->input('incidencia_id');
-        $observacion  = trim((string) $this->input('observacion', 'Cancelada por el administrador'));
-        $adminUser    = Auth::user();
-
-        $incidencia = Incidencia::obtenerPorId($incidenciaId);
-        if (!$incidencia) {
-            Session::addFlash('error', 'La incidencia no existe.');
-            $this->redirect('/admin/incidencias');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?action=incidencias');
+            return;
         }
 
-        $estadoAnterior = $incidencia['estado'];
+        $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
+        $observacion  = is_string($_POST['observacion'] ?? null) ? trim($_POST['observacion']) : 'Cancelada por el Administrador';
+        $adminUserId  = Auth::id() ?? (int) Session::get('usuario_id', 0);
 
-        if (!in_array($estadoAnterior, ['Pendiente', 'Asignada'], true)) {
-            Session::addFlash('error', "No se puede cancelar una incidencia en estado '{$estadoAnterior}'.");
-            $this->redirect('/admin/incidencias');
+        $datosActualizar = [
+            'estado'     => 'Cancelada',
+            'comentario' => $observacion
+        ];
+
+        $resultado = $this->service->modificarPorAdmin($incidenciaId, $datosActualizar, $adminUserId);
+
+        if ($resultado['exito']) {
+            Session::addFlash('success', 'Incidencia cancelada correctamente.');
+        } else {
+            Session::addFlash('error', $resultado['mensaje']);
         }
 
-        Incidencia::actualizarEstado($incidenciaId, 'Cancelada');
-
-        HistorialEstado::crear(
-            $incidenciaId,
-            $estadoAnterior,
-            'Cancelada',
-            (int) $adminUser['id'],
-            $observacion
-        );
-
-        Session::addFlash('success', 'Incidencia cancelada correctamente.');
-        $this->redirect('/admin/incidencias');
-    }
-
-    final class AdminController extends Controller
-    {
-        public function __construct() 
-        {
-            Auth::requireRole(Roles::ADMIN);
-        }
+        $this->redirect('index.php?action=incidencias');
     }
 }

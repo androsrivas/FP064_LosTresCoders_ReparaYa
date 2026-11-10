@@ -27,6 +27,8 @@ $router->post('/perfil', 'PerfilController@update');
  $router->get('/admin/incidencias',  'AdminController@incidencias');
  $router->get('/admin/calendario',   'CalendarioController@index');
 // $router->get('/admin/servicios',    'TipoServicioController@index');
+$router->get('/agenda', 'AgendaController@index');
+$router->get('/gestion', 'AdminController@index');
 
 // Técnicos (admin)  — vistas pendientes: admin/tecnicos/index y admin/tecnicos/form
 $router->get('/admin/tecnicos', 'TecnicoController@index');
