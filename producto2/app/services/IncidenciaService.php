@@ -337,13 +337,13 @@ public function cancelarPorAdmin(int $incidenciaId, string $motivo, int $adminUs
         Incidencia::actualizarEstado($incidenciaId, 'Cancelada');
 
         // 2. Registrar la traza en el historial de modificaciones
-        HistorialEstado::registrar([
-            'incidencia_id'   => $incidenciaId,
-            'usuario_id'      => $adminUserId,
-            'estado_anterior' => $estadoActual,
-            'estado_nuevo'    => 'Cancelada',
-            'comentario'      => $motivoFinal
-        ]);
+       HistorialEstado::registrar(
+        $incidenciaId,   
+        $estadoActual,    
+        'Cancelada',      
+        $adminUserId,     
+        $motivoFinal      
+    );
 
         return [
             'exito' => true,

@@ -121,19 +121,25 @@ $especialidadNombre = $incidencia['nombre_especialidad']
         <!-- Acciones especiales si el usuario autenticado es TÉCNICO -->
         <?php if ($userRol === 'tecnico' && in_array($incidencia['estado'] ?? '', ['Asignada', 'En curso'])): ?>
             <hr class="border-secondary">
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <span class="small text-muted">Acciones de estado (Técnico):</span>
-                <?php if (($incidencia['estado'] ?? '') === 'Asignada'): ?>
-                    <button type="button" class="btn btn-primary btn-sm btn-cambiar-estado" data-estado="En curso"
-                        data-id="<?= $incidencia['id']; ?>">
-                        <i class="bi bi-play-fill me-1"></i>Pasar a "En curso"
-                    </button>
-                <?php elseif (($incidencia['estado'] ?? '') === 'En curso'): ?>
-                    <button type="button" class="btn btn-success btn-sm btn-cambiar-estado" data-estado="Finalizada"
-                        data-id="<?= $incidencia['id']; ?>">
-                        <i class="bi bi-check-circle me-1"></i>Finalizar servicio
-                    </button>
-                <?php endif; ?>
+
+                <form action="<?= e(url('/tecnico/incidencia/estado')); ?>" method="POST" class="form-cambiar-estado-tecnico">
+                    <?= csrf_field(); ?>
+                    <input type="hidden" name="incidencia_id" value="<?= (int) $incidencia['id']; ?>">
+
+                    <?php if (($incidencia['estado'] ?? '') === 'Asignada'): ?>
+                        <input type="hidden" name="nuevo_estado" value="En curso">
+                        <button type="submit" class="btn btn-primary btn-sm fw-semibold">
+                            <i class="bi bi-play-fill me-1"></i>Pasar a "En curso"
+                        </button>
+                    <?php elseif (($incidencia['estado'] ?? '') === 'En curso'): ?>
+                        <input type="hidden" name="nuevo_estado" value="Finalizada">
+                        <button type="submit" class="btn btn-success btn-sm fw-semibold">
+                            <i class="bi bi-check-circle me-1"></i>Finalizar servicio
+                        </button>
+                    <?php endif; ?>
+                </form>
             </div>
         <?php endif; ?>
 

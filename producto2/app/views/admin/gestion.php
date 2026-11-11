@@ -14,12 +14,12 @@
         <div class="btn-group" role="group">
             <button type="button" class="btn btn-outline-yellow" id="tabBtnCrear" onclick="mostrarSeccion('secCrear')">Crear servicio</button>
             <button type="button" class="btn btn-yellow active" id="tabBtnIncidencias" onclick="mostrarSeccion('secIncidencias')">Incidencias</button>
-            <a href="<?= e(url('/calendario')) ?>" class="btn btn-outline-yellow">Agenda</a>
+            <a href="<?= e(url('/agenda')) ?>" class="btn btn-outline-yellow">Agenda</a>
         </div>
 
         <!-- Barra de búsqueda universal (Solo visible en sección Incidencias) -->
         <div class="d-flex align-items-center" id="contenedorBuscador">
-            <input type="text" id="inputBuscador" class="form-control" placeholder="Búsqueda de incidencia (estado, cliente, ref...)" style="min-width: 280px;">
+            <input type="text" id="inputBuscador" class="form-control color-buscador" placeholder="Búsqueda de incidencia (estado, cliente, ref...)" style="min-width: 280px;">
         </div>
     </div>
 

@@ -133,7 +133,16 @@ class IncidenciaController extends Controller
         $tecnicoIdIncidencia = (int) ($incidencia['tecnico_id'] ?? 0);
 
         $esPropietario = ($clienteIdIncidencia === $usuarioId && $usuarioId > 0);
-        $esTecnico = ($tecnicoIdIncidencia === $usuarioId && $usuarioId > 0);
+       // Mapear usuario_id al ID del registro en la tabla 'tecnicos'
+        $esTecnico = false;
+        if (strtolower($rol) === 'tecnico' && $usuarioId > 0) {
+            $tecnicoObj = \App\Models\Tecnico::findByUsuarioId($usuarioId);
+            $tecnicoId = $tecnicoObj ? (int) $tecnicoObj['id'] : 0;
+
+            // El técnico puede ver la incidencia si le está asignada o si la incidencia está Pendiente
+            $esTecnico = ($tecnicoIdIncidencia > 0 && $tecnicoIdIncidencia === $tecnicoId)
+                      || (($incidencia['estado'] ?? '') === 'Pendiente');
+        }
         $esAdmin = (strtolower($rol) === 'admin');
 
         if (!$esPropietario && !$esTecnico && !$esAdmin) {

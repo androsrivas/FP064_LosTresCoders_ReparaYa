@@ -18,22 +18,28 @@ class AgendaController extends Controller
     public function __construct()
     {
         // Restricción de seguridad: Solo accesible para técnicos
-        Auth::requireRole(Roles::TECNICO);
+        Auth::requireRole(Roles::TECNICO, Roles::ADMIN);
     }
 
-    /**
-     * Muestra la agenda de incidencias asignadas al técnico autenticado.
-     * Ruta: GET /tecnico/agenda o GET /agenda
-     */
     public function index(): void
     {
-        $tecnico = $this->obtenerTecnicoAutenticado();
-        
-        // Obtener incidencias asociadas al id del técnico
-        $incidencias = Incidencia::obtenerPorTecnico((int) $tecnico['id']);
+        $user = Auth::user();
+        $userRol = $user['rol'] ?? '';
+
+        if ($userRol === Roles::ADMIN || $userRol === 'admin') {
+            // El Administrador ve TODAS las incidencias
+            $incidencias = Incidencia::obtenerTodas();
+            $tecnico = null;
+            $titulo = 'Agenda Global de Incidencias';
+        } else {
+            // El Técnico ve solo sus incidencias asignadas
+            $tecnico = $this->obtenerTecnicoAutenticado();
+            $incidencias = Incidencia::obtenerPorTecnico((int) $tecnico['id']);
+            $titulo = 'Mi Agenda de Incidencias';
+        }
 
         $this->view('admin/agenda', [
-            'titulo'      => 'Mi Agenda de Incidencias',
+            'titulo'      => $titulo,
             'incidencias' => $incidencias,
             'tecnico'     => $tecnico
         ]);

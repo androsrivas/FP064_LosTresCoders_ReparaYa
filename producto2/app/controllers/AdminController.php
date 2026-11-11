@@ -12,6 +12,8 @@ use App\Models\HistorialEstado;
 use App\Models\Incidencia;
 use App\Models\Tecnico;
 use App\Services\IncidenciaService;
+use App\Models\Cliente;
+use App\Models\TipoServicio;
 
 class AdminController extends Controller
 {
@@ -24,19 +26,24 @@ class AdminController extends Controller
         $this->service = new IncidenciaService();
     }
 
-    /**
-     * Muestra el panel principal de administración con el listado completo de incidencias.
+   /**
+     * Muestra el panel principal de administración con el listado completo de incidencias,
+     * técnicos, clientes y tipos de servicio (especialidades).
      */
     public function incidencias(): void
     {
-        // Obtenemos todas las incidencias 
-        $incidencias = Incidencia::obtenerTodas();
-        $tecnicos    = Tecnico::all(); 
+        // Obtenemos todas las relaciones necesarias para el panel y los formularios
+        $incidencias   = Incidencia::obtenerTodas();
+        $tecnicos      = Tecnico::all();
+        $clientes      = Cliente::all();
+        $especialidades = TipoServicio::all();
 
         $this->view('admin/gestion', [
-            'titulo'      => 'Gestión de Incidencias',
-            'incidencias' => $incidencias,
-            'tecnicos'    => $tecnicos
+            'titulo'         => 'Gestión de Incidencias',
+            'incidencias'    => $incidencias,
+            'tecnicos'       => $tecnicos,
+            'clientes'       => $clientes,
+            'especialidades' => $especialidades
         ]);
     }
 
@@ -53,15 +60,16 @@ class AdminController extends Controller
             return;
         }
 
-        // [REVISION]: Inyección del cliente_id desde la sesión activa y filtrado de payload (Mass Assignment)
-        $rol = (string) Session::get('usuario_rol', '');
+        // Obtener el rol del usuario de forma segura y en minúsculas
+        $user = Auth::user();
+        $rol  = strtolower((string) ($user['rol'] ?? Session::get('usuario_rol', '')));
+
+        // Si es administrador y seleccionó un cliente del formulario, usar dicho cliente_id
         $clienteId = 0;
-        if (class_exists('App\Core\Auth') && Auth::check()) {
-            $user = Auth::user();
-            $clienteId = (int) ($user['id'] ?? $user['usuario_id'] ?? 0);
-        }
-        if ($clienteId === 0) {
-            $clienteId = (int) (Session::get('usuario_id') ?? Session::get('user_id') ?? 0);
+        if (!empty($_POST['cliente_id'])) {
+            $clienteId = (int) $_POST['cliente_id'];
+        } else {
+            $clienteId = (int) ($user['id'] ?? $user['usuario_id'] ?? Session::get('usuario_id', 0));
         }
 
         $payload = [
@@ -75,13 +83,12 @@ class AdminController extends Controller
 
         $resultado = $this->service->crearIncidencia($payload);
 
-        if ($resultado['exito']) {
+      if ($resultado['exito']) {
             Session::forget('old');
             Session::forget('errors');
             $this->flash('success', 'Incidencia registrada con éxito. Localizador: ' . $resultado['localizador']);
 
-            $redirectAction = $rol === 'admin' ? 'gestion' : 'perfil';
-            $this->redirect("/{$redirectAction}");
+            $this->redirect('/gestion');
             return;
         }
 
@@ -189,8 +196,6 @@ class AdminController extends Controller
 
        $resultado = $this->service->cancelarPorAdmin($incidenciaId, $observacion, $adminUserId);
 
-        $resultado = $this->service->cancelarPorAdmin($incidenciaId, $datosActualizar, $adminUserId);
-
         if ($resultado['exito']) {
             Session::addFlash('success', 'Incidencia cancelada correctamente.');
         } else {
@@ -198,5 +203,6 @@ class AdminController extends Controller
         }
 
         $this->redirect('/gestion');
+        return;
     }
 }
