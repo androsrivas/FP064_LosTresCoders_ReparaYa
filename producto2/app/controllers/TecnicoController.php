@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controllers;
@@ -6,176 +7,157 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Roles;
-use App\Core\Validator;
+use App\Core\Session;
 use App\Services\TecnicoService;
 
-/** CRUD de técnicos. Solo administradores. */
-final class TecnicoController extends Controller
+class TecnicoController extends Controller
 {
-    private const MAX_NOMBRE = 100;
-    private const MAX_EMAIL = 100;
-    private const MIN_PASSWORD = 8;
-    private const MAX_PASSWORD = 72;
-
-    private TecnicoService $servicio;
+    private TecnicoService $service;
 
     public function __construct()
     {
+        // Seguridad: Solo los administradores pueden gestionar técnicos
         Auth::requireRole(Roles::ADMIN);
-        $this->servicio = new TecnicoService();
-    }
-
-    /** GET /admin/tecnicos */
-    public function index(): void
-    {
-        $this->view('admin/tecnicos/index', [
-            'titulo' => 'Técnicos',
-            'tecnicos' => $this->servicio->listar(),
-        ]);
-    }
-
-    /** GET /admin/tecnicos/nuevo */
-    public function create(): void
-    {
-        $this->renderForm(null);
-    }
-
-    /** POST /admin/tecnicos/nuevo */
-    public function store(): void
-    {
-        $this->requireCsrf('/admin/tecnicos/nuevo');
-
-        $data = $this->datosFormulario();
-        $password = $this->input('password');
-
-        $v = $this->validar($data + [
-            'password' => $password,
-            'password_confirm' => $this->input('password_confirm'),
-        ])
-            ->required('password', 'contraseña')
-            ->min('password', self::MIN_PASSWORD, 'contraseña')
-            ->max('password', self::MAX_PASSWORD, 'contraseña')
-            ->matches('password_confirm', 'password', 'Las contraseñas no coinciden.');
-
-        if (!$v->fails()) {
-            $r = $this->servicio->crear(...$this->paraGuardar($data) + ['password' => $password]);
-
-            if ($r['exito']) {
-                $this->flash('success', $r['mensaje']);
-                $this->redirect('/admin/tecnicos');
-            }
-
-            $v->add('general', $r['mensaje']);
-        }
-
-        $this->renderForm(null, $v->errors(), $data);
-    }
-
-    /** GET /admin/tecnicos/{id}/editar */
-    public function edit(string $id): void
-    {
-        $this->renderForm($this->buscarOVolver((int) $id));
-    }
-
-    /** POST /admin/tecnicos/{id}/editar */
-    public function update(string $id): void
-    {
-        $id = (int) $id;
-        $this->requireCsrf("/admin/tecnicos/$id/editar");
-
-        $tecnico = $this->buscarOVolver($id);
-        $data = $this->datosFormulario();
-        $v = $this->validar($data);
-
-        if (!$v->fails()) {
-            $r = $this->servicio->modificar($id, ...$this->paraGuardar($data));
-
-            if ($r['exito']) {
-                $this->flash('success', $r['mensaje']);
-                $this->redirect('/admin/tecnicos');
-            }
-
-            $v->add('general', $r['mensaje']);
-        }
-
-        $this->renderForm($tecnico, $v->errors(), $data);
-    }
-
-    /** POST /admin/tecnicos/{id}/eliminar */
-    public function destroy(string $id): void
-    {
-        $this->requireCsrf('/admin/tecnicos');
-
-        $r = $this->servicio->eliminar((int) $id);
-
-        $this->flash($r['exito'] ? 'success' : 'error', $r['mensaje']);
-        $this->redirect('/admin/tecnicos');
-    }
-
-    /** Entrada del formulario tal como la escribió el usuario (para repintarla si hay errores). */
-    private function datosFormulario(): array
-    {
-        return [
-            'nombre' => trim($this->input('nombre')),
-            'email' => trim($this->input('email')),
-            'telefono' => trim($this->input('telefono')),
-            'especialidad_id' => trim($this->input('especialidad_id')),
-            // Un checkbox desmarcado no se envía: ausente = no disponible
-            'disponible' => $this->input('disponible') === '1' ? '1' : '0',
-        ];
-    }
-
-    private function validar(array $data): Validator
-    {
-        return (new Validator($data))
-            ->required('nombre', 'nombre')
-            ->max('nombre', self::MAX_NOMBRE, 'nombre')
-            ->required('email', 'correo')
-            ->email('email')
-            ->max('email', self::MAX_EMAIL, 'correo')
-            ->telefono('telefono');
+        $this->service = new TecnicoService();
     }
 
     /**
-     * Convierte la entrada validada a los tipos del servicio.
-     * Claves con el nombre de sus parámetros, para pasarlo con "...".
-     * Una especialidad no numérica queda en 0 y el servicio la rechaza por inexistente.
+     * Muestra el listado completo de técnicos.
+     * Ruta: GET /admin/tecnicos
      */
-    private function paraGuardar(array $data): array
+    public function index(): void
     {
-        return [
-            'nombre' => $data['nombre'],
-            'email' => $data['email'],
-            'especialidadId' => $data['especialidad_id'] === '' ? null : (int) $data['especialidad_id'],
-            'telefono' => $data['telefono'] === '' ? null : $data['telefono'],
-            'disponible' => $data['disponible'] === '1',
-        ];
+        $tecnicos = $this->service->listar();
+
+        $this->view('admin/tecnicos/index', [
+            'titulo'   => 'Gestión de Técnicos',
+            'tecnicos' => $tecnicos
+        ]);
     }
 
-    private function buscarOVolver(int $id): array
+    /**
+     * Muestra el formulario para registrar un nuevo técnico.
+     * Ruta: GET /admin/tecnicos/nuevo
+     */
+    public function create(): void
     {
-        $tecnico = $this->servicio->obtener($id);
+        $especialidades = $this->service->especialidades();
 
-        if ($tecnico === null) {
-            $this->flash('error', 'Técnico no encontrado.');
+        $this->view('admin/tecnicos/form', [
+            'titulo'         => 'Alta de Nuevo Técnico',
+            'especialidades' => $especialidades,
+            'tecnico'        => null
+        ]);
+    }
+
+    /**
+     * Procesa el formulario de alta de un técnico.
+     * Ruta: POST /admin/tecnicos/nuevo
+     */
+    public function store(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('/admin/tecnicos');
+            return;
         }
 
-        return $tecnico;
+        $nombre         = trim($_POST['nombre_completo'] ?? $_POST['nombre'] ?? '');
+        $email          = trim($_POST['email'] ?? '');
+        $password       = $_POST['password'] ?? '';
+        $especialidadId = isset($_POST['especialidad_id']) && $_POST['especialidad_id'] !== '' 
+                          ? (int) $_POST['especialidad_id'] 
+                          : null;
+        $telefono       = isset($_POST['telefono']) ? trim($_POST['telefono']) : null;
+        $disponible     = isset($_POST['disponible']) ? (bool) $_POST['disponible'] : true;
+
+        $resultado = $this->service->crear($nombre, $email, $password, $especialidadId, $telefono, $disponible);
+
+        if ($resultado['exito']) {
+            Session::forget('old');
+            Session::forget('errors');
+            $this->flash('success', $resultado['mensaje']);
+            $this->redirect('/admin/tecnicos');
+            return;
+        }
+
+        Session::set('errors', ['general' => [$resultado['mensaje']]]);
+        Session::set('old', $_POST);
+        $this->redirect('/admin/tecnicos/nuevo');
     }
 
-    /** @param array|null $tecnico null = alta; la fila actual = edición. */
-    private function renderForm(?array $tecnico, array $errors = [], array $old = []): void
+    /**
+     * Muestra el formulario de edición de un técnico existente.
+     * Ruta: GET /admin/tecnicos/{id}/editar
+     */
+    public function edit(int $id): void
     {
-        $this->form(
-            'admin/tecnicos/form',
-            $tecnico === null ? 'Nuevo técnico' : 'Editar técnico',
-            $errors,
-            $old,
-            [
-                'tecnico' => $tecnico,
-                'especialidades' => $this->servicio->especialidades(),
-            ]
-        );
+        $tecnico = $this->service->obtener($id);
+
+        if (!$tecnico) {
+            $this->flash('danger', 'Técnico no encontrado.');
+            $this->redirect('/admin/tecnicos');
+            return;
+        }
+
+        $especialidades = $this->service->especialidades();
+
+        $this->view('admin/tecnicos/form', [
+            'titulo'         => 'Editar Técnico',
+            'tecnico'        => $tecnico,
+            'especialidades' => $especialidades
+        ]);
+    }
+
+    /**
+     * Guarda los cambios aplicados a un técnico.
+     * Ruta: POST /admin/tecnicos/{id}/editar
+     */
+    public function update(int $id): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/tecnicos');
+            return;
+        }
+
+        $nombre         = trim($_POST['nombre_completo'] ?? $_POST['nombre'] ?? '');
+        $email          = trim($_POST['email'] ?? '');
+        $especialidadId = isset($_POST['especialidad_id']) && $_POST['especialidad_id'] !== '' 
+                          ? (int) $_POST['especialidad_id'] 
+                          : null;
+        $telefono       = isset($_POST['telefono']) ? trim($_POST['telefono']) : null;
+        $disponible     = isset($_POST['disponible']) ? (bool) $_POST['disponible'] : false;
+
+        $resultado = $this->service->modificar($id, $nombre, $email, $especialidadId, $telefono, $disponible);
+
+        if ($resultado['exito']) {
+            $this->flash('success', $resultado['mensaje']);
+            $this->redirect('/admin/tecnicos');
+            return;
+        }
+
+        $this->flash('danger', $resultado['mensaje']);
+        $this->redirect("/admin/tecnicos/{$id}/editar");
+    }
+
+    /**
+     * Elimina un técnico del sistema o gestiona el error si tiene incidencias asignadas.
+     * Ruta: POST /admin/tecnicos/{id}/eliminar
+     */
+    public function destroy(int $id): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/tecnicos');
+            return;
+        }
+
+        $resultado = $this->service->eliminar($id);
+
+        if ($resultado['exito']) {
+            $this->flash('success', $resultado['mensaje']);
+        } else {
+            $this->flash('danger', $resultado['mensaje']);
+        }
+
+        $this->redirect('/admin/tecnicos');
     }
 }

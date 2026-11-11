@@ -141,15 +141,17 @@ $especialidadNombre = $incidencia['nombre_especialidad']
         <?php if ($userRol === 'admin'): ?>
             <hr class="border-secondary">
             <div class="d-flex flex-wrap gap-2 justify-content-end">
-                <button type="button" class="btn btn-outline-warning btn-sm"
-                    onclick="abrirEdicionAdmin(<?= $incidencia['id']; ?>)">
-                    <i class="bi bi-pencil me-1"></i>Editar Incidencia
-                </button>
                 <?php if (($incidencia['estado'] ?? '') !== 'Cancelada'): ?>
-                    <button type="button" class="btn btn-outline-danger btn-sm"
-                        onclick="cancelarIncidenciaAdmin(<?= $incidencia['id']; ?>)">
-                        <i class="bi bi-x-circle me-1"></i>Cancelar
-                    </button>
+                    <form action="<?= e(url('/admin/cancelar')); ?>" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas cancelar esta incidencia?');">
+                        <?= csrf_field(); ?>
+                        <input type="hidden" name="incidencia_id" value="<?= (int)$incidencia['id']; ?>">
+                        <input type="hidden" name="estado" value="Cancelada">
+                        <input type="hidden" name="comentario" value="Cancelada por el Administrador desde la ficha de detalle.">
+                        
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-x-circle me-1"></i>Cancelar Incidencia
+                        </button>
+                    </form>
                 <?php endif; ?>
             </div>
         <?php endif; ?>

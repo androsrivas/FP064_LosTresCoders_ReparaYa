@@ -17,7 +17,7 @@ class IncidenciaController extends Controller
 
     public function __construct()
     {
-        Auth::requireRole(Roles::PARTICULAR);
+        Auth::requireRole(Roles::PARTICULAR, Roles::ADMIN, Roles::TECNICO); 
 
         $this->service = new IncidenciaService();
     }
@@ -150,6 +150,7 @@ class IncidenciaController extends Controller
 
         require __DIR__ . '/../views/incidencias/_contenido_detalle.php';
     }
+    
 
     /**
      * Actualización de estado por parte de un Técnico (Asignada -> En curso -> Finalizada)
@@ -238,15 +239,59 @@ class IncidenciaController extends Controller
         return;
     }
 
+
+        //SE PROPONE LO SIGUIENTE PARA RESOLVER LA CUESTIÓN DE QUE GUARDE TODOS LOS CAMPPOS 
+        /**
+     * Modificación o asignación completa por parte del Administrador.
+     */
+    public function modificarAdmin(): void
+    {
+        Auth::requireRole('admin');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/gestion');
+            return;
+        }
+
+        $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
+        
+        // Recuperar ID de usuario del administrador
+        $user = Auth::user();
+        $adminUserId = (int) ($user['id'] ?? $user['usuario_id'] ?? Session::get('usuario_id', 0));
+
+        // Preparar el payload respetando lo que IncidenciaService y Incidencia::actualizarIncidencia esperan
+        $payload = [
+            'tecnico_id'     => (isset($_POST['tecnico_id']) && $_POST['tecnico_id'] !== '') ? (int) $_POST['tecnico_id'] : null,
+            'estado'         => trim($_POST['estado'] ?? ''),
+            'tipo_urgencia'  => trim($_POST['tipo_urgencia'] ?? ''),
+            'fecha_servicio' => trim($_POST['fecha_servicio'] ?? ''),
+            'direccion'      => trim($_POST['direccion'] ?? ''),
+            'comentario'     => trim($_POST['comentario'] ?? '')
+        ];
+
+        // Se pasan los datos al servicio (el servicio se encarga de combinar los valores modificados con los existentes)
+        $resultado = $this->service->modificarPorAdmin($incidenciaId, $payload, $adminUserId);
+
+        if ($resultado['exito']) {
+            Session::forget('form_data');
+            $this->flash('success', $resultado['mensaje']);
+        } else {
+            Session::set('form_data', $payload);
+            $this->flash('danger', $resultado['mensaje']);
+        }
+
+        $this->redirect('/gestion');
+        return;
+    }
     /**
      * Modificación o asignación completa por parte del Administrador
      */
-    public function modificarAdmin(): void
+    /**public function modificarAdmin(): void  COMENTAR!!!
     {
         // [REVISION]: Guard de rol y método POST
         Auth::requireRole('admin');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('index.php?action=gestion');
+            $this->redirect('/gestion');
             return;
         }
 
@@ -278,9 +323,9 @@ class IncidenciaController extends Controller
             $this->flash('danger', $resultado['mensaje']);
         }
 
-        $this->redirect('index.php?action=gestion');
+        $this->redirect('/gestion');
         return;
-    }
+    }*/
 
     /**
      * Asignación rápida de técnico por el Administrador.

@@ -129,4 +129,51 @@ class Incidencia extends Model
             'id'              => $id
         ]);
     }
+
+    /**
+     * Devuelve todas las incidencias con sus relaciones (especialidad, cliente y técnico),
+     * ordenadas por la fecha de servicio.
+     *
+     * @param string $orden 'ASC' para más antiguas/próximas primero, 'DESC' para más recientes primero.
+     */
+    public static function obtenerTodas(string $orden = 'DESC'): array
+    {
+        $direccionOrden = strtoupper($orden) === 'DESC' ? 'DESC' : 'ASC';
+
+        $sql = "SELECT i.*, 
+                       e.nombre_especialidad, 
+                       u.nombre AS nombre_cliente, 
+                       t.nombre_completo AS nombre_tecnico
+                FROM incidencias i
+                INNER JOIN especialidades e ON i.especialidad_id = e.id
+                INNER JOIN usuarios u ON i.cliente_id = u.id
+                LEFT JOIN tecnicos t ON i.tecnico_id = t.id
+                ORDER BY i.fecha_servicio {$direccionOrden}";
+
+        return self::fetchAll($sql);
+    }
+
+
+    /**
+     * Devuelve los avisos activos (Pendientes o Asignados) para el panel lateral de la agenda de Tecnico.
+     */
+    public static function obtenerAvisos(?int $tecnicoId = null): array
+    {
+        $sql = "SELECT i.*, e.nombre_especialidad, u.nombre AS nombre_cliente
+                FROM incidencias i
+                INNER JOIN especialidades e ON i.especialidad_id = e.id
+                INNER JOIN usuarios u ON i.cliente_id = u.id
+                WHERE i.estado IN ('Pendiente', 'Asignada')";
+
+        $params = [];
+
+        if ($tecnicoId !== null) {
+            $sql .= " AND i.tecnico_id = :tecnico_id";
+            $params['tecnico_id'] = $tecnicoId;
+        }
+
+        $sql .= " ORDER BY i.fecha_servicio ASC";
+
+        return self::fetchAll($sql, $params);
+    }
 }

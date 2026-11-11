@@ -9,17 +9,17 @@
 ?>
 
 <div class="container-fluid py-4">
-    <!-- Encabezado y Pestañas de Navegación del Boceto -->
+    <!-- Encabezado y Pestañas de Navegación (Orden según mockup: Crear servicio | Incidencias | Agenda) -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div class="btn-group" role="group">
-            <button type="button" class="btn btn-yellow active" id="tabBtnIncidencias" onclick="mostrarSeccion('secIncidencias')">Incidencias</button>
             <button type="button" class="btn btn-outline-yellow" id="tabBtnCrear" onclick="mostrarSeccion('secCrear')">Crear servicio</button>
-            <a href="<?= e(url('/calendario')) ?>" class="btn btn-outline-yellow">Agenda / Calendario</a>
+            <button type="button" class="btn btn-yellow active" id="tabBtnIncidencias" onclick="mostrarSeccion('secIncidencias')">Incidencias</button>
+            <a href="<?= e(url('/calendario')) ?>" class="btn btn-outline-yellow">Agenda</a>
         </div>
 
-        <!-- Barra de búsqueda universal (filtra estado, cliente, especialidad, etc.) -->
+        <!-- Barra de búsqueda universal (Solo visible en sección Incidencias) -->
         <div class="d-flex align-items-center" id="contenedorBuscador">
-            <input type="text" id="inputBuscador" class="form-control" placeholder="Búsqueda de incidencia..." style="min-width: 280px;">
+            <input type="text" id="inputBuscador" class="form-control" placeholder="Búsqueda de incidencia (estado, cliente, ref...)" style="min-width: 280px;">
         </div>
     </div>
 
@@ -69,7 +69,11 @@
                                         </td>
                                         <td><?= e($inc['nombre_tecnico'] ?? 'Sin asignar') ?></td>
                                         <td class="text-end">
-                                            <a href="<?= e(url('/incidencia/detalle/' . $inc['id'])) ?>" class="btn btn-sm btn-outline-yellow me-1">Ver</a>
+                                            <button type="button"
+                                            class="btn btn-warning btn-sm fw-bold px-3 btn-ver-incidencia"
+                                            data-incidencia-id="<?= (int)$inc['id']; ?>">
+                                            Ver
+                                            </button>
                                             
                                             <?php if (in_array($inc['estado'], ['Pendiente', 'Asignada'], true)): ?>
                                                 <button type="button" class="btn btn-sm btn-yellow" 
@@ -153,7 +157,7 @@
     </div>
 </div>
 
-<!-- MODAL DE GESTIÓN (Asignar / Modificar / Cancelar con motivo) -->
+<!-- MODAL DE GESTIÓN (Asignar / Modificar / Cancelar con motivo según mockup) -->
 <div class="modal fade" id="modalGestionIncidencia" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -224,14 +228,24 @@
 <!-- SCRIPTS DE INTERACCIÓN DE LA VISTA -->
 <script>
 function mostrarSeccion(idSeccion) {
+    // Ocultar todas las secciones
     document.querySelectorAll('.seccion-admin').forEach(el => el.style.display = 'none');
+    
+    // Mostrar sección seleccionada
     document.getElementById(idSeccion).style.display = 'block';
 
+    // Ajustar estilos de botones
     document.getElementById('tabBtnIncidencias').className = idSeccion === 'secIncidencias' ? 'btn btn-yellow active' : 'btn btn-outline-yellow';
     document.getElementById('tabBtnCrear').className = idSeccion === 'secCrear' ? 'btn btn-yellow active' : 'btn btn-outline-yellow';
+
+    // Requisito del mockup: La barra de búsqueda SOLO es visible si la sección de Incidencias está activa
+    const contenedorBuscador = document.getElementById('contenedorBuscador');
+    if (contenedorBuscador) {
+        contenedorBuscador.style.display = idSeccion === 'secIncidencias' ? 'flex' : 'none';
+    }
 }
 
-// Filtro universal en tiempo real por búsqueda
+// Filtro universal en tiempo real por cualquier columna de la tabla
 document.addEventListener('DOMContentLoaded', function() {
     const inputBuscador = document.getElementById('inputBuscador');
     const filas = document.querySelectorAll('#tablaIncidencias tbody tr.fila-incidencia');
@@ -248,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Modal dinámico
+// Abrir modal de gestión con datos precargados
 function abrirModalGestion(incidencia) {
     document.getElementById('modal_incidencia_id').value = incidencia.id;
     document.getElementById('modalTituloGestion').textContent = 'Gestionar Incidencia: ' + (incidencia.localizador || '');
@@ -264,4 +278,50 @@ function abrirModalGestion(incidencia) {
     var modal = new bootstrap.Modal(document.getElementById('modalGestionIncidencia'));
     modal.show();
 }
+</script>
+
+<!-- INCLUSIÓN DEL MODAL REUTILIZABLE DE DETALLE DE INCIDENCIA -->
+<?php require __DIR__ . '/../incidencias/_modal_detalle.php'; ?>
+
+<!-- SCRIPT GENERAL PARA LA CARGA DINÁMICA DEL DETALLE VÍA AJAX -->
+<script>
+document.addEventListener('click', function (e) {
+    const trigger = e.target.closest('.btn-ver-incidencia');
+    if (!trigger) return;
+
+    const incidenciaId = trigger.dataset.incidenciaId;
+    if (!incidenciaId) return;
+
+    const modalEl = document.getElementById('detalleIncidenciaModal');
+    const contenedorContent = document.getElementById('contenidoDetalleIncidencia');
+
+    if (!modalEl || !contenedorContent) return;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    // Muestra spinner inicial
+    contenedorContent.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-warning" role="status"></div>
+            <p class="text-muted small mt-2">Cargando información del servicio...</p>
+        </div>`;
+
+    modal.show();
+
+    // Petición AJAX al controlador (Sintaxis corregida)
+    fetch(`<?= e(url('/incidencia/detalle/')); ?>${incidenciaId}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Error de permisos o servicio');
+            return response.text();
+        })
+        .then(html => {
+            contenedorContent.innerHTML = html;
+        })
+        .catch(err => {
+            contenedorContent.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="bi bi-exclamation-octagon me-2"></i>No se pudo cargar la información del servicio.
+                </div>`;
+        });
+});
 </script>

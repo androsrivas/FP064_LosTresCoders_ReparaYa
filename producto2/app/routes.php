@@ -22,6 +22,7 @@ $router->post('/cliente/nueva',          'IncidenciaController@crear');
 $router->get('/cliente/avisos/{id}',     'IncidenciaController@show');
 $router->get('/incidencia/detalle/{id}', 'IncidenciaController@verDetalle');
 $router->post('/cliente/avisos/{id}/cancelar',  'IncidenciaController@cancelarCliente');
+$router->post('/admin/modificar', 'IncidenciaController@modificarAdmin');
 
 // Admin (CRUD C y D)  -> Auth::homeFor(admin) = /admin
  $router->get('/admin',              'AdminController@index');
@@ -29,7 +30,8 @@ $router->post('/cliente/avisos/{id}/cancelar',  'IncidenciaController@cancelarCl
  $router->get('/admin/calendario',   'CalendarioController@index');
 // $router->get('/admin/servicios',    'TipoServicioController@index');
 $router->get('/agenda', 'AgendaController@index');
-$router->get('/gestion', 'AdminController@index');
+$router->get('/gestion', 'AdminController@incidencias');
+$router->post('/admin/cancelar', 'AdminController@cancelar');
 
 // Técnicos (admin)  — vistas pendientes: admin/tecnicos/index y admin/tecnicos/form
 $router->get('/admin/tecnicos', 'TecnicoController@index');

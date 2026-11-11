@@ -6,82 +6,82 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Controller;
+use App\Core\Roles;
 use App\Models\Incidencia;
+use App\Models\Tecnico;
 
-final class CalendarioController extends Controller
+class CalendarioController extends Controller
 {
     public function __construct()
     {
-        //Restricción a nivel de servidor: Solo rol 'admin'
-        Auth::requireRole('admin');
+        // Accesible tanto para administradores como para técnicos
+        Auth::requireRole([Roles::ADMIN, Roles::TECNICO]);
     }
 
     /**
-     * Muestra la vista principal del calendario (Mensual, Semanal, Diario)
+     * Muestra la vista principal del calendario y los avisos laterales.
+     * Ruta: GET /admin/calendario o GET /calendario
      */
     public function index(): void
     {
-        $vista = isset($_GET['vista']) && in_array($_GET['vista'], ['mensual', 'semanal', 'diario'], true) 
-            ? $_GET['vista'] 
-            : 'mensual';
+        $user = Auth::user();
+        $rol  = Auth::role();
 
-        //Obtenemos todas las incidencias de la base de datos
-        $incidencias = Incidencia::obtenerPorEstado('Todas');
+        $pendientes = [];
 
-        // Formateamos los eventos respetando los campos reales de la BBDD
-        $eventos = array_map(function (array $incidencia) {
-            $esUrgente = strtolower($incidencia['tipo_urgencia'] ?? '') === 'urgente';
-            
-            return [
-                'id'            => (int) $incidencia['id'],
-                'localizador'   => $incidencia['localizador'] ?? '',
-                'title'         => '[' . $incidencia['estado'] . '] ' . ($incidencia['nombre_especialidad'] ?? 'Incidencia'),
-                'start'         => $incidencia['fecha_servicio'],
-                'estado'        => $incidencia['estado'],
-                'tipo_urgencia' => $incidencia['tipo_urgencia'] ?? 'Estándar',
-                'direccion'     => $incidencia['direccion'] ?? '',
-                'descripcion'   => $incidencia['descripcion'] ?? '',
-                'clase_badge'   => $esUrgente ? 'bg-danger text-white' : 'badge-yellow',
-                'url_detalle'   => '/incidencia/detalle/' . $incidencia['id']
-            ];
-        }, $incidencias);
+        if ($rol === Roles::ADMIN) {
+            // El administrador ve todos los avisos activos en el lateral
+            $pendientes = Incidencia::obtenerAvisos();
+        } else {
+            // El técnico solo ve sus avisos activos asignados
+            $usuarioId = (int) ($user['id'] ?? $user['usuario_id'] ?? 0);
+            $tecnico   = Tecnico::findByUsuarioId($usuarioId);
 
-        $this->view('admin/calendario', [
-            'titulo'  => 'Calendario de Avisos',
-            'vista'   => $vista,
-            'eventos' => $eventos
+            if ($tecnico) {
+                $pendientes = Incidencia::obtenerAvisos((int) $tecnico['id']);
+            }
+        }
+
+        // Carga la vista admin/agenda pasando la variable $pendientes exigida por el template
+        $this->view('admin/agenda', [
+            'titulo'     => 'Agenda de Servicios',
+            'pendientes' => $pendientes,
+            'rol'        => $rol
         ]);
     }
 
     /**
-     * Endpoint API JSON consumido por FullCalendar
+     * Devuelve los eventos en formato JSON consumidos por FullCalendar en la vista agenda.php.
+     * Ruta: GET /calendario/eventos
      */
-    public function apiEventos(): void
+    public function eventos(): void
     {
-        header('Content-Type: application/json; charset=utf-8');
-        $incidencias = Incidencia::obtenerPorEstado('Todas');
+        $user = Auth::user();
+        $rol  = Auth::role();
 
-        $eventos = array_map(function (array $incidencia) {
+        if ($rol === Roles::ADMIN) {
+            $incidencias = Incidencia::obtenerTodas('ASC');
+        } else {
+            $usuarioId   = (int) ($user['id'] ?? $user['usuario_id'] ?? 0);
+            $tecnico     = Tecnico::findByUsuarioId($usuarioId);
+            $incidencias = $tecnico ? Incidencia::obtenerPorTecnico((int) $tecnico['id']) : [];
+        }
+
+        // Formatea las incidencias a los campos esperados por FullCalendar 5
+        $eventos = array_map(function (array $incidencia): array {
             $esUrgente = strtolower($incidencia['tipo_urgencia'] ?? '') === 'urgente';
-            
+
             return [
-                'id'              => (int) $incidencia['id'],
-                'title'           => '[' . $incidencia['estado'] . '] ' . ($incidencia['localizador'] ?? '') . ' - ' . ($incidencia['nombre_especialidad'] ?? 'Aviso'),
+                'id'              => $incidencia['id'],
+                'title'           => '#' . $incidencia['localizador'] . ' - ' . ($incidencia['nombre_especialidad'] ?? 'Servicio'),
                 'start'           => $incidencia['fecha_servicio'],
-                'backgroundColor' => $esUrgente ? '#dc3545' : '#ffb703',
-                'borderColor'     => $esUrgente ? '#b02a37' : '#e0a100',
+                'backgroundColor' => $esUrgente ? '#dc3545' : '#ffc107',
+                'borderColor'     => $esUrgente ? '#dc3545' : '#ffc107',
                 'textColor'       => $esUrgente ? '#ffffff' : '#000000',
-                'url'             => '/incidencia/detalle/' . $incidencia['id'],
-                'extendedProps'   => [
-                    'estado'        => $incidencia['estado'],
-                    'tipo_urgencia' => $incidencia['tipo_urgencia'] ?? 'Estándar',
-                    'direccion'     => $incidencia['direccion'] ?? '',
-                    'descripcion'   => $incidencia['descripcion'] ?? ''
-                ]
+                'url'             => url('/incidencia/detalle/' . $incidencia['id'])
             ];
         }, $incidencias);
 
-        echo json_encode($eventos);
-        exit;
+        $this->json($eventos);
     }
 }

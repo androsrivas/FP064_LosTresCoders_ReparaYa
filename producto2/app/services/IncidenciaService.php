@@ -299,4 +299,61 @@ class IncidenciaService
     {
         return 'REP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
     }
+
+    /**
+ * Cancela una incidencia por parte del Administrador.
+ * Regla de negocio: Solo permite cancelar si el estado es 'Pendiente' o 'Asignada'.
+ *
+ * @param int $incidenciaId
+ * @param string $motivo
+ * @param int $adminUserId
+ * @return array{exito: bool, mensaje: string}
+ */
+public function cancelarPorAdmin(int $incidenciaId, string $motivo, int $adminUserId): array
+{
+    $incidencia = Incidencia::obtenerPorId($incidenciaId);
+
+    if (!$incidencia) {
+        return [
+            'exito' => false,
+            'mensaje' => 'La incidencia no existe.'
+        ];
+    }
+
+    $estadoActual = $incidencia['estado'] ?? '';
+
+    // Validación estricta: Solo cancelar si está en Pendiente o Asignada
+    if (!in_array($estadoActual, ['Pendiente', 'Asignada'], true)) {
+        return [
+            'exito' => false,
+            'mensaje' => "No se puede cancelar una incidencia en estado '{$estadoActual}'. Solo es posible cancelar incidencias en estado Pendiente o Asignada."
+        ];
+    }
+
+    $motivoFinal = !empty($motivo) ? $motivo : 'Cancelada por el Administrador';
+
+    try {
+        // 1. Actualizar el estado en la base de datos a 'Cancelada'
+        Incidencia::actualizarEstado($incidenciaId, 'Cancelada');
+
+        // 2. Registrar la traza en el historial de modificaciones
+        HistorialEstado::registrar([
+            'incidencia_id'   => $incidenciaId,
+            'usuario_id'      => $adminUserId,
+            'estado_anterior' => $estadoActual,
+            'estado_nuevo'    => 'Cancelada',
+            'comentario'      => $motivoFinal
+        ]);
+
+        return [
+            'exito' => true,
+            'mensaje' => 'La incidencia ha sido cancelada correctamente.'
+        ];
+    } catch (\Throwable $e) {
+        return [
+            'exito' => false,
+            'mensaje' => 'Error al procesar la cancelación: ' . $e->getMessage()
+        ];
+    }
+}
 }
