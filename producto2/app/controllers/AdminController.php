@@ -8,38 +8,50 @@ use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Roles;
 use App\Core\Session;
-use App\Models\HistorialEstado;
-use App\Models\Incidencia;
-use App\Models\Tecnico;
-use App\Services\IncidenciaService;
+use App\Core\Validator;
 use App\Models\Cliente;
-use App\Models\TipoServicio;
+use App\Models\Incidencia;
+use App\Services\IncidenciaService;
+use App\Services\TecnicoService;
+use App\Services\TipoServicioService;
 
 class AdminController extends Controller
 {
+    private const MAX_NOMBRE_SERVICIO = 50;
+
     private IncidenciaService $service;
+    private TecnicoService $tecnicoService;
+    private TipoServicioService $tipoServicioService;
 
     public function __construct()
     {
-        //Validación de rol: solo administradores
         Auth::requireRole(Roles::ADMIN);
         $this->service = new IncidenciaService();
+        $this->tecnicoService = new TecnicoService();
+        $this->tipoServicioService = new TipoServicioService();
     }
 
-   /**
+    /**
+     * Alias de entrada para /admin.
+     */
+    public function index(): void
+    {
+        $this->incidencias();
+    }
+
+    /**
      * Muestra el panel principal de administración con el listado completo de incidencias,
      * técnicos, clientes y tipos de servicio (especialidades).
      */
     public function incidencias(): void
     {
-        // Obtenemos todas las relaciones necesarias para el panel y los formularios
-        $incidencias   = Incidencia::obtenerTodas();
-        $tecnicos      = Tecnico::all();
-        $clientes      = Cliente::all();
-        $especialidades = TipoServicio::all();
+        $incidencias    = Incidencia::obtenerTodas();
+        $tecnicos       = $this->tecnicoService->listar();
+        $clientes       = Cliente::all();
+        $especialidades = $this->tipoServicioService->listar();
 
         $this->view('admin/gestion', [
-            'titulo'         => 'Gestión de Incidencias',
+            'titulo'         => 'Panel de Gestión',
             'incidencias'    => $incidencias,
             'tecnicos'       => $tecnicos,
             'clientes'       => $clientes,
@@ -47,79 +59,62 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * Alta manual de avisos realizada por el Administrador.
-     * Delega la validación de 48h, fecha futura y generación de localizador al Servicio.
-     */
+    // =========================================================================
+    // GESTIÓN DE INCIDENCIAS
+    // =========================================================================
+
     public function store(): void
     {
-            // [REVISION]: Evitar pantallas en blanco si la petición no es POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $referer = $_SERVER['HTTP_REFERER'] ?? '/gestion';
-            $this->redirect($referer);
+            $this->redirect('/gestion');
             return;
         }
 
-        // Obtener el rol del usuario de forma segura y en minúsculas
         $user = Auth::user();
         $rol  = strtolower((string) ($user['rol'] ?? Session::get('usuario_rol', '')));
 
-        // Si es administrador y seleccionó un cliente del formulario, usar dicho cliente_id
-        $clienteId = 0;
-        if (!empty($_POST['cliente_id'])) {
-            $clienteId = (int) $_POST['cliente_id'];
-        } else {
-            $clienteId = (int) ($user['id'] ?? $user['usuario_id'] ?? Session::get('usuario_id', 0));
-        }
+        $clienteId = !empty($_POST['cliente_id'])
+            ? (int) $_POST['cliente_id']
+            : (int) ($user['id'] ?? $user['usuario_id'] ?? Session::get('usuario_id', 0));
 
         $payload = [
-            'cliente_id' => ($rol === 'admin' && isset($_POST['cliente_id'])) ? (int) $_POST['cliente_id'] : $clienteId,
+            'cliente_id'      => ($rol === 'admin' && isset($_POST['cliente_id'])) ? (int) $_POST['cliente_id'] : $clienteId,
             'especialidad_id' => (int) ($_POST['especialidad_id'] ?? 0),
-            'tipo_urgencia' => trim($_POST['tipo_urgencia'] ?? 'Estándar'),
-            'fecha_servicio' => trim($_POST['fecha_servicio'] ?? ''),
-            'descripcion' => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
-            'direccion' => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : ''
+            'tipo_urgencia'   => trim($_POST['tipo_urgencia'] ?? 'Estándar'),
+            'fecha_servicio'  => trim($_POST['fecha_servicio'] ?? ''),
+            'descripcion'     => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
+            'direccion'       => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : ''
         ];
 
         $resultado = $this->service->crearIncidencia($payload);
 
-      if ($resultado['exito']) {
+        if ($resultado['exito']) {
             Session::forget('old');
             Session::forget('errors');
             $this->flash('success', 'Incidencia registrada con éxito. Localizador: ' . $resultado['localizador']);
-
             $this->redirect('/gestion');
             return;
         }
 
         Session::set('errors', ['general' => [$resultado['mensaje']]]);
         Session::set('old', $payload);
-
-        $redirectAction = $rol === 'admin' ? 'gestion' : 'perfil';
-        $this->redirect("/{$redirectAction}");
-        return;
+        $this->redirect('/gestion');
     }
 
-    /**
-     * Asignación de técnico a una incidencia.
-     * Transición automática: Cambia de Pendiente a Asignada y registra trazabilidad.
-     */
     public function asignar(): void
     {
-          Auth::requireRole('admin');
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('/gestion');
             return;
         }
 
         $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
-        $tecnicoId = (int) ($_POST['tecnico_id'] ?? 0);
-        $adminUserId = (int) Session::get('usuario_id', 0);
+        $tecnicoId    = (int) ($_POST['tecnico_id'] ?? 0);
+        $adminUserId  = (int) Session::get('usuario_id', 0);
 
         if ($incidenciaId <= 0 || $tecnicoId <= 0) {
             $this->flash('danger', 'Debe seleccionar una incidencia y un técnico válidos.');
-            $this->redirect('index.php?action=gestion');
+            $this->redirect('/gestion');
             return;
         }
 
@@ -133,39 +128,30 @@ class AdminController extends Controller
         }
 
         $this->redirect('/gestion');
-        return;
     }
 
-    /**
-     * Modificación de datos generales de una incidencia (Solo en estados Pendiente o Asignada).
-     */
     public function actualizar(): void
     {
-         // [REVISION]: Guard de rol y método POST
-        Auth::requireRole('admin');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('/gestion');
             return;
         }
 
         $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
-        $adminUserId = (int) Session::get('usuario_id', 0);
+        $adminUserId  = (int) Session::get('usuario_id', 0);
 
-        // [REVISION]: Filtrado de payload para evitar Mass Assignment, Completo para asignación manual de los campos
         $payload = [
-            'tecnico_id' => isset($_POST['tecnico_id']) && $_POST['tecnico_id'] !== '' ? (int) $_POST['tecnico_id'] : null,
+            'tecnico_id'      => isset($_POST['tecnico_id']) && $_POST['tecnico_id'] !== '' ? (int) $_POST['tecnico_id'] : null,
             'especialidad_id' => isset($_POST['especialidad_id']) ? (int) $_POST['especialidad_id'] : null,
-            'descripcion' => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
-            'direccion' => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : '',
-            'fecha_servicio' => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : '',
-            'tipo_urgencia' => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : '',
-            'estado' => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : '',
-            // [REVISION]: Capturamos la nota o motivo para la columna comentario de historial_incidencias
-            'comentario' => is_string($_POST['comentario'] ?? $_POST['observaciones'] ?? null)
+            'descripcion'     => is_string($_POST['descripcion'] ?? null) ? trim($_POST['descripcion']) : '',
+            'direccion'       => is_string($_POST['direccion'] ?? null) ? trim($_POST['direccion']) : '',
+            'fecha_servicio'  => is_string($_POST['fecha_servicio'] ?? null) ? trim($_POST['fecha_servicio']) : '',
+            'tipo_urgencia'   => is_string($_POST['tipo_urgencia'] ?? null) ? trim($_POST['tipo_urgencia']) : '',
+            'estado'          => is_string($_POST['estado'] ?? null) ? trim($_POST['estado']) : '',
+            'comentario'      => is_string($_POST['comentario'] ?? $_POST['observaciones'] ?? null)
                 ? trim($_POST['comentario'] ?? $_POST['observaciones']) : ''
         ];
 
-        // Llama al método de modificación manual sin automatizaciones filtrando los campos no modificados para no modificar los actuales
         $resultado = $this->service->modificarPorAdmin($incidenciaId, array_filter($payload, fn($v) => !is_null($v)), $adminUserId);
 
         if ($resultado['exito']) {
@@ -177,12 +163,8 @@ class AdminController extends Controller
         }
 
         $this->redirect('/gestion');
-        return;
     }
 
-    /**
-     * Cancelación de la incidencia por parte del Administrador. //
-     */
     public function cancelar(): void
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -194,15 +176,216 @@ class AdminController extends Controller
         $observacion  = is_string($_POST['observacion'] ?? null) ? trim($_POST['observacion']) : 'Cancelada por el Administrador';
         $adminUserId  = Auth::id() ?? (int) Session::get('usuario_id', 0);
 
-       $resultado = $this->service->cancelarPorAdmin($incidenciaId, $observacion, $adminUserId);
+        $resultado = $this->service->cancelarPorAdmin($incidenciaId, $observacion, $adminUserId);
 
         if ($resultado['exito']) {
-            Session::addFlash('success', 'Incidencia cancelada correctamente.');
+            $this->flash('success', 'Incidencia cancelada correctamente.');
         } else {
-            Session::addFlash('error', $resultado['mensaje']);
+            $this->flash('danger', $resultado['mensaje']);
         }
 
         $this->redirect('/gestion');
-        return;
+    }
+
+    // =========================================================================
+    // CRUD DE TÉCNICOS (Desde /gestion)
+    // =========================================================================
+
+    public function storeTecnico(): void
+    {
+        $this->requireCsrf('/gestion');
+
+        $nombre         = trim($this->input('nombre_completo') ?: $this->input('nombre'));
+        $email          = trim($this->input('email'));
+        $password       = (string) ($_POST['password'] ?? '');
+        $especialidadRaw = trim($this->input('especialidad_id'));
+        $especialidadId = $especialidadRaw !== '' ? (int) $especialidadRaw : null;
+        $telefonoRaw    = trim($this->input('telefono'));
+        $telefono       = $telefonoRaw !== '' ? $telefonoRaw : null;
+        $disponible     = isset($_POST['disponible']);
+
+        $v = (new Validator([
+            'nombre_completo' => $nombre,
+            'email'           => $email,
+            'password'        => $password,
+        ]))
+            ->required('nombre_completo', 'nombre completo')
+            ->max('nombre_completo', 100, 'nombre completo')
+            ->required('email', 'correo electrónico')
+            ->email('email', 'correo electrónico')
+            ->required('password', 'contraseña')
+            ->min('password', 6, 'contraseña');
+
+        if ($v->fails()) {
+            $errores = $v->errors();
+            $primerCampo = reset($errores);
+            $primerError = is_array($primerCampo) ? ($primerCampo[0] ?? 'Datos del técnico no válidos.') : 'Datos del técnico no válidos.';
+            $this->flash('danger', $primerError);
+            $this->redirect('/gestion');
+            return;
+        }
+
+        $resultado = $this->tecnicoService->crear(
+            $nombre,
+            $email,
+            $password,
+            $especialidadId,
+            $telefono,
+            $disponible
+        );
+
+        $this->flash($resultado['exito'] ? 'success' : 'danger', $resultado['mensaje']);
+        $this->redirect('/gestion');
+    }
+
+    public function updateTecnico(string $id): void
+    {
+        $this->requireCsrf('/gestion');
+
+        $tecnicoId       = (int) $id;
+        $nombre          = trim($this->input('nombre_completo') ?: $this->input('nombre'));
+        $email           = trim($this->input('email'));
+        $especialidadRaw = trim($this->input('especialidad_id'));
+        $especialidadId  = $especialidadRaw !== '' ? (int) $especialidadRaw : null;
+        $telefonoRaw     = trim($this->input('telefono'));
+        $telefono        = $telefonoRaw !== '' ? $telefonoRaw : null;
+        $disponible      = isset($_POST['disponible']);
+
+        $v = (new Validator([
+            'nombre_completo' => $nombre,
+            'email'           => $email,
+        ]))
+            ->required('nombre_completo', 'nombre completo')
+            ->max('nombre_completo', 100, 'nombre completo')
+            ->required('email', 'correo electrónico')
+            ->email('email', 'correo electrónico');
+
+        if ($v->fails()) {
+            $errores = $v->errors();
+            $primerCampo = reset($errores);
+            $primerError = is_array($primerCampo) ? ($primerCampo[0] ?? 'Datos del técnico no válidos.') : 'Datos del técnico no válidos.';
+            $this->flash('danger', $primerError);
+            $this->redirect('/gestion');
+            return;
+        }
+
+        $resultado = $this->tecnicoService->modificar(
+            $tecnicoId,
+            $nombre,
+            $email,
+            $especialidadId,
+            $telefono,
+            $disponible
+        );
+
+        $this->flash($resultado['exito'] ? 'success' : 'danger', $resultado['mensaje']);
+        $this->redirect('/gestion');
+    }
+
+    public function destroyTecnico(string $id): void
+    {
+        $this->requireCsrf('/gestion');
+
+        $resultado = $this->tecnicoService->eliminar((int) $id);
+
+        $this->flash($resultado['exito'] ? 'success' : 'danger', $resultado['mensaje']);
+        $this->redirect('/gestion');
+    }
+
+    // =========================================================================
+    // CRUD DE ESPECIALIDADES / TIPOS DE SERVICIO (Desde /gestion)
+    // =========================================================================
+
+    public function storeServicio(): void
+    {
+        $this->requireCsrf('/gestion');
+
+        $data = $this->datosFormularioServicio();
+        $v = $this->validarServicio($data);
+
+        if ($v->fails()) {
+            $errores = $v->errors();
+            $primerCampo = reset($errores);
+            $primerError = is_array($primerCampo) ? ($primerCampo[0] ?? 'Datos de la especialidad no válidos.') : 'Datos de la especialidad no válidos.';
+            $this->flash('danger', $primerError);
+            $this->redirect('/gestion');
+            return;
+        }
+
+        $resultado = $this->tipoServicioService->crear(...$this->paraGuardarServicio($data));
+
+        $this->flash($resultado['exito'] ? 'success' : 'danger', $resultado['mensaje']);
+        $this->redirect('/gestion');
+    }
+
+    public function updateServicio(string $id): void
+    {
+        $this->requireCsrf('/gestion');
+
+        $data = $this->datosFormularioServicio();
+        $v = $this->validarServicio($data);
+
+        if ($v->fails()) {
+            $errores = $v->errors();
+            $primerCampo = reset($errores);
+            $primerError = is_array($primerCampo) ? ($primerCampo[0] ?? 'Datos de la especialidad no válidos.') : 'Datos de la especialidad no válidos.';
+            $this->flash('danger', $primerError);
+            $this->redirect('/gestion');
+            return;
+        }
+
+        $resultado = $this->tipoServicioService->modificar((int) $id, ...$this->paraGuardarServicio($data));
+
+        $this->flash($resultado['exito'] ? 'success' : 'danger', $resultado['mensaje']);
+        $this->redirect('/gestion');
+    }
+
+    public function destroyServicio(string $id): void
+    {
+        $this->requireCsrf('/gestion');
+
+        $resultado = $this->tipoServicioService->eliminar((int) $id);
+
+        $this->flash($resultado['exito'] ? 'success' : 'danger', $resultado['mensaje']);
+        $this->redirect('/gestion');
+    }
+
+    // =========================================================================
+    // HELPERS PRIVADOS DE VALIDACIÓN PARA SERVICIOS
+    // =========================================================================
+
+    private function datosFormularioServicio(): array
+    {
+        return [
+            'nombre_especialidad' => trim($this->input('nombre_especialidad')),
+            'descripcion'         => trim($this->input('descripcion')),
+            'responsabilidades'   => trim($this->input('responsabilidades')),
+            'salario_base'        => trim($this->input('salario_base')),
+            'precio_base'         => trim($this->input('precio_base')),
+        ];
+    }
+
+    private function validarServicio(array $data): Validator
+    {
+        return (new Validator($data))
+            ->required('nombre_especialidad', 'nombre')
+            ->max('nombre_especialidad', self::MAX_NOMBRE_SERVICIO, 'nombre')
+            ->required('precio_base', 'precio base')
+            ->decimal('precio_base', 'precio base')
+            ->decimal('salario_base', 'salario base');
+    }
+
+    private function paraGuardarServicio(array $data): array
+    {
+        $opcional = static fn(string $v): ?string => $v === '' ? null : $v;
+        $importe  = static fn(string $v): string => str_replace(',', '.', $v);
+
+        return [
+            'nombre'            => $data['nombre_especialidad'],
+            'descripcion'       => $opcional($data['descripcion']),
+            'responsabilidades' => $opcional($data['responsabilidades']),
+            'salarioBase'       => $data['salario_base'] === '' ? null : $importe($data['salario_base']),
+            'precioBase'        => $importe($data['precio_base']),
+        ];
     }
 }
