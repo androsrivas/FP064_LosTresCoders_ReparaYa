@@ -15,7 +15,7 @@ class CalendarioController extends Controller
     public function __construct()
     {
         // Accesible tanto para administradores como para técnicos
-        Auth::requireRole([Roles::ADMIN, Roles::TECNICO]);
+        Auth::requireRole(Roles::ADMIN, Roles::TECNICO);
     }
 
     /**
