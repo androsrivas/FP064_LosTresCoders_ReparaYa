@@ -26,7 +26,7 @@ $clasesEstado = [
     'Finalizada' => 'bg-success text-white',
     'Asignada'   => 'bg-info text-dark',
     'En curso'   => 'bg-warning text-dark',
-    'Cancelada'  => 'bg-danger text-white',
+    'Cancelada'  => 'bg-dark border border-secondary text-muted',
     'Pendiente'  => 'bg-secondary text-white',
 ];
 ?>
@@ -334,11 +334,14 @@ function crearCeldaDia(numeroDia, esFueraDeMes, esHoy = false, listaIncidencias 
     celda.appendChild(badgeDia);
 
     listaIncidencias.forEach(inc => {
+        const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
+        const etiquetaTexto = `${esUrgente ? '🔥 ' : ''}#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}`;
+
         const item = document.createElement('div');
-        item.className = `evento-item btn-ver-incidencia ${obtenerBadgeClase(inc.estado)}`;
+        item.className = `evento-item btn-ver-incidencia ${obtenerClaseEvento(inc)}`;
         item.dataset.incidenciaId = inc.id;
-        item.title = `#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}`;
-        item.textContent = `#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}`;
+        item.title = `${etiquetaTexto} (${inc.estado})`;
+        item.textContent = etiquetaTexto;
         celda.appendChild(item);
     });
 
@@ -367,12 +370,17 @@ function renderizarSemanal() {
                     <span class="badge bg-secondary">${incidencias.length} incidencias</span>
                 </div>
                 <div class="card-body p-2">
-                    ${incidencias.map(inc => `
-                        <div class="d-flex justify-content-between align-items-center p-2 mb-1 bg-dark border border-secondary rounded btn-ver-incidencia" data-incidencia-id="${inc.id}" style="cursor:pointer;">
-                            <span class="small text-light fw-bold">#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}</span>
-                            <span class="badge ${obtenerBadgeClase(inc.estado)}">${inc.estado}</span>
-                        </div>
-                    `).join('') || '<span class="text-muted extra-small p-1 d-block">Sin servicios este día.</span>'}
+                    ${incidencias.map(inc => {
+                        const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
+                        return `
+                            <div class="d-flex justify-content-between align-items-center p-2 mb-1 bg-dark border ${esUrgente ? 'border-danger' : 'border-secondary'} rounded btn-ver-incidencia" data-incidencia-id="${inc.id}" style="cursor:pointer;">
+                                <span class="small text-light fw-bold">
+                                    ${esUrgente ? '<span class="badge bg-danger me-1">URGENTE</span>' : ''}#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}
+                                </span>
+                                <span class="badge ${obtenerClaseEvento(inc)}">${inc.estado}</span>
+                            </div>
+                        `;
+                    }).join('') || '<span class="text-muted extra-small p-1 d-block">Sin servicios este día.</span>'}
                 </div>
             </div>
         `;
@@ -399,27 +407,36 @@ function renderizarDiario() {
     }
 
     incidencias.forEach(inc => {
+        const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
         const item = document.createElement('div');
-        item.className = 'p-3 bg-dark border border-secondary rounded d-flex justify-content-between align-items-center btn-ver-incidencia';
+        item.className = `p-3 bg-dark border ${esUrgente ? 'border-danger' : 'border-secondary'} rounded d-flex justify-content-between align-items-center btn-ver-incidencia`;
         item.dataset.incidenciaId = inc.id;
         item.style.cursor = 'pointer';
         item.innerHTML = `
             <div>
-                <h6 class="mb-1 text-warning fw-bold">#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}</h6>
+                <h6 class="mb-1 text-warning fw-bold">
+                    ${esUrgente ? '<span class="badge bg-danger text-white me-2">URGENTE</span>' : ''}#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}
+                </h6>
                 <p class="mb-0 small text-light">${inc.descripcion || 'Sin descripción'}</p>
             </div>
-            <span class="badge ${obtenerBadgeClase(inc.estado)} px-3 py-2">${inc.estado}</span>
+            <span class="badge ${obtenerClaseEvento(inc)} px-3 py-2">${inc.estado}</span>
         `;
         grid.appendChild(item);
     });
 }
 
-function obtenerBadgeClase(estado) {
-    switch (estado) {
+function obtenerClaseEvento(inc) {
+    // Prioridad 1: Si es urgente, siempre rojo exclusivo
+    if ((inc.tipo_urgencia || '').toLowerCase() === 'urgente') {
+        return 'bg-danger text-white fw-bold';
+    }
+
+    // Prioridad 2: Colores por estado (sin rojo)
+    switch (inc.estado) {
         case 'Finalizada': return 'bg-success text-white';
         case 'Asignada':   return 'bg-info text-dark';
         case 'En curso':   return 'bg-warning text-dark';
-        case 'Cancelada':  return 'bg-danger text-white';
+        case 'Cancelada':  return 'bg-dark border border-secondary text-muted';
         default:           return 'bg-secondary text-white';
     }
 }
