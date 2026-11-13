@@ -43,5 +43,3 @@ CREATE TABLE incidencias (
     FOREIGN KEY (tecnico_id) REFERENCES tecnicos(id),
     FOREIGN KEY (especialidad_id) REFERENCES especialidades(id)
 );
-
-

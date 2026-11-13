@@ -47,6 +47,15 @@ p {
     color: var(--text-paragraph) !important;
 }
 
+.color-buscador {
+    color: var(--text-paragraph) !important;
+}
+
+.color-buscador::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.8;
+}
+
 /* Tarjetas y Modales */
 .card, .modal-content, .list-group-item {
     background-color: var(--bg-card) !important;
@@ -70,7 +79,7 @@ p {
     border-color: var(--orange-hover-border) !important;
     box-shadow: 0 12px 32px var(--shadow-deep), 
                 0 0 30px var(--orange-glow) !important;
-    transform: translateY(-4px);
+    /* transform: translateY(-4px); */
 }
 
 /* Botones principales */

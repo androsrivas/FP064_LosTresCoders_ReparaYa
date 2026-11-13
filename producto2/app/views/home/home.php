@@ -251,9 +251,9 @@ $isLoggedIn = Auth::check();
                             <label for="especialidad_id" class="form-label text-muted small">Especialidad del servicio</label>
                             <select name="especialidad_id" id="especialidad_id" class="form-select" required>
                                 <option value="" disabled selected>Selecciona una opción...</option>
-                                <option value="1" <?= ($old['especialidad_id'] ?? '') === '1' ? 'selected' : ''; ?>>Fontanería</option>
-                                <option value="2" <?= ($old['especialidad_id'] ?? '') === '2' ? 'selected' : ''; ?>>Electricidad</option>
-                                <option value="3" <?= ($old['especialidad_id'] ?? '') === '3' ? 'selected' : ''; ?>>Climatización</option>
+                                <?php foreach ($especialidades as $esp): ?>
+                                    <option value="<?= e((string) $esp['id']) ?>"><?= e($esp['nombre_especialidad']) ?></option>
+                                <?php endforeach; ?>
                             </select>
                             <?= field_errors($errors, 'especialidad_id'); ?>
                         </div>
