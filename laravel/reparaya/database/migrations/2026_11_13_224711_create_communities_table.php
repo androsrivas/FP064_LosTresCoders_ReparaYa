@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('communities', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('management_companies_id')
+            $table->foreignId('management_company_id')
                 ->constrained()
                 ->restrictOnDelete();
 
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('address', 255);
             $table->timestamps();
 
-            $table->unique(['management_companies_id', 'name']);
+            $table->unique(['management_company_id', 'name']);
         });
     }
 
