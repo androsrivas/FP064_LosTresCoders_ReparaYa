@@ -28,6 +28,7 @@ $router->post('/cliente/avisos/{id}/cancelar',  'IncidenciaController@cancelarCl
 // COMPARTIDAS (Detalle Modal y Agenda)
 // =============================================================================
 $router->get('/incidencia/detalle/{id}', 'IncidenciaController@verDetalle');
+$router->post('/incidencia/detalle/{id}/mensaje', 'IncidenciaController@enviarMensaje');
 $router->get('/agenda',                  'AgendaController@index');
 $router->get('/agenda/detalle/{id}',     'AgendaController@show');
 

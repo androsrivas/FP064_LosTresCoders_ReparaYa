@@ -5,7 +5,7 @@
 /** @var string $userRol */
 /** @var int $userId */
 
-// FUNCION PARA ACTIVAR EL BOTON DE CANCELACION DEL BOTÓN DE CANCELACION
+// FUNCION PARA ACTIVAR EL BOTON DE CANCELACION
 // 1. Verificar si el estado actual permite modificar/cancelar (según EstadoIncidencia)
 $esEstadoCancelable = !in_array($incidencia['estado'] ?? '', ['Cancelada', 'Finalizada']);
 
@@ -206,18 +206,27 @@ $especialidadNombre = $incidencia['nombre_especialidad']
             <?php if (!empty($mensajes)): ?>
                 <?php foreach ($mensajes as $msg): ?>
                     <?php
-                    $emisorId = (int) ($msg['usuario_id'] ?? 0);
-                    $esMio = ($emisorId === $userId);
+                    $emisorId  = (int) ($msg['usuario_id'] ?? 0);
+                    $esMio     = ($emisorId === $userId);
+                    $emisorRol = strtolower((string) ($msg['emisor_rol'] ?? ''));
+                    $etiquetaRol = match ($emisorRol) {
+                        'tecnico' => 'Técnico',
+                        'admin'   => 'Admin',
+                        default   => 'Cliente',
+                    };
                     ?>
                     <div class="d-flex mb-2 <?= $esMio ? 'justify-content-end' : 'justify-content-start'; ?>">
                         <div class="p-2 rounded <?= $esMio ? 'bg-warning text-dark fw-semibold' : 'bg-secondary text-white'; ?>"
                             style="max-width: 80%;">
                             <div class="small fw-bold border-bottom border-dark border-opacity-25 pb-1 mb-1">
                                 <?= e($msg['emisor_nombre'] ?? $msg['nombre_usuario'] ?? ('Usuario #' . $emisorId)); ?>
-                                <span
-                                    class="fw-normal opacity-75 small">(<?= e(date('H:i d/m', strtotime($msg['created_at'] ?? 'now'))); ?>)</span>
+                                <span class="badge <?= $esMio ? 'bg-dark text-warning' : 'bg-dark text-light'; ?> ms-1" style="font-size: 0.65rem;">
+                                    <?= e($etiquetaRol); ?>
+                                </span>
+                                <span class="fw-normal opacity-75 small ms-1">
+                                    (<?= e(date('H:i d/m', strtotime($msg['created_at'] ?? 'now'))); ?>)
+                                </span>
                             </div>
-                            <!-- Se lee $msg['comentario'] -->
                             <div class="small"><?= nl2br(e($msg['comentario'] ?? '')); ?></div>
                         </div>
                     </div>
@@ -225,7 +234,9 @@ $especialidadNombre = $incidencia['nombre_especialidad']
             <?php else: ?>
                 <div class="text-center py-4 text-muted">
                     <i class="bi bi-chat-left-dots fs-3 d-block mb-1"></i>
-                    <p class="mb-0 fw-bold">Comunícate con tu técnico</p>
+                    <p class="mb-0 fw-bold">
+                        <?= $userRol === 'tecnico' ? 'Comunícate con el cliente' : ($userRol === 'admin' ? 'Foro de seguimiento de la incidencia' : 'Comunícate con tu técnico'); ?>
+                    </p>
                     <small>Usa el formulario inferior para enviar dudas o aclaraciones.</small>
                 </div>
             <?php endif; ?>
@@ -233,6 +244,7 @@ $especialidadNombre = $incidencia['nombre_especialidad']
 
         <!-- Formulario para nuevo mensaje -->
         <form id="formNuevoMensaje" onsubmit="enviarMensajeForo(event, <?= (int) $incidencia['id']; ?>)">
+            <?= csrf_field(); ?>
             <div class="input-group">
                 <input type="text" name="comentario" id="inputMensajeForo"
                     class="form-control bg-dark border-secondary text-white" placeholder="Escribe un mensaje..."
