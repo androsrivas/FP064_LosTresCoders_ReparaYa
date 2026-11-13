@@ -110,7 +110,12 @@ class AdminController extends Controller
 
         $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
         $tecnicoId    = (int) ($_POST['tecnico_id'] ?? 0);
-        $adminUserId  = (int) Session::get('usuario_id', 0);
+        $adminUserId = (int) (
+            Auth::id()
+            ?? Auth::user()['id']
+            ?? Session::get('usuario_id')
+            ?? 0
+        );
 
         if ($incidenciaId <= 0 || $tecnicoId <= 0) {
             $this->flash('danger', 'Debe seleccionar una incidencia y un técnico válidos.');
@@ -138,7 +143,12 @@ class AdminController extends Controller
         }
 
         $incidenciaId = (int) ($_POST['incidencia_id'] ?? 0);
-        $adminUserId  = (int) Session::get('usuario_id', 0);
+        $adminUserId = (int) (
+            Auth::id()
+            ?? Auth::user()['id']
+            ?? Session::get('usuario_id')
+            ?? 0
+        );
 
         $payload = [
             'tecnico_id'      => isset($_POST['tecnico_id']) && $_POST['tecnico_id'] !== '' ? (int) $_POST['tecnico_id'] : null,

@@ -24,16 +24,17 @@ foreach ($incidencias as $inc) {
 
 $clasesEstado = [
     'Finalizada' => 'bg-success text-white',
-    'Asignada'   => 'bg-info text-dark',
-    'En curso'   => 'bg-warning text-dark',
-    'Cancelada'  => 'bg-dark border border-secondary text-muted',
-    'Pendiente'  => 'bg-secondary text-white',
+    'Asignada' => 'bg-info text-dark',
+    'En curso' => 'bg-warning text-dark',
+    'Cancelada' => 'bg-dark border border-secondary text-muted',
+    'Pendiente' => 'bg-secondary text-white',
 ];
 ?>
 
 <div class="container-fluid py-4 text-white">
     <!-- CABECERA Y SECTOR DE VISTAS -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 border-bottom border-secondary pb-3">
+    <div
+        class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 border-bottom border-secondary pb-3">
         <div>
             <h3 class="fw-bold mb-1">
                 <i class="bi bi-calendar-week me-2 text-warning"></i><?= e($titulo ?? 'Agenda de Servicios'); ?>
@@ -45,13 +46,16 @@ $clasesEstado = [
 
         <!-- Botones conmutadores de vista -->
         <div class="btn-group" role="group" aria-label="Cambiar Vista">
-            <button type="button" class="btn btn-outline-warning active" id="btnVistaMensual" onclick="cambiarVistaAgenda('mensual')">
+            <button type="button" class="btn btn-outline-warning active" id="btnVistaMensual"
+                onclick="cambiarVistaAgenda('mensual')">
                 <i class="bi bi-calendar3 me-1"></i>Mensual
             </button>
-            <button type="button" class="btn btn-outline-warning" id="btnVistaSemanal" onclick="cambiarVistaAgenda('semanal')">
+            <button type="button" class="btn btn-outline-warning" id="btnVistaSemanal"
+                onclick="cambiarVistaAgenda('semanal')">
                 <i class="bi bi-calendar-range me-1"></i>Semanal
             </button>
-            <button type="button" class="btn btn-outline-warning" id="btnVistaDiaria" onclick="cambiarVistaAgenda('diaria')">
+            <button type="button" class="btn btn-outline-warning" id="btnVistaDiaria"
+                onclick="cambiarVistaAgenda('diaria')">
                 <i class="bi bi-calendar-day me-1"></i>Diario
             </button>
         </div>
@@ -66,15 +70,28 @@ $clasesEstado = [
                     <h5 class="card-title mb-0 fw-bold text-light" id="tituloCalendario">
                         <!-- Generado por JS -->
                     </h5>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-secondary text-light" onclick="navegarPeriodo(-1)">
-                            <i class="bi bi-chevron-left"></i>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Navegar periodo">
+                        <button type="button"
+                            class="btn btn-outline-warning d-inline-flex align-items-center justify-content-center px-2"
+                            onclick="navegarPeriodo(-1)" title="Periodo anterior" aria-label="Periodo anterior">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                    d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
+                            </svg>
                         </button>
-                        <button type="button" class="btn btn-outline-secondary text-light" onclick="navegarPeriodo(0)">
+                        <button type="button" class="btn btn-outline-warning fw-semibold px-3"
+                            onclick="navegarPeriodo(0)">
                             Hoy
                         </button>
-                        <button type="button" class="btn btn-outline-secondary text-light" onclick="navegarPeriodo(1)">
-                            <i class="bi bi-chevron-right"></i>
+                        <button type="button"
+                            class="btn btn-outline-warning d-inline-flex align-items-center justify-content-center px-2"
+                            onclick="navegarPeriodo(1)" title="Periodo siguiente" aria-label="Periodo siguiente">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                    d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z" />
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -82,7 +99,8 @@ $clasesEstado = [
                 <div class="card-body p-3">
                     <!-- VISTA MENSUAL -->
                     <div id="contenedorMensual">
-                        <div class="row g-0 text-center fw-bold text-muted border-bottom border-secondary mb-2 pb-2 small">
+                        <div
+                            class="row g-0 text-center fw-bold text-muted border-bottom border-secondary mb-2 pb-2 small">
                             <div class="col">Lun</div>
                             <div class="col">Mar</div>
                             <div class="col">Mié</div>
@@ -125,28 +143,29 @@ $clasesEstado = [
                     <?php else: ?>
                         <div class="d-flex flex-column gap-3">
                             <?php foreach ($incidencias as $inc): ?>
-                                <?php 
+                                <?php
                                 $badgeClass = $clasesEstado[$inc['estado'] ?? 'Pendiente'] ?? 'bg-secondary text-white';
                                 $fechaFormat = date('d/m/Y H:i', strtotime($inc['fecha_servicio']));
                                 ?>
                                 <div class="card bg-black bg-opacity-40 border-secondary hover-border-warning transition-all">
                                     <div class="card-body p-3">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <span class="badge bg-secondary small">#<?= e($inc['localizador'] ?? $inc['id']); ?></span>
+                                            <span
+                                                class="badge bg-secondary small">#<?= e($inc['localizador'] ?? $inc['id']); ?></span>
                                             <span class="badge <?= $badgeClass; ?> small"><?= e($inc['estado']); ?></span>
                                         </div>
                                         <h6 class="card-title text-warning mb-1 text-truncate">
                                             <?= e($inc['nombre_especialidad'] ?? $inc['especialidad'] ?? 'Servicio General'); ?>
                                         </h6>
-                                        <p class="card-text text-light small mb-2 text-multiline-truncate" style="-webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;">
+                                        <p class="card-text text-light small mb-2 text-multiline-truncate"
+                                            style="-webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;">
                                             <?= e($inc['descripcion'] ?? 'Sin descripción disponible.'); ?>
                                         </p>
                                         <div class="text-muted extra-small mb-3">
                                             <i class="bi bi-clock me-1"></i><?= $fechaFormat; ?>
                                         </div>
-                                        <button type="button" 
-                                                class="btn btn-outline-warning btn-sm w-100 btn-ver-incidencia" 
-                                                data-incidencia-id="<?= (int)$inc['id']; ?>">
+                                        <button type="button" class="btn btn-outline-warning btn-sm w-100 btn-ver-incidencia"
+                                            data-incidencia-id="<?= (int) $inc['id']; ?>">
                                             <i class="bi bi-eye me-1"></i>Ver Detalle
                                         </button>
                                     </div>
@@ -165,205 +184,209 @@ $clasesEstado = [
 
 <!-- ESTILOS ADICIONALES PARA LA AGENDA -->
 <style>
-/* ESTILOS ADICIONALES PARA LA AGENDA */
-#gridCalendarioMensual {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 7 columnas idénticas para los 7 días */
-    gap: 4px;
-}
+    /* ESTILOS ADICIONALES PARA LA AGENDA */
+    #gridCalendarioMensual {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        /* 7 columnas idénticas para los 7 días */
+        gap: 4px;
+    }
 
-.celda-dia {
-    min-height: 90px;
-    height: 90px; /* Altura uniforme para todas las celdas */
-    background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
-    padding: 6px;
-    transition: background-color 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto; /* Permite scroll discreto si hay muchos eventos en un solo día */
-}
+    .celda-dia {
+        min-height: 90px;
+        height: 90px;
+        /* Altura uniforme para todas las celdas */
+        background-color: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 4px;
+        padding: 6px;
+        transition: background-color 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        /* Permite scroll discreto si hay muchos eventos en un solo día */
+    }
 
-.celda-dia::-webkit-scrollbar {
-    width: 3px;
-}
-.celda-dia::-webkit-scrollbar-thumb {
-    background: rgba(255, 193, 7, 0.4);
-    border-radius: 3px;
-}
+    .celda-dia::-webkit-scrollbar {
+        width: 3px;
+    }
 
-.celda-dia:hover {
-    background-color: rgba(255, 193, 7, 0.05);
-}
+    .celda-dia::-webkit-scrollbar-thumb {
+        background: rgba(255, 193, 7, 0.4);
+        border-radius: 3px;
+    }
 
-.celda-dia.fuera-mes {
-    opacity: 0.35;
-}
+    .celda-dia:hover {
+        background-color: rgba(255, 193, 7, 0.05);
+    }
 
-.celda-dia.hoy {
-    border: 1px solid #ffc107;
-}
+    .celda-dia.fuera-mes {
+        opacity: 0.35;
+    }
 
-.evento-item {
-    font-size: 0.7rem;
-    padding: 2px 4px;
-    border-radius: 3px;
-    cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
-}
+    .celda-dia.hoy {
+        border: 1px solid #ffc107;
+    }
 
-.hover-border-warning:hover {
-    border-color: #ffc107 !important;
-}
+    .evento-item {
+        font-size: 0.7rem;
+        padding: 2px 4px;
+        border-radius: 3px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 2px;
+    }
 
-.extra-small {
-    font-size: 0.75rem;
-}
+    .hover-border-warning:hover {
+        border-color: #ffc107 !important;
+    }
+
+    .extra-small {
+        font-size: 0.75rem;
+    }
 </style>
 
 <!-- LÓGICA JAVASCRIPT DEL CALENDARIO Y MODAL -->
 <script>
-const datosIncidencias = <?= json_encode($incidenciasPorFecha, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
-let vistaActual = 'mensual';
-let fechaReferencia = new Date();
+    const datosIncidencias = <?= json_encode($incidenciasPorFecha, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+    let vistaActual = 'mensual';
+    let fechaReferencia = new Date();
 
-document.addEventListener('DOMContentLoaded', function () {
-    renderizarCalendario();
-});
-
-function cambiarVistaAgenda(nuevaVista) {
-    vistaActual = nuevaVista;
-
-    document.querySelectorAll('.btn-group button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('contenedorMensual').classList.add('d-none');
-    document.getElementById('contenedorSemanal').classList.add('d-none');
-    document.getElementById('contenedorDiario').classList.add('d-none');
-
-    if (nuevaVista === 'mensual') {
-        document.getElementById('btnVistaMensual').classList.add('active');
-        document.getElementById('contenedorMensual').classList.remove('d-none');
-    } else if (nuevaVista === 'semanal') {
-        document.getElementById('btnVistaSemanal').classList.add('active');
-        document.getElementById('contenedorSemanal').classList.remove('d-none');
-    } else {
-        document.getElementById('btnVistaDiaria').classList.add('active');
-        document.getElementById('contenedorDiario').classList.remove('d-none');
-    }
-
-    renderizarCalendario();
-}
-
-function navegarPeriodo(delta) {
-    if (delta === 0) {
-        fechaReferencia = new Date();
-    } else if (vistaActual === 'mensual') {
-        fechaReferencia.setMonth(fechaReferencia.getMonth() + delta);
-    } else if (vistaActual === 'semanal') {
-        fechaReferencia.setDate(fechaReferencia.getDate() + (delta * 7));
-    } else if (vistaActual === 'diaria') {
-        fechaReferencia.setDate(fechaReferencia.getDate() + delta);
-    }
-    renderizarCalendario();
-}
-
-function renderizarCalendario() {
-    const tituloEl = document.getElementById('tituloCalendario');
-    if (!tituloEl) return;
-    
-    if (vistaActual === 'mensual') {
-        const mesNombre = fechaReferencia.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
-        tituloEl.textContent = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
-        renderizarMensual();
-    } else if (vistaActual === 'semanal') {
-        tituloEl.textContent = "Vista Semanal";
-        renderizarSemanal();
-    } else {
-        tituloEl.textContent = fechaReferencia.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        renderizarDiario();
-    }
-}
-
-function renderizarMensual() {
-    const grid = document.getElementById('gridCalendarioMensual');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    const año = fechaReferencia.getFullYear();
-    const mes = fechaReferencia.getMonth();
-
-    const primerDiaMes = new Date(año, mes, 1);
-    const ultimoDiaMes = new Date(año, mes + 1, 0);
-
-    let diaSemanaInicio = primerDiaMes.getDay() - 1; 
-    if (diaSemanaInicio === -1) diaSemanaInicio = 6;
-
-    const totalDiasPrevios = diaSemanaInicio;
-    const totalDiasMes = ultimoDiaMes.getDate();
-
-    const hoyStr = (new Date()).toISOString().split('T')[0];
-
-    // Días del mes anterior
-    const ultimoDiaMesAnterior = new Date(año, mes, 0).getDate();
-    for (let i = totalDiasPrevios - 1; i >= 0; i--) {
-        const numDia = ultimoDiaMesAnterior - i;
-        grid.appendChild(crearCeldaDia(numDia, true));
-    }
-
-    // Días del mes actual
-    for (let d = 1; d <= totalDiasMes; d++) {
-        const mStr = String(mes + 1).padStart(2, '0');
-        const dStr = String(d).padStart(2, '0');
-        const claveFecha = `${año}-${mStr}-${dStr}`;
-        const esHoy = (claveFecha === hoyStr);
-
-        grid.appendChild(crearCeldaDia(d, false, esHoy, datosIncidencias[claveFecha] || []));
-    }
-}
-
-function crearCeldaDia(numeroDia, esFueraDeMes, esHoy = false, listaIncidencias = []) {
-    const celda = document.createElement('div');
-    celda.className = `celda-dia ${esFueraDeMes ? 'fuera-mes' : ''} ${esHoy ? 'hoy' : ''}`;
-    
-    const badgeDia = document.createElement('div');
-    badgeDia.className = `fw-bold mb-1 small ${esHoy ? 'text-warning' : 'text-muted'}`;
-    badgeDia.textContent = numeroDia;
-    celda.appendChild(badgeDia);
-
-    listaIncidencias.forEach(inc => {
-        const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
-        const etiquetaTexto = `${esUrgente ? '🔥 ' : ''}#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}`;
-
-        const item = document.createElement('div');
-        item.className = `evento-item btn-ver-incidencia ${obtenerClaseEvento(inc)}`;
-        item.dataset.incidenciaId = inc.id;
-        item.title = `${etiquetaTexto} (${inc.estado})`;
-        item.textContent = etiquetaTexto;
-        celda.appendChild(item);
+    document.addEventListener('DOMContentLoaded', function () {
+        renderizarCalendario();
     });
 
-    return celda;
-}
+    function cambiarVistaAgenda(nuevaVista) {
+        vistaActual = nuevaVista;
 
-function renderizarSemanal() {
-    const grid = document.getElementById('gridCalendarioSemanal');
-    if (!grid) return;
-    grid.innerHTML = '';
+        document.querySelectorAll('.btn-group button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('contenedorMensual').classList.add('d-none');
+        document.getElementById('contenedorSemanal').classList.add('d-none');
+        document.getElementById('contenedorDiario').classList.add('d-none');
 
-    const curr = new Date(fechaReferencia);
-    const first = curr.getDate() - (curr.getDay() === 0 ? 6 : curr.getDay() - 1);
+        if (nuevaVista === 'mensual') {
+            document.getElementById('btnVistaMensual').classList.add('active');
+            document.getElementById('contenedorMensual').classList.remove('d-none');
+        } else if (nuevaVista === 'semanal') {
+            document.getElementById('btnVistaSemanal').classList.add('active');
+            document.getElementById('contenedorSemanal').classList.remove('d-none');
+        } else {
+            document.getElementById('btnVistaDiaria').classList.add('active');
+            document.getElementById('contenedorDiario').classList.remove('d-none');
+        }
 
-    for (let i = 0; i < 7; i++) {
-        const next = new Date(curr.setDate(first + i));
-        const dateStr = next.toISOString().split('T')[0];
-        const incidencias = datosIncidencias[dateStr] || [];
+        renderizarCalendario();
+    }
 
-        const col = document.createElement('div');
-        col.className = 'col-md-12';
-        col.innerHTML = `
+    function navegarPeriodo(delta) {
+        if (delta === 0) {
+            fechaReferencia = new Date();
+        } else if (vistaActual === 'mensual') {
+            fechaReferencia.setMonth(fechaReferencia.getMonth() + delta);
+        } else if (vistaActual === 'semanal') {
+            fechaReferencia.setDate(fechaReferencia.getDate() + (delta * 7));
+        } else if (vistaActual === 'diaria') {
+            fechaReferencia.setDate(fechaReferencia.getDate() + delta);
+        }
+        renderizarCalendario();
+    }
+
+    function renderizarCalendario() {
+        const tituloEl = document.getElementById('tituloCalendario');
+        if (!tituloEl) return;
+
+        if (vistaActual === 'mensual') {
+            const mesNombre = fechaReferencia.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+            tituloEl.textContent = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
+            renderizarMensual();
+        } else if (vistaActual === 'semanal') {
+            tituloEl.textContent = "Vista Semanal";
+            renderizarSemanal();
+        } else {
+            tituloEl.textContent = fechaReferencia.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            renderizarDiario();
+        }
+    }
+
+    function renderizarMensual() {
+        const grid = document.getElementById('gridCalendarioMensual');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const año = fechaReferencia.getFullYear();
+        const mes = fechaReferencia.getMonth();
+
+        const primerDiaMes = new Date(año, mes, 1);
+        const ultimoDiaMes = new Date(año, mes + 1, 0);
+
+        let diaSemanaInicio = primerDiaMes.getDay() - 1;
+        if (diaSemanaInicio === -1) diaSemanaInicio = 6;
+
+        const totalDiasPrevios = diaSemanaInicio;
+        const totalDiasMes = ultimoDiaMes.getDate();
+
+        const hoyStr = (new Date()).toISOString().split('T')[0];
+
+        // Días del mes anterior
+        const ultimoDiaMesAnterior = new Date(año, mes, 0).getDate();
+        for (let i = totalDiasPrevios - 1; i >= 0; i--) {
+            const numDia = ultimoDiaMesAnterior - i;
+            grid.appendChild(crearCeldaDia(numDia, true));
+        }
+
+        // Días del mes actual
+        for (let d = 1; d <= totalDiasMes; d++) {
+            const mStr = String(mes + 1).padStart(2, '0');
+            const dStr = String(d).padStart(2, '0');
+            const claveFecha = `${año}-${mStr}-${dStr}`;
+            const esHoy = (claveFecha === hoyStr);
+
+            grid.appendChild(crearCeldaDia(d, false, esHoy, datosIncidencias[claveFecha] || []));
+        }
+    }
+
+    function crearCeldaDia(numeroDia, esFueraDeMes, esHoy = false, listaIncidencias = []) {
+        const celda = document.createElement('div');
+        celda.className = `celda-dia ${esFueraDeMes ? 'fuera-mes' : ''} ${esHoy ? 'hoy' : ''}`;
+
+        const badgeDia = document.createElement('div');
+        badgeDia.className = `fw-bold mb-1 small ${esHoy ? 'text-warning' : 'text-muted'}`;
+        badgeDia.textContent = numeroDia;
+        celda.appendChild(badgeDia);
+
+        listaIncidencias.forEach(inc => {
+            const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
+            const etiquetaTexto = `${esUrgente ? '🔥 ' : ''}#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}`;
+
+            const item = document.createElement('div');
+            item.className = `evento-item btn-ver-incidencia ${obtenerClaseEvento(inc)}`;
+            item.dataset.incidenciaId = inc.id;
+            item.title = `${etiquetaTexto} (${inc.estado})`;
+            item.textContent = etiquetaTexto;
+            celda.appendChild(item);
+        });
+
+        return celda;
+    }
+
+    function renderizarSemanal() {
+        const grid = document.getElementById('gridCalendarioSemanal');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const curr = new Date(fechaReferencia);
+        const first = curr.getDate() - (curr.getDay() === 0 ? 6 : curr.getDay() - 1);
+
+        for (let i = 0; i < 7; i++) {
+            const next = new Date(curr.setDate(first + i));
+            const dateStr = next.toISOString().split('T')[0];
+            const incidencias = datosIncidencias[dateStr] || [];
+
+            const col = document.createElement('div');
+            col.className = 'col-md-12';
+            col.innerHTML = `
             <div class="card bg-black bg-opacity-25 border-secondary mb-1">
                 <div class="card-header py-1 px-3 bg-dark border-secondary d-flex justify-content-between text-warning small fw-bold">
                     <span>${next.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
@@ -371,8 +394,8 @@ function renderizarSemanal() {
                 </div>
                 <div class="card-body p-2">
                     ${incidencias.map(inc => {
-                        const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
-                        return `
+                const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
+                return `
                             <div class="d-flex justify-content-between align-items-center p-2 mb-1 bg-dark border ${esUrgente ? 'border-danger' : 'border-secondary'} rounded btn-ver-incidencia" data-incidencia-id="${inc.id}" style="cursor:pointer;">
                                 <span class="small text-light fw-bold">
                                     ${esUrgente ? '<span class="badge bg-danger me-1">URGENTE</span>' : ''}#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}
@@ -380,39 +403,39 @@ function renderizarSemanal() {
                                 <span class="badge ${obtenerClaseEvento(inc)}">${inc.estado}</span>
                             </div>
                         `;
-                    }).join('') || '<span class="text-muted extra-small p-1 d-block">Sin servicios este día.</span>'}
+            }).join('') || '<span class="text-muted extra-small p-1 d-block">Sin servicios este día.</span>'}
                 </div>
             </div>
         `;
-        grid.appendChild(col);
+            grid.appendChild(col);
+        }
     }
-}
 
-function renderizarDiario() {
-    const grid = document.getElementById('gridCalendarioDiario');
-    if (!grid) return;
-    grid.innerHTML = '';
+    function renderizarDiario() {
+        const grid = document.getElementById('gridCalendarioDiario');
+        if (!grid) return;
+        grid.innerHTML = '';
 
-    const dateStr = fechaReferencia.toISOString().split('T')[0];
-    const incidencias = datosIncidencias[dateStr] || [];
+        const dateStr = fechaReferencia.toISOString().split('T')[0];
+        const incidencias = datosIncidencias[dateStr] || [];
 
-    if (incidencias.length === 0) {
-        grid.innerHTML = `
+        if (incidencias.length === 0) {
+            grid.innerHTML = `
             <div class="text-center py-5 text-muted border border-secondary rounded">
                 <i class="bi bi-calendar-event fs-1 d-block mb-2"></i>
                 <p class="mb-0">No hay incidencias programadas para el día seleccionado.</p>
             </div>
         `;
-        return;
-    }
+            return;
+        }
 
-    incidencias.forEach(inc => {
-        const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
-        const item = document.createElement('div');
-        item.className = `p-3 bg-dark border ${esUrgente ? 'border-danger' : 'border-secondary'} rounded d-flex justify-content-between align-items-center btn-ver-incidencia`;
-        item.dataset.incidenciaId = inc.id;
-        item.style.cursor = 'pointer';
-        item.innerHTML = `
+        incidencias.forEach(inc => {
+            const esUrgente = (inc.tipo_urgencia || '').toLowerCase() === 'urgente';
+            const item = document.createElement('div');
+            item.className = `p-3 bg-dark border ${esUrgente ? 'border-danger' : 'border-secondary'} rounded d-flex justify-content-between align-items-center btn-ver-incidencia`;
+            item.dataset.incidenciaId = inc.id;
+            item.style.cursor = 'pointer';
+            item.innerHTML = `
             <div>
                 <h6 class="mb-1 text-warning fw-bold">
                     ${esUrgente ? '<span class="badge bg-danger text-white me-2">URGENTE</span>' : ''}#${inc.localizador || inc.id} - ${inc.nombre_especialidad || 'Servicio'}
@@ -421,94 +444,94 @@ function renderizarDiario() {
             </div>
             <span class="badge ${obtenerClaseEvento(inc)} px-3 py-2">${inc.estado}</span>
         `;
-        grid.appendChild(item);
-    });
-}
-
-function obtenerClaseEvento(inc) {
-    // Prioridad 1: Si es urgente, siempre rojo exclusivo
-    if ((inc.tipo_urgencia || '').toLowerCase() === 'urgente') {
-        return 'bg-danger text-white fw-bold';
+            grid.appendChild(item);
+        });
     }
 
-    // Prioridad 2: Colores por estado (sin rojo)
-    switch (inc.estado) {
-        case 'Finalizada': return 'bg-success text-white';
-        case 'Asignada':   return 'bg-info text-dark';
-        case 'En curso':   return 'bg-warning text-dark';
-        case 'Cancelada':  return 'bg-dark border border-secondary text-muted';
-        default:           return 'bg-secondary text-white';
+    function obtenerClaseEvento(inc) {
+        // Prioridad 1: Si es urgente, siempre rojo exclusivo
+        if ((inc.tipo_urgencia || '').toLowerCase() === 'urgente') {
+            return 'bg-danger text-white fw-bold';
+        }
+
+        // Prioridad 2: Colores por estado (sin rojo)
+        switch (inc.estado) {
+            case 'Finalizada': return 'bg-success text-white';
+            case 'Asignada': return 'bg-info text-dark';
+            case 'En curso': return 'bg-warning text-dark';
+            case 'Cancelada': return 'bg-dark border border-secondary text-muted';
+            default: return 'bg-secondary text-white';
+        }
     }
-}
 
-// SCRIPT GENERAL PARA LA CARGA DINÁMICA DEL MODAL DE DETALLE VÍA AJAX
-document.addEventListener('click', function (e) {
-    const trigger = e.target.closest('.btn-ver-incidencia');
-    if (!trigger) return;
+    // SCRIPT GENERAL PARA LA CARGA DINÁMICA DEL MODAL DE DETALLE VÍA AJAX
+    document.addEventListener('click', function (e) {
+        const trigger = e.target.closest('.btn-ver-incidencia');
+        if (!trigger) return;
 
-    const incidenciaId = trigger.dataset.incidenciaId;
-    if (!incidenciaId) return;
+        const incidenciaId = trigger.dataset.incidenciaId;
+        if (!incidenciaId) return;
 
-    const modalEl = document.getElementById('detalleIncidenciaModal');
-    const contenedorContent = document.getElementById('contenidoDetalleIncidencia');
+        const modalEl = document.getElementById('detalleIncidenciaModal');
+        const contenedorContent = document.getElementById('contenidoDetalleIncidencia');
 
-    if (!modalEl || !contenedorContent) return;
+        if (!modalEl || !contenedorContent) return;
 
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
-    contenedorContent.innerHTML = `
+        contenedorContent.innerHTML = `
         <div class="text-center py-5">
             <div class="spinner-border text-warning" role="status"></div>
             <p class="text-muted small mt-2">Cargando información del servicio...</p>
         </div>`;
 
-    modal.show();
+        modal.show();
 
-    fetch(`<?= e(url('/incidencia/detalle/')); ?>${incidenciaId}`)
-        .then(response => {
-            if (!response.ok) throw new Error('Error de permisos o servicio');
-            return response.text();
-        })
-        .then(html => {
-            contenedorContent.innerHTML = html;
-        })
-        .catch(err => {
-            contenedorContent.innerHTML = `
+        fetch(`<?= e(url('/incidencia/detalle/')); ?>${incidenciaId}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Error de permisos o servicio');
+                return response.text();
+            })
+            .then(html => {
+                contenedorContent.innerHTML = html;
+            })
+            .catch(err => {
+                contenedorContent.innerHTML = `
                 <div class="alert alert-danger mb-0">
                     <i class="bi bi-exclamation-octagon me-2"></i>No se pudo cargar la información del servicio.
                 </div>`;
-        });
-});
-
-document.addEventListener('submit', function (e) {
-    const form = e.target.closest('.form-cambiar-estado-tecnico');
-    if (!form) return;
-
-    e.preventDefault();
-
-    const formData = new FormData(form);
-    const incidenciaId = formData.get('incidencia_id');
-
-    fetch(form.action, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Error al actualizar el estado');
-        return fetch(`<?= e(url('/incidencia/detalle/')); ?>${incidenciaId}`);
-    })
-    .then(response => response.text())
-    .then(html => {
-        const contenedorContent = document.getElementById('contenidoDetalleIncidencia');
-        if (contenedorContent) {
-            contenedorContent.innerHTML = html;
-        }
-        if (typeof renderizarCalendario === 'function') {
-            window.location.reload();
-        }
-    })
-    .catch(err => {
-        alert('Ocurrió un error al intentar cambiar el estado de la incidencia.');
+            });
     });
-});
+
+    document.addEventListener('submit', function (e) {
+        const form = e.target.closest('.form-cambiar-estado-tecnico');
+        if (!form) return;
+
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const incidenciaId = formData.get('incidencia_id');
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Error al actualizar el estado');
+                return fetch(`<?= e(url('/incidencia/detalle/')); ?>${incidenciaId}`);
+            })
+            .then(response => response.text())
+            .then(html => {
+                const contenedorContent = document.getElementById('contenidoDetalleIncidencia');
+                if (contenedorContent) {
+                    contenedorContent.innerHTML = html;
+                }
+                if (typeof renderizarCalendario === 'function') {
+                    window.location.reload();
+                }
+            })
+            .catch(err => {
+                alert('Ocurrió un error al intentar cambiar el estado de la incidencia.');
+            });
+    });
 </script>

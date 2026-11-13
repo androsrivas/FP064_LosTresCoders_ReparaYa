@@ -23,3 +23,51 @@
         </div>
     </div>
 </div>
+
+<script>
+function enviarMensajeForo(event, incidenciaId) {
+    event.preventDefault();
+
+    const form = event.target;
+    const input = document.getElementById('inputMensajeForo');
+    const btnSubmit = form.querySelector('button[type="submit"]');
+    const contenedorContent = document.getElementById('contenidoDetalleIncidencia');
+
+    if (!input || !input.value.trim()) return;
+
+    const formData = new FormData(form);
+    if (btnSubmit) btnSubmit.disabled = true;
+
+    fetch(`<?= e(url('/incidencia/detalle/')); ?>${incidenciaId}/mensaje`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.exito) {
+            alert(data.mensaje || 'No se pudo enviar el mensaje.');
+            if (btnSubmit) btnSubmit.disabled = false;
+            return;
+        }
+
+        // Recargar el parcial del modal para pintar el mensaje recién guardado
+        return fetch(`<?= e(url('/incidencia/detalle/')); ?>${incidenciaId}`)
+            .then(r => r.text())
+            .then(html => {
+                if (contenedorContent) {
+                    contenedorContent.innerHTML = html;
+                    const cajaMensajes = contenedorContent.querySelector('.mensajes-contenedor');
+                    if (cajaMensajes) {
+                        cajaMensajes.scrollTop = cajaMensajes.scrollHeight;
+                    }
+                    const nuevoInput = document.getElementById('inputMensajeForo');
+                    if (nuevoInput) nuevoInput.focus();
+                }
+            });
+    })
+    .catch(() => {
+        alert('Error de conexión al enviar el mensaje.');
+        if (btnSubmit) btnSubmit.disabled = false;
+    });
+}
+</script>

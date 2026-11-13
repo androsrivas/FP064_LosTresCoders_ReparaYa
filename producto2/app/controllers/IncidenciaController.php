@@ -10,6 +10,8 @@ use App\Core\Roles;
 use App\Core\Session;
 use App\Models\HistorialEstado;
 use App\Services\IncidenciaService;
+use App\Models\ComentarioIncidencia;
+use App\Models\Tecnico;
 
 class IncidenciaController extends Controller
 {
@@ -136,7 +138,7 @@ class IncidenciaController extends Controller
        // Mapear usuario_id al ID del registro en la tabla 'tecnicos'
         $esTecnico = false;
         if (strtolower($rol) === 'tecnico' && $usuarioId > 0) {
-            $tecnicoObj = \App\Models\Tecnico::findByUsuarioId($usuarioId);
+            $tecnicoObj = Tecnico::findByUsuarioId($usuarioId);
             $tecnicoId = $tecnicoObj ? (int) $tecnicoObj['id'] : 0;
 
             // El técnico puede ver la incidencia si le está asignada o si la incidencia está Pendiente
@@ -152,7 +154,7 @@ class IncidenciaController extends Controller
         }
 
         $historial = HistorialEstado::obtenerPorIncidencia($id) ?? [];
-        // $mensajes = $this->service->obtenerMensajesForo($id) ?? [];
+        $mensajes = ComentarioIncidencia::obtenerPorIncidencia($id) ?? [];
 
         $userRol = $rol;
         $userId = $usuarioId;
@@ -369,5 +371,79 @@ class IncidenciaController extends Controller
 
         $this->redirect('/gestion');
         return;
+    }
+
+    /**
+     * Guarda un nuevo mensaje en el foro de comunicación de la incidencia (AJAX).
+     * Ruta: POST /incidencia/detalle/{id}/mensaje
+     */
+    public function enviarMensaje($id = 0): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['exito' => false, 'mensaje' => 'Método no permitido.']);
+            return;
+        }
+
+        $incidenciaId = (int) $id;
+        $comentario   = is_string($_POST['comentario'] ?? null) ? trim($_POST['comentario']) : '';
+
+        if ($incidenciaId <= 0 || $comentario === '') {
+            http_response_code(422);
+            echo json_encode(['exito' => false, 'mensaje' => 'El mensaje no puede estar vacío.']);
+            return;
+        }
+
+        $incidencia = $this->service->obtenerPorId($incidenciaId);
+        if (!$incidencia) {
+            http_response_code(404);
+            echo json_encode(['exito' => false, 'mensaje' => 'Incidencia no encontrada.']);
+            return;
+        }
+
+        $usuarioId = (int) (
+            Auth::id()
+            ?? Auth::user()['id']
+            ?? Session::get('usuario_id')
+            ?? 0
+        );
+
+        $rol = strtolower((string) (
+            Auth::user()['rol']
+            ?? Session::get('usuario_rol')
+            ?? ''
+        ));
+
+        // Verificar permisos sobre la incidencia (misma regla que verDetalle)
+        $clienteIdIncidencia = (int) ($incidencia['cliente_id'] ?? $incidencia['usuario_id'] ?? 0);
+        $tecnicoIdIncidencia = (int) ($incidencia['tecnico_id'] ?? 0);
+
+        $esPropietario = ($clienteIdIncidencia === $usuarioId && $usuarioId > 0);
+        $esAdmin       = ($rol === 'admin');
+        $esTecnico     = false;
+
+        if ($rol === 'tecnico' && $usuarioId > 0) {
+            $tecnicoObj = Tecnico::findByUsuarioId($usuarioId);
+            $tecnicoId  = $tecnicoObj ? (int) $tecnicoObj['id'] : 0;
+            $esTecnico  = ($tecnicoIdIncidencia > 0 && $tecnicoIdIncidencia === $tecnicoId)
+                       || (($incidencia['estado'] ?? '') === 'Pendiente');
+        }
+
+        if (!$esPropietario && !$esTecnico && !$esAdmin) {
+            http_response_code(403);
+            echo json_encode(['exito' => false, 'mensaje' => 'No tienes permisos para escribir en este chat.']);
+            return;
+        }
+
+        try {
+            ComentarioIncidencia::crear($incidenciaId, $usuarioId, $comentario);
+            echo json_encode(['exito' => true, 'mensaje' => 'Mensaje enviado.']);
+        } catch (\Throwable $e) {
+            error_log('Error al guardar mensaje foro: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['exito' => false, 'mensaje' => 'Error interno al enviar el mensaje.']);
+        }
     }
 }
