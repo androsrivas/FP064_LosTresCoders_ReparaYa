@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use League\Uri\Builder;
+use Illuminate\Database\Query\Builder;
 
 #[Fillable('uer_id', 'full_name', 'sepciality_id', 'is_available')]
 class Technician extends Model
