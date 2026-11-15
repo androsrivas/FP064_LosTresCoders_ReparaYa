@@ -38,7 +38,7 @@ final class LoginRequest extends FormRequest
     }
 
     /**
-     * Intenta iniciar sesión. El mensaje es el mismo tanto si el correo no existe como si la contraseña es incorrecta )no revela qué correos estan registrados).
+     * Intenta iniciar sesión. El mensaje es el mismo tanto si el correo no existe como si la contraseña es incorrecta (no revela qué correos estan registrados).
      * 
      * @throws ValidationException
      */
@@ -67,7 +67,7 @@ final class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => 'Demasiados intentos. Vuelve a intentarlo en {$seconds} segundos.',
+            'email' => "Demasiados intentos. Vuelve a intentarlo en {$seconds} segundos.",
         ]);
     }
 
