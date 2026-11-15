@@ -7,6 +7,7 @@ use App\Enums\Urgency;
 use App\Models\Incident;
 use App\Models\Speciality;
 use App\Services\IncidentService;
+use App\Http\Requests\StoreIncidentRequest;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,8 @@ final class IncidentController extends Controller
     // Inyección de dependencias por constructor (igual que en Spring)
     public function __construct(
         private readonly IncidentService $incidentService
-    ) {}
+    ) {
+    }
 
     /**
      * Listado de incidencias del cliente autenticado.
@@ -48,19 +50,10 @@ final class IncidentController extends Controller
     /**
      * Guarda una nueva incidencia validando los datos y delegando en IncidentService.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreIncidentRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'speciality_id' => ['required', 'integer', 'exists:specialities,id'],
-            'community_id'  => ['nullable', 'integer', 'exists:communities,id'],
-            'description'   => ['required', 'string', 'min:10', 'max:2000'],
-            'address'       => ['required', 'string', 'min:5', 'max:255'],
-            'service_date'  => ['required', 'date', 'after:now'],
-            'urgency'       => ['required', Rule::enum(Urgency::class)],
-        ]);
-
         try {
-            $this->incidentService->createForClient(Auth::user(), $validated);
+            $this->incidentService->createForClient(Auth::user(), $request->validated());
 
             return redirect()
                 ->route('incidents.index')
