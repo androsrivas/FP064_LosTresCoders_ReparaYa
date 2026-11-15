@@ -16,8 +16,8 @@
     --accent-yellow-hover: #e0a100;
     --orange-hover-border: rgba(255, 160, 0, 0.4);
     --orange-glow: rgba(255, 140, 0, 0.22);
-    --orange-glow-strong: rgba(255, 140, 0, 0.30);
-    --orange-glow-inset: rgba(255, 140, 0, 0.10);
+    --orange-glow-strong: rgba(255, 140, 0, 0.3);
+    --orange-glow-inset: rgba(255, 140, 0, 0.1);
 
     /* Bordes y Sombras */
     --border-subtle: rgba(255, 255, 255, 0.08);
@@ -26,20 +26,37 @@
 }
 
 /* Base global */
-html, body {
+html,
+body {
     background-color: var(--bg-main) !important;
     color: var(--text-body) !important;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        sans-serif;
     min-height: 100vh;
 }
 
 /* Encabezados */
-h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
     color: var(--text-primary) !important;
 }
 
 /* Textos secundarios y párrafos */
-.text-muted, .lead {
+.text-muted,
+.lead {
     color: var(--text-muted) !important;
 }
 
@@ -57,28 +74,40 @@ p {
 }
 
 /* Tarjetas y Modales */
-.card, .modal-content, .list-group-item {
+.card,
+.modal-content,
+.list-group-item {
     background-color: var(--bg-card) !important;
     border: 1px solid var(--border-subtle) !important;
     color: var(--text-body) !important;
     border-radius: 12px;
 }
 
-.card-header, .modal-header, .modal-footer {
+.card-header,
+.modal-header,
+.modal-footer {
     border-color: var(--border-subtle) !important;
     background-color: transparent !important;
 }
 
 /* Transiciones e Interacción Hover */
 .card {
-    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease !important;
 }
 
 .card:hover {
-    background: radial-gradient(circle at center, var(--bg-card) 85%, var(--bg-card-hover) 100%) !important;
+    background: radial-gradient(
+        circle at center,
+        var(--bg-card) 85%,
+        var(--bg-card-hover) 100%
+    ) !important;
     border-color: var(--orange-hover-border) !important;
-    box-shadow: 0 12px 32px var(--shadow-deep), 
-                0 0 30px var(--orange-glow) !important;
+    box-shadow:
+        0 12px 32px var(--shadow-deep),
+        0 0 30px var(--orange-glow) !important;
     /* transform: translateY(-4px); */
 }
 
@@ -93,9 +122,10 @@ p {
 .btn-yellow:hover {
     background-color: var(--accent-yellow-hover) !important;
     color: #000000 !important;
-    box-shadow: 0 10px 30px var(--shadow-deep), 
-                0 0 25px var(--orange-glow-strong),
-                inset 0 0 15px var(--orange-glow-inset) !important;            
+    box-shadow:
+        0 10px 30px var(--shadow-deep),
+        0 0 25px var(--orange-glow-strong),
+        inset 0 0 15px var(--orange-glow-inset) !important;
 }
 
 .btn-outline-yellow {
@@ -107,19 +137,22 @@ p {
 .btn-outline-yellow:hover {
     background-color: var(--accent-yellow) !important;
     color: #000000 !important;
-    box-shadow: 0 10px 30px var(--shadow-deep), 
-                0 0 25px var(--orange-glow-strong),
-                inset 0 0 15px var(--orange-glow-inset) !important;            
+    box-shadow:
+        0 10px 30px var(--shadow-deep),
+        0 0 25px var(--orange-glow-strong),
+        inset 0 0 15px var(--orange-glow-inset) !important;
 }
 
 /* Formularios / Inputs */
-.form-control, .form-select {
+.form-control,
+.form-select {
     background-color: var(--bg-input) !important;
     border: 1px solid var(--border-input) !important;
     color: var(--text-primary) !important;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: var(--accent-yellow) !important;
     box-shadow: 0 0 0 0.25rem rgba(255, 183, 3, 0.2) !important;
 }
@@ -173,12 +206,33 @@ p {
 }
 
 /* Colores según el estado */
-.badge-status-finalizada { color: #2ecc71 !important; border-color: rgba(46, 204, 113, 0.4) !important; }
-.badge-status-asignada   { color: #00d2d3 !important; border-color: rgba(0, 210, 211, 0.4) !important; }
-.badge-status-en-curso   { color: #54a0ff !important; border-color: rgba(84, 160, 255, 0.4) !important; }
-.badge-status-cancelada  { color: #ff6b6b !important; border-color: rgba(255, 107, 107, 0.4) !important; }
-.badge-status-pendiente  { color: #f1c40f !important; border-color: rgba(241, 196, 15, 0.4) !important; }
+.badge-status-finalizada {
+    color: #2ecc71 !important;
+    border-color: rgba(46, 204, 113, 0.4) !important;
+}
+.badge-status-asignada {
+    color: #00d2d3 !important;
+    border-color: rgba(0, 210, 211, 0.4) !important;
+}
+.badge-status-en-curso {
+    color: #54a0ff !important;
+    border-color: rgba(84, 160, 255, 0.4) !important;
+}
+.badge-status-cancelada {
+    color: #ff6b6b !important;
+    border-color: rgba(255, 107, 107, 0.4) !important;
+}
+.badge-status-pendiente {
+    color: #f1c40f !important;
+    border-color: rgba(241, 196, 15, 0.4) !important;
+}
 
 /* Estilos traslúcidos para tipos de urgencia */
-.badge-urgencia-urgente { color: #ff4757 !important; border-color: rgba(255, 71, 87, 0.4) !important; }
-.badge-urgencia-estandar { color: #a4b0be !important; border-color: rgba(164, 176, 190, 0.3) !important; }
+.badge-urgencia-urgente {
+    color: #ff4757 !important;
+    border-color: rgba(255, 71, 87, 0.4) !important;
+}
+.badge-urgencia-estandar {
+    color: #a4b0be !important;
+    border-color: rgba(164, 176, 190, 0.3) !important;
+}

@@ -1,6 +1,6 @@
-@@extends('layouts.app')
+@extends('layouts.app')
 
-@@section('title', 'Registro')
+@section('title', 'Registro')
 
 @section('content')
     <div class="row justify-content-center">
@@ -14,7 +14,7 @@
                     <label for="name" class="form-label">Nombre</label>
                     <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus autocomplete="name"
                     @class(['form-control', 'is-invalid' => $errors->has('name')])>
-                    @@error('name')
+                    @error('name')
                         <div class="invalid-feedback">{{ $messages }}</div>                        
                     @enderror
                 </div>
@@ -23,7 +23,7 @@
                     <label for="email" class="form-label">Correo electrónico</label>
                     <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email"
                     @class(['form-control', 'is-invalid' => $errors->has('email')])>
-                    @@error('email')
+                    @error('email')
                         <div class="invalid-feedback">{{ $messages }}</div>                        
                     @enderror
                 </div>
@@ -32,7 +32,7 @@
                     <label for="phone" class="form-label">Teléfono <span class="text-white-50">(opcional)</span></label>
                     <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" autocomplete="name"
                     @class(['form-control', 'is-invalid' => $errors->has('phone')])>
-                    @@error('phone')
+                    @error('phone')
                         <div class="invalid-feedback">{{ $messages }}</div>                        
                     @enderror
                 </div>
@@ -41,7 +41,7 @@
                     <label for="password" class="form-label">Contraseña</label>
                     <input id="password" name="password" type="password" required autocomplete="new-password"
                     @class(['form-control', 'is-invalid' => $errors->has('password')])>
-                    @@error('password')
+                    @error('password')
                         <div class="invalid-feedback">{{ $messages }}</div>                        
                     @enderror
                 </div>

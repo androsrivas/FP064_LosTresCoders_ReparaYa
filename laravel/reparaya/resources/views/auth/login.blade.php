@@ -1,6 +1,6 @@
-@@extends('layouts.app')
+@extends('layouts.app')
 
-@@section('title', 'Iniciar sesión')
+@section('title', 'Iniciar sesión')
 
 @section('content')
     <div class="row justify-content-center">
@@ -8,7 +8,7 @@
             <h1 class="h3 mb-4">Iniciar sesión</h1>
 
             <form method="POST" action="{{ route('login') }}" novalidate>
-                @@csrf
+                @csrf
 
                 <div class="mb-3">
                     <label for="email" class="form-label">Correo electrónico</label>
@@ -33,7 +33,7 @@
                 <button type="submit" class="btn btn.yellow-100">Entrar</button>
             </form>
 
-            <p class="mt-3 small">¿No tienes cuenta? <a href="{{ route('registre') }}">Regístrate</a></p>
+            <p class="mt-3 small">¿No tienes cuenta? <a href="{{ route('register') }}">Regístrate</a></p>
         </div>
     </div>
 @endsection
