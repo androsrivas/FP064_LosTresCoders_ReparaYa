@@ -25,7 +25,7 @@ final class EnsureUserHasRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $allowed = array_map(UserRole::from(...), $roles);
-        if (! $request->user()?->hasRole($allowed)) {
+        if (! $request->user()?->hasRole(...$allowed)) {
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
         return $next($request);

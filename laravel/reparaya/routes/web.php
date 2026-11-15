@@ -15,19 +15,23 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/registro', [RegisterController::class, 'store']);
 });
 
-// Paneles por rol (provisionales: B y C añadirán sus rutas)
-Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function (): void {
-    Route::view('/', 'dashboard')->name('home');
-});
-
-Route::middleware('role:tecnico')->prefix('tecnico')->name('technician.')->group(function (): void {
-    Route::view('/', 'dashboard')->name('home');
-});
-
-Route::middleware('role:gestora')->prefix('gestora')->name('manager.')->group(function (): void {
-    Route::view('/', 'dashboard')->name('home');
-});
-
-Route::middleware('role:particular')->prefix('cliente')->name('customer.')->group(function (): void {
-    Route::view('/', 'dashboard')->name('home');
+Route::middleware('auth')->group(function (): void {
+    Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+    
+    // Paneles por rol (provisionales: B y C añadirán sus rutas)
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function (): void {
+        Route::view('/', 'dashboard')->name('home');
+    });
+    
+    Route::middleware('role:tecnico')->prefix('tecnico')->name('technician.')->group(function (): void {
+        Route::view('/', 'dashboard')->name('home');
+    });
+    
+    Route::middleware('role:gestora')->prefix('gestora')->name('manager.')->group(function (): void {
+        Route::view('/', 'dashboard')->name('home');
+    });
+    
+    Route::middleware('role:particular')->prefix('cliente')->name('customer.')->group(function (): void {
+        Route::view('/', 'dashboard')->name('home');
+    });
 });

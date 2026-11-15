@@ -3,7 +3,7 @@
         <div class="container-fluid">
             <a class="navbar-brand fw-bold text-yellow d-flex align-items-center gap-2" href="{{ route('home') }}"><span style="font-size: 1.4rem;">🛠️</span> <span>Repara<span class="text-white">Ya</span></span></a>
 
-            <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-control="mainNav" aria-expanded="false" aria-label="Mostrar menú">
+            <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Mostrar menú">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -15,8 +15,8 @@
                             @php($active = request()->routeIs($routeName))
                             <li class="nav-item">
                                 <a @class(['nav-link', 'text-white fw-bold active' => $active, 'text-white-50' => ! $active])
-                                    href="{{ route($routeName) }}" @if ($active) aria-current="pager" @endif>
-                                    {{ label }}
+                                    href="{{ route($routeName) }}" @if ($active) aria-current="page" @endif>
+                                    {{ $label }}
                                 </a>
                             </li>                            
                         @endforeach

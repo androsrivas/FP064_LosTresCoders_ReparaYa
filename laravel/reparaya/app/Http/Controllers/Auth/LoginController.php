@@ -27,7 +27,7 @@ final class LoginController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::logouy();
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

@@ -15,7 +15,7 @@
                     <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus autocomplete="name"
                     @class(['form-control', 'is-invalid' => $errors->has('name')])>
                     @error('name')
-                        <div class="invalid-feedback">{{ $messages }}</div>                        
+                        <div class="invalid-feedback">{{ $message }}</div>                        
                     @enderror
                 </div>
 
@@ -30,7 +30,7 @@
 
                 <div class="mb-3">
                     <label for="phone" class="form-label">Teléfono <span class="text-white-50">(opcional)</span></label>
-                    <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" autocomplete="name"
+                    <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" autocomplete="tel"
                     @class(['form-control', 'is-invalid' => $errors->has('phone')])>
                     @error('phone')
                         <div class="invalid-feedback">{{ $messages }}</div>                        
@@ -51,7 +51,7 @@
                     <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password" class="form-control">
                 </div>
 
-                <button type="submit" class="btn btn-yellow-200">Crear cuenta</button>
+                <button type="submit" class="btn btn-yellow-100">Crear cuenta</button>
             </form>
 
             <p class="mt-3 small">¿Ya tienes cuenta? <a href="{{ route('login') }}">Inicia sesión</a></p>

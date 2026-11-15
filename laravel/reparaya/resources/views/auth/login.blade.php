@@ -30,7 +30,7 @@
                     <label for="remember" class="form-check-label">Recordarme</label>
                 </div>
 
-                <button type="submit" class="btn btn.yellow-100">Entrar</button>
+                <button type="submit" class="btn btn-yellow-100">Entrar</button>
             </form>
 
             <p class="mt-3 small">¿No tienes cuenta? <a href="{{ route('register') }}">Regístrate</a></p>
