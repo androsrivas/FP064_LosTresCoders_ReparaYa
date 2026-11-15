@@ -23,3 +23,17 @@ Route::prefix('incidencias')
         Route::get('/{incident}', 'show')->name('show');
         Route::patch('/{incident}/cancelar', 'cancel')->name('cancel');
     });
+
+
+
+
+/**
+ * Rutas para testear las diferentes partes del CRUD a medida que se vayan incorporando.
+ * Descomentar la sección correspondiente cuando se quiera testear cada cosa
+ */
+
+// CRUD INCIDENCIAS CLIENTE
+Route::get('/dev-login/{id}', function (int $id) {
+    auth()->loginUsingId($id);
+    return redirect()->route('incidents.index');
+});

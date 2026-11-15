@@ -38,6 +38,7 @@ class StoreIncidentRequest extends FormRequest
             'description'   => ['required', 'string', 'min:10', 'max:1000'],
             'urgency'       => ['required', Rule::enum(Urgency::class)],
             'service_date'  => ['required', 'date', $minDateRule],
+            'address'       => ['required', 'string', 'min:5', 'max:255'],
         ];
     }
 
@@ -61,6 +62,9 @@ class StoreIncidentRequest extends FormRequest
             'service_date.date'           => 'El formato de la fecha del servicio no es válido.',
             'service_date.after'          => 'Para incidencias urgentes, la fecha y hora del servicio deben ser posteriores al momento actual.',
             'service_date.after_or_equal' => 'Las incidencias estándar deben solicitarse con al menos 48 horas de antelación.',
+            'address.required'            => 'La dirección de intervención es obligatoria.',
+            'address.min'                 => 'La dirección debe tener al menos 5 caracteres.',
+            'address.max'                 => 'La dirección no puede superar los 255 caracteres.',
         ];
     }
 }
