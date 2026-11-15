@@ -14,7 +14,7 @@ Route::get('/', function () {
 // Rutas del CRUD de Incidencias (Cliente / Gestor)
 Route::prefix('incidencias')
     ->name('incidents.')
-    // ->middleware(['auth', 'role:particular,gestora']) // Si añadís middleware de control por rol
+    ->middleware(['auth', 'role:particular,gestora'])
     ->controller(IncidentController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');
