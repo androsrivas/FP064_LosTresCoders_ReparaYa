@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\IncidentStatus;
+use App\Enums\Urgency;
 use App\Models\Incident;
 use App\Models\User;
 use DomainException;
@@ -23,10 +24,19 @@ final class IncidentService
     public function createForClient(User $client, array $data): Incident
     {
         $serviceDate = Carbon::parse($data['service_date']);
+        $urgency = $data['urgency'] instanceof Urgency
+            ? $data['urgency']
+            : Urgency::from($data['urgency']);
 
-        if ($serviceDate->lt(now()->addHours(self::MIN_HOURS_ADVANCE))) {
+        if ($urgency === Urgency::Urgent) {
+            if ($serviceDate->isPast()) {
+                throw new DomainException(
+                    'La fecha del servicio urgente debe ser posterior al momento actual.'
+                );
+            }
+        } elseif ($serviceDate->lt(now()->addHours(self::MIN_HOURS_ADVANCE))) {
             throw new DomainException(
-                'La fecha del servicio debe solicitarse con al menos 48 horas de antelación.'
+                'La fecha del servicio estándar debe solicitarse con al menos 48 horas de antelación.'
             );
         }
 
