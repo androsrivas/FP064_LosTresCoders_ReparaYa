@@ -9,4 +9,60 @@ enum UserRole: string
     case Technician = 'tecnico';
     case Customer = 'particular';
     case PropertyManager = 'gestora';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Admin => 'Adminsitrador',
+            self::Technician => 'Técnico',
+            self::Customer => 'Particular',
+            self::PropertyManager => 'Gestora',
+        };
+    }
+
+    /** Nombre de la ruta donde va el usuario después de iniciar sesión */
+    public function homeRoute(): string
+    {
+        return match ($this) {
+            self::Admin => 'admin.home',
+            self::Technician => 'technician.home',
+            self::Customer => 'customer.home',
+            self::PropertyManager => 'manager.home'
+        };
+    }
+
+    /**
+     * Menú por rol: [etiqueta, nombre de la ruta]
+     * Las rutas que aún no existen no se muestran (Route::has en el layout), así solo se deberán crear con estos nombres.
+     * 
+     * @return list<array{0: string, 1: string}>
+     */
+    public function menu(): array
+    {
+        return match ($this) {
+            self::Admin => [
+                ['Panel', 'admin.home'],
+                ['Incidencias', 'admin.incidents.index'],
+                ['Calendario', 'admin.calendar'],
+                ['Técnicos', 'admin.technicians.index'],
+                ['Servicios', 'admin.specialities.index'],
+                ['Gestoras', 'admin.management-companies.index'],
+                ['Zonas', 'admin.zones.index'],
+                ['Liquidaciones', 'admin.settlements.index'],
+            ],
+            self::Technician => [
+                ['Mi agenda', 'technician.home'],
+            ],
+            self::Customer => [
+                ['Mis avisos', 'customer.home'],
+                ['Nueva solicitud', 'customer.incidents.create'],
+            ],
+            self::PropertyManager => [
+                ['Mi panel', 'manager.home'],
+                ['Comunidades', 'manager.communities.index'],
+                ['Incidencias', 'manager.incidents.index'],
+                ['Liquidaciones', 'manager.settlements.index'],
+            ],
+        };
+    }
 }
