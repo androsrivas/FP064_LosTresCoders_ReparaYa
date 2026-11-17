@@ -16,6 +16,7 @@ final class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $user = $request->user();
+        abort_unless($user !== null, 401);
 
         $incidents = $user->incidents()
             ->with(['speciality', 'technician.user', 'community'])
