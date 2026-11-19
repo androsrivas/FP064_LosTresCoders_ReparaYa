@@ -18,7 +18,7 @@ Route::prefix('incidencias')
     ->controller(IncidentController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('/crear', 'create')->name('create');
+        // Route::get('/crear', 'create')->name('create');
         Route::post('/', 'store')->name('store');
         Route::get('/{incident}', 'show')->name('show');
         Route::patch('/{incident}/cancelar', 'cancel')->name('cancel');
