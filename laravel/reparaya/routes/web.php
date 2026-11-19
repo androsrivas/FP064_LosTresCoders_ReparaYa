@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+
 
 Route::view('/', 'home')->name('home');
 
@@ -17,6 +19,14 @@ Route::middleware('guest')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+    // Perfil propio: común a todos los roles, por eso va fuera de los grupos 'role:'
+    Route::prefix('perfil')->name('profile.')->controller(ProfileController::class)->group(function (): void {
+        Route::get('/', 'show')->name('show');
+        Route::get('/editar', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+        Route::put('/password', 'updatePassword')->name('password');
+    });
     
     // Paneles por rol (provisionales: B y C añadirán sus rutas)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function (): void {
