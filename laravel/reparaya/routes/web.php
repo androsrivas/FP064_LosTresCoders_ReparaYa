@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IncidentController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -20,12 +21,15 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
-    // Perfil propio: común a todos los roles, por eso va fuera de los grupos 'role:'
-    Route::prefix('perfil')->name('profile.')->controller(ProfileController::class)->group(function (): void {
-        Route::get('/', 'show')->name('show');
-        Route::get('/editar', 'edit')->name('edit');
-        Route::put('/', 'update')->name('update');
-        Route::put('/password', 'updatePassword')->name('password');
+    // CRUD de incidencias (compartido por particular y gestora)
+    Route::middleware('role:particular,gestora')->group(function (): void {
+        Route::resource('incidencias', IncidentController::class)
+            ->only(['index', 'store', 'show'])
+            ->names('incidents')
+            ->parameters(['incidencias' => 'incident']);
+        
+        Route::patch('/incidencias/{incident}/cancelar', [IncidentController::class, 'cancel'])
+            ->name('incidents.cancel');
     });
     
     // Paneles por rol (provisionales: B y C añadirán sus rutas)
@@ -38,10 +42,10 @@ Route::middleware('auth')->group(function (): void {
     });
     
     Route::middleware('role:gestora')->prefix('gestora')->name('manager.')->group(function (): void {
-        Route::view('/', 'dashboard')->name('home');
+        Route::get('/', DashboardController::class)->name('home');
     });
     
     Route::middleware('role:particular')->prefix('cliente')->name('customer.')->group(function (): void {
-        Route::view('/', 'dashboard')->name('home');
+        Route::get('/', DashboardController::class)->name('home');
     });
 });
