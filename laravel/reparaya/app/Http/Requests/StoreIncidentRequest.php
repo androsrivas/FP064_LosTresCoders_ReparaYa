@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\Urgency;
+use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -26,6 +27,10 @@ class StoreIncidentRequest extends FormRequest
      */
     public function rules(): array
     {
+        $user = $this->user();
+        $isGestora = $user?->hasRole(UserRole::PropertyManager) ?? false;
+        $managementCompanyId = $user?->managementCompany?->id;
+
         $isUrgent = $this->input('urgency') === Urgency::Urgent->value;
 
         $minDateRule = $isUrgent
@@ -34,7 +39,15 @@ class StoreIncidentRequest extends FormRequest
 
         return [
             'speciality_id' => ['required', 'integer', 'exists:specialities,id'],
-            'community_id'  => ['nullable', 'integer', 'exists:communities,id'],
+            'community_id'  => $isGestora
+                ? [
+                    'required',
+                    'integer',
+                    Rule::exists('communities', 'id')->where(
+                        fn ($query) => $query->where('management_company_id', $managementCompanyId)
+                    ),
+                ]
+                : ['prohibited'],
             'description'   => ['required', 'string', 'min:10', 'max:1000'],
             'urgency'       => ['required', Rule::enum(Urgency::class)],
             'service_date'  => ['required', 'date', $minDateRule],
@@ -53,6 +66,8 @@ class StoreIncidentRequest extends FormRequest
             'speciality_id.required'      => 'Debes seleccionar una especialidad técnica.',
             'speciality_id.exists'        => 'La especialidad seleccionada no es válida.',
             'community_id.exists'         => 'La comunidad seleccionada no es válida.',
+            'community_id.required'       => 'Debes seleccionar una comunidad.',
+            'community_id.prohibited'     => 'Un cliente particular no puede asociar una comunidad a la incidencia.',
             'description.required'        => 'La descripción de la incidencia es obligatoria.',
             'description.min'             => 'Describe el problema con al menos 10 caracteres.',
             'description.max'             => 'La descripción no puede superar los 1000 caracteres.',
