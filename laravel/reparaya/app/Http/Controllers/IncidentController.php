@@ -33,7 +33,11 @@ final class IncidentController extends Controller
 
         $specialities = Speciality::orderBy('name')->get();
 
-        return view('incidents.index', compact('incidents', 'specialities'));
+        // Comunidades de la gestora (colección vacía pra particulares)
+        $communities = Auth::user()->managementCompany?->communities()->orderBy('name')->get()
+            ?? collect();
+
+        return view('incidents.index', compact('incidents', 'specialities', 'communities'));
     }
 
     /**
