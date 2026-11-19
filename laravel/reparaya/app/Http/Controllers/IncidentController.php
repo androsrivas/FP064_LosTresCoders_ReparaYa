@@ -54,7 +54,7 @@ final class IncidentController extends Controller
             $this->incidentService->createForClient(Auth::user(), $request->validated());
 
             return redirect()
-                ->route('incidents.index')
+                ->route(Auth::user()->role->homeRoute())
                 ->with('success', 'Incidencia registrada correctamente.');
         } catch (DomainException $e) {
             return back()
