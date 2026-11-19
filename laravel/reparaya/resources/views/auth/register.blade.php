@@ -24,7 +24,7 @@
                     <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email"
                     @class(['form-control', 'is-invalid' => $errors->has('email')])>
                     @error('email')
-                        <div class="invalid-feedback">{{ $messages }}</div>                        
+                        <div class="invalid-feedback">{{ $message }}</div>                        
                     @enderror
                 </div>
 
@@ -33,7 +33,7 @@
                     <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" autocomplete="tel"
                     @class(['form-control', 'is-invalid' => $errors->has('phone')])>
                     @error('phone')
-                        <div class="invalid-feedback">{{ $messages }}</div>                        
+                        <div class="invalid-feedback">{{ $message }}</div>                        
                     @enderror
                 </div>
 
@@ -42,7 +42,7 @@
                     <input id="password" name="password" type="password" required autocomplete="new-password"
                     @class(['form-control', 'is-invalid' => $errors->has('password')])>
                     @error('password')
-                        <div class="invalid-feedback">{{ $messages }}</div>                        
+                        <div class="invalid-feedback">{{ $message }}</div>                        
                     @enderror
                 </div>
 
