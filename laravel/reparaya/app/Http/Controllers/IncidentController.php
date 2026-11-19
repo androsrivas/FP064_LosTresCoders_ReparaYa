@@ -33,7 +33,7 @@ final class IncidentController extends Controller
 
         $specialities = Speciality::orderBy('name')->get();
 
-        return view('incidents.index', compact('incidents'));
+        return view('incidents.index', compact('incidents', 'specialities'));
     }
 
     /**
