@@ -18,7 +18,7 @@
 
         {{-- Resumen de las últimas incidencias --}}
         <div class="col-lg-7">
-            <div class="card">
+            <div class="card overflow-hidden">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Últimas incidencias</span>
                     <a href="{{ route('incidents.index') }}" class="btn btn-outline-yellow btn-sm">Ver todas</a>
