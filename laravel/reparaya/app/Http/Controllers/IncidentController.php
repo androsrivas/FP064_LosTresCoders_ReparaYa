@@ -31,6 +31,8 @@ final class IncidentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $specialities = Speciality::orderBy('name')->get();
+
         return view('incidents.index', compact('incidents'));
     }
 

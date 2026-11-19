@@ -29,9 +29,6 @@
     </style>
 </head>
 <body>
-    @php
-        $testSpecialities = \App\Models\Speciality::orderBy('name')->get();
-    @endphp
 
     <h1>Banco de Pruebas: IncidentController (Usuario ID: {{ Auth::id() ?? 'Guest' }})</h1>
 
@@ -68,7 +65,7 @@
                     <label for="speciality_id">Especialidad *</label>
                     <select name="speciality_id" id="speciality_id">
                         <option value="">-- Selecciona --</option>
-                        @foreach ($testSpecialities as $spec)
+                        @foreach ($specialities as $spec)
                             <option value="{{ $spec->id }}" @selected(old('speciality_id') == $spec->id)>
                                 {{ $spec->name }}
                             </option>
