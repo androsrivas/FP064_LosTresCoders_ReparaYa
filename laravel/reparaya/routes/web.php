@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\IncidentController;
+use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
 
@@ -18,6 +18,17 @@ Route::middleware('guest')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+    // CRUD de incidencias (compartido por particular y gestora)
+    Route::middleware('role:particular,gestora')->group(function (): void {
+        Route::resource('incidencias', IncidentController::class)
+            ->only(['index', 'store', 'show'])
+            ->names('incidents')
+            ->parameters(['incidencias' => 'incident']);
+        
+        Route::patch('/incidencias/{incident}/cancelar', [IncidentController::class, 'cancel'])
+            ->name('incidents.cancel');
+    });
     
     // Paneles por rol (provisionales: B y C añadirán sus rutas)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function (): void {
@@ -35,31 +46,4 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware('role:particular')->prefix('cliente')->name('customer.')->group(function (): void {
         Route::view('/', 'dashboard')->name('home');
     });
-});
-
-// Rutas del CRUD de Incidencias (Cliente / Gestor)
-Route::prefix('incidencias')
-    ->name('incidents.')
-    ->middleware(['auth', 'role:particular,gestora'])
-    ->controller(IncidentController::class)
-    ->group(function () {
-        Route::get('/', 'index')->name('index');
-        // Route::get('/crear', 'create')->name('create');
-        Route::post('/', 'store')->name('store');
-        Route::get('/{incident}', 'show')->name('show');
-        Route::patch('/{incident}/cancelar', 'cancel')->name('cancel');
-    });
-
-
-
-
-/**
- * Rutas para testear las diferentes partes del CRUD a medida que se vayan incorporando.
- * Descomentar la sección correspondiente cuando se quiera testear cada cosa
- */
-
-// CRUD INCIDENCIAS CLIENTE
-Route::get('/dev-login/{id}', function (int $id) {
-    auth()->loginUsingId($id);
-    return redirect()->route('incidents.index');
 });
