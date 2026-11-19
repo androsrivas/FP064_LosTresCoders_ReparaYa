@@ -8,6 +8,10 @@ use Illuminate\Foundation\Http\FormRequest;
 final class UpdatePasswordRequest extends FormRequest
 {
     /**
+     * Bolsa de errores propia: el formulario de contraseñas comparte la página con el de datos
+     */
+    protected $errorBag = 'updatePassword';
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
