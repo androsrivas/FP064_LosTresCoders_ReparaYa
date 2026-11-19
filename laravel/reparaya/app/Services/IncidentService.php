@@ -73,30 +73,32 @@ final class IncidentService
      */
     public function cancelByClient(Incident $incident, User $client): void
     {
-        if (!in_array($incident->status, [IncidentStatus::Pending, IncidentStatus::Assigned], true)) {
-            throw new DomainException(
-                'Solo se pueden cancelar incidencias en estado Pendiente o Asignada.'
-            );
-        }
-
-        if ($incident->service_date->lt(now()->addHours(self::MIN_HOURS_ADVANCE))) {
-            throw new DomainException(
-                'No es posible cancelar una incidencia con menos de 48 horas de antelación.'
-            );
-        }
-
         DB::transaction(function () use ($incident, $client): void {
-            $previousStatus = $incident->status;
+            $lockedIncident = Incident::lockForUpdate()->findOrFail($incident->id);
 
-            $incident->status = IncidentStatus::Cancelled;
-            $incident->save();
+            if (!in_array($lockedIncident->status, [IncidentStatus::Pending, IncidentStatus::Assigned], true)) {
+                throw new DomainException(
+                    'Solo se pueden cancelar incidencias en estado Pendiente o Asignada.'
+                );
+            }
 
-            $incident->statusLogs()->create([
-                'user_id'         => $client->id,
-                'previous_status' => $previousStatus,
-                'new_status'      => IncidentStatus::Cancelled,
-                'note'            => 'Incidencia cancelada por el cliente.',
-            ]);
+            if ($lockedIncident->service_date->lt(now()->addHours(self::MIN_HOURS_ADVANCE))) {
+                throw new DomainException(
+                    'No es posible cancelar una incidencia con menos de 48 horas de antelación.'
+                );
+            }
+
+                $previousStatus = $lockedIncident->status;
+
+                $lockedIncident->status = IncidentStatus::Cancelled;
+                $lockedIncident->save();
+
+                $lockedIncident->statusLogs()->create([
+                    'user_id'         => $client->id,
+                    'previous_status' => $previousStatus,
+                    'new_status'      => IncidentStatus::Cancelled,
+                    'note'            => 'Incidencia cancelada por el cliente.',
+                ]);
         });
     }
 

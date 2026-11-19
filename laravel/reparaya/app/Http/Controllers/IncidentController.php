@@ -10,9 +10,7 @@ use App\Services\IncidentService;
 use App\Http\Requests\StoreIncidentRequest;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 final class IncidentController extends Controller
