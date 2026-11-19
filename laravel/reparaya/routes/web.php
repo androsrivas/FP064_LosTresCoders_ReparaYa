@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,10 +41,10 @@ Route::middleware('auth')->group(function (): void {
     });
     
     Route::middleware('role:gestora')->prefix('gestora')->name('manager.')->group(function (): void {
-        Route::view('/', 'dashboard')->name('home');
+        Route::get('/', DashboardController::class)->name('home');
     });
     
     Route::middleware('role:particular')->prefix('cliente')->name('customer.')->group(function (): void {
-        Route::view('/', 'dashboard')->name('home');
+        Route::get('/', DashboardController::class)->name('home');
     });
 });
