@@ -51,7 +51,7 @@
                     <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password" class="form-control">
                 </div>
 
-                <button type="submit" class="btn btn-yellow-100">Crear cuenta</button>
+                <button type="submit" class="btn btn-yellow">Crear cuenta</button>
             </form>
 
             <p class="mt-3 small">¿Ya tienes cuenta? <a href="{{ route('login') }}">Inicia sesión</a></p>
