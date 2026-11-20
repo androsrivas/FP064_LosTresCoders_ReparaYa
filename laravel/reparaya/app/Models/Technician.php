@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 
-#[Fillable('uer_id', 'full_name', 'sepciality_id', 'is_available')]
+#[Fillable(['user_id', 'full_name', 'speciality_id', 'is_available'])]
 class Technician extends Model
 {
     protected function casts(): array
