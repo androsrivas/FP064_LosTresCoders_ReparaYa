@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\SpecialityController;
+use App\Http\Controllers\Admin\TechnicianController;
 
 Route::view('/', 'home')->name('home');
 
@@ -34,6 +36,17 @@ Route::middleware('auth')->group(function (): void {
     // Paneles por rol (provisionales: B y C añadirán sus rutas)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function (): void {
         Route::view('/', 'dashboard')->name('home');
+
+        Route::resource('especialidades', SpecialityController::class)
+            ->names('specialities')
+            ->parameters(['especialidades' => 'speciality'])
+            ->except(['show']);
+
+        Route::resource('tecnicos', TechnicianController::class)
+            ->names('technicians')
+            ->parameters(['tecnicos' => 'technician'])
+            ->except(['show']);
+            
     });
     
     Route::middleware('role:tecnico')->prefix('tecnico')->name('technician.')->group(function (): void {
@@ -47,4 +60,5 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware('role:particular')->prefix('cliente')->name('customer.')->group(function (): void {
         Route::get('/', DashboardController::class)->name('home');
     });
+
 });
