@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\Urgency;
 use App\Enums\UserRole;
+use App\Services\IncidentService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -35,7 +36,7 @@ class StoreIncidentRequest extends FormRequest
 
         $minDateRule = $isUrgent
             ? 'after:now'
-            : 'after_or_equal:' . now()->addHours(48)->toDateTimeString();
+            : 'after_or_equal:' . now()->addHours(IncidentService::MIN_HOURS_ADVANCE)->toDateTimeString();
 
         return [
             'speciality_id' => ['required', 'integer', 'exists:specialities,id'],
@@ -62,6 +63,8 @@ class StoreIncidentRequest extends FormRequest
      */
     public function messages(): array
     {
+        $hours = IncidentService::MIN_HOURS_ADVANCE;
+
         return [
             'speciality_id.required'      => 'Debes seleccionar una especialidad técnica.',
             'speciality_id.exists'        => 'La especialidad seleccionada no es válida.',
@@ -76,7 +79,7 @@ class StoreIncidentRequest extends FormRequest
             'service_date.required'       => 'La fecha y hora preferida del servicio son obligatorias.',
             'service_date.date'           => 'El formato de la fecha del servicio no es válido.',
             'service_date.after'          => 'Para incidencias urgentes, la fecha y hora del servicio deben ser posteriores al momento actual.',
-            'service_date.after_or_equal' => 'Las incidencias estándar deben solicitarse con al menos 48 horas de antelación.',
+            'service_date.after_or_equal' => "Las incidencias estándar deben solicitarse con al menos {$hours} horas de antelación.",
             'address.required'            => 'La dirección de intervención es obligatoria.',
             'address.min'                 => 'La dirección debe tener al menos 5 caracteres.',
             'address.max'                 => 'La dirección no puede superar los 255 caracteres.',

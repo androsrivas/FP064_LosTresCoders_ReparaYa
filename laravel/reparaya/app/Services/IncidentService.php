@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 
 final class IncidentService
 {
-    private const MIN_HOURS_ADVANCE = 48;
+    public const MIN_HOURS_ADVANCE = 48;
 
     /**
      * Crea una nueva incidencia para el cliente y registra su entrada inicial en el historial.
