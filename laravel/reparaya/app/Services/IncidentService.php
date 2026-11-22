@@ -5,12 +5,14 @@ namespace App\Services;
 
 use App\Enums\IncidentStatus;
 use App\Enums\Urgency;
+use App\Exceptions\Incident\CancellationDeadlineExceededException;
+use App\Exceptions\Incident\IncidentNotCancellableException;
 use App\Exceptions\Incident\InvalidServiceDateException;
 use App\Models\Incident;
 use App\Models\User;
-use DomainException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 final class IncidentService
@@ -40,11 +42,11 @@ final class IncidentService
         return DB::transaction(function () use ($client, $data, $serviceDate, $urgency): Incident {
             $incident = new Incident([
                 'speciality_id' => $data['speciality_id'],
-                'community_id'  => $data['community_id'] ?? null,
-                'description'   => trim($data['description']),
-                'address'       => trim($data['address']),
-                'service_date'  => $serviceDate,
-                'urgency'       => $urgency,
+                'community_id' => $data['community_id'] ?? null,
+                'description' => trim($data['description']),
+                'address' => trim($data['address']),
+                'service_date' => $serviceDate,
+                'urgency' => $urgency,
             ]);
 
             // Campos protegidos que no van en #[Fillable]
@@ -55,10 +57,10 @@ final class IncidentService
 
             // Registro inicial en incident_status_logs
             $incident->statusLogs()->create([
-                'user_id'         => $client->id,
+                'user_id' => $client->id,
                 'previous_status' => null,
-                'new_status'      => IncidentStatus::Pending,
-                'note'            => 'Incidencia registrada.',
+                'new_status' => IncidentStatus::Pending,
+                'note' => 'Incidencia registrada.',
             ]);
 
             return $incident;
@@ -66,36 +68,38 @@ final class IncidentService
     }
 
     /**
-     * Cancela una incidencia del cliente si su estado y antelación lo permiten.
+     * Cancela una incidencia del cliente si es suya y su estado y antelación lo permiten.
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException si el cliente no es el propietario
+     * @throws IncidentNotCancellableException si el estado no permite cancelar
+     * @throws CancellationDeadlineExceededException si no queda más de la antelación mínima
      */
     public function cancelByClient(Incident $incident, User $client): void
     {
         DB::transaction(function () use ($incident, $client): void {
             $lockedIncident = Incident::lockForUpdate()->findOrFail($incident->id);
 
+            Gate::forUser($client)->authorize('cancel', $lockedIncident);
+
             if (!in_array($lockedIncident->status, [IncidentStatus::Pending, IncidentStatus::Assigned], true)) {
-                throw new DomainException(
-                    'Solo se pueden cancelar incidencias en estado Pendiente o Asignada.'
-                );
+                throw IncidentNotCancellableException::forStatus($lockedIncident->status);
             }
 
-            if ($lockedIncident->service_date->lt(now()->addHours(self::MIN_HOURS_ADVANCE))) {
-                throw new DomainException(
-                    'No es posible cancelar una incidencia con menos de 48 horas de antelación.'
-                );
+            if ($lockedIncident->service_date->lte(now()->addHours(self::MIN_HOURS_ADVANCE))) {
+                throw CancellationDeadlineExceededException::withinHours(self::MIN_HOURS_ADVANCE);
             }
 
-                $previousStatus = $lockedIncident->status;
+            $previousStatus = $lockedIncident->status;
 
-                $lockedIncident->status = IncidentStatus::Cancelled;
-                $lockedIncident->save();
+            $lockedIncident->status = IncidentStatus::Cancelled;
+            $lockedIncident->save();
 
-                $lockedIncident->statusLogs()->create([
-                    'user_id'         => $client->id,
-                    'previous_status' => $previousStatus,
-                    'new_status'      => IncidentStatus::Cancelled,
-                    'note'            => 'Incidencia cancelada por el cliente.',
-                ]);
+            $lockedIncident->statusLogs()->create([
+                'user_id' => $client->id,
+                'previous_status' => $previousStatus,
+                'new_status' => IncidentStatus::Cancelled,
+                'note' => 'Incidencia cancelada por el cliente.',
+            ]);
         });
     }
 
