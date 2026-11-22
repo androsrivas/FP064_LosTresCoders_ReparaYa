@@ -11,6 +11,7 @@ use App\Http\Requests\StoreIncidentRequest;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 final class IncidentController extends Controller
@@ -68,8 +69,7 @@ final class IncidentController extends Controller
      */
     public function show(Incident $incident): View
     {
-        // Evitar IDOR: solo el cliente dueño de la incidencia puede verla aquí
-        abort_if($incident->client_id !== Auth::id(), 403);
+        Gate::authorize('view', $incident);
 
         $incident->load([
             'speciality',
@@ -87,7 +87,7 @@ final class IncidentController extends Controller
      */
     public function cancel(Incident $incident): RedirectResponse
     {
-        abort_if($incident->client_id !== Auth::id(), 403);
+        Gate::authorize('cancel', $incident);
 
         try {
             $this->incidentService->cancelByClient($incident, Auth::user());
