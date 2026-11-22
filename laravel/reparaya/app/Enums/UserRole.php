@@ -44,6 +44,7 @@ enum UserRole: string
                 ['Panel', 'admin.home'],
                 ['Incidencias', 'admin.incidents.index'],
                 ['Calendario', 'admin.calendar'],
+                ['Usuarios', 'admin.users.index'],
                 ['Técnicos', 'admin.technicians.index'],
                 ['Servicios', 'admin.specialities.index'],
                 ['Gestoras', 'admin.management-companies.index'],
