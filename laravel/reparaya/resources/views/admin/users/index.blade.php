@@ -110,4 +110,8 @@ $externalCrud = [
             @endif
         </div>
     </div>
+
+    @push('scripts')
+        <script src="{{ asset('js/confirm.js') }}"></script>
+    @endpush
 @endsection
