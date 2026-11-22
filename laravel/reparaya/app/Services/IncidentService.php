@@ -5,6 +5,7 @@ namespace App\Services;
 
 use App\Enums\IncidentStatus;
 use App\Enums\Urgency;
+use App\Exceptions\Incident\InvalidServiceDateException;
 use App\Models\Incident;
 use App\Models\User;
 use DomainException;
@@ -30,24 +31,20 @@ final class IncidentService
 
         if ($urgency === Urgency::Urgent) {
             if ($serviceDate->isPast()) {
-                throw new DomainException(
-                    'La fecha del servicio urgente debe ser posterior al momento actual.'
-                );
+                throw InvalidServiceDateException::notInFuture();
             }
         } elseif ($serviceDate->lt(now()->addHours(self::MIN_HOURS_ADVANCE))) {
-            throw new DomainException(
-                'La fecha del servicio estándar debe solicitarse con al menos 48 horas de antelación.'
-            );
+            throw InvalidServiceDateException::tooSoon(self::MIN_HOURS_ADVANCE);
         }
 
-        return DB::transaction(function () use ($client, $data, $serviceDate): Incident {
+        return DB::transaction(function () use ($client, $data, $serviceDate, $urgency): Incident {
             $incident = new Incident([
                 'speciality_id' => $data['speciality_id'],
                 'community_id'  => $data['community_id'] ?? null,
                 'description'   => trim($data['description']),
                 'address'       => trim($data['address']),
                 'service_date'  => $serviceDate,
-                'urgency'       => $data['urgency'],
+                'urgency'       => $urgency,
             ]);
 
             // Campos protegidos que no van en #[Fillable]
