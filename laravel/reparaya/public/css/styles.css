@@ -14,6 +14,10 @@
     /* Acentos (Amarillo & Naranja) */
     --accent-yellow: #ffb703;
     --accent-yellow-hover: #e0a100;
+    --bs-link-color: var(--accent-yellow);
+    --bs-link-color-rgb: 255, 183, 3;
+    --bs-link-hover-color: var(--accent-yellow-hover);
+    --bs-link-hover-color-rgb: 224, 161, 0;
     --orange-hover-border: rgba(255, 160, 0, 0.4);
     --orange-glow: rgba(255, 140, 0, 0.22);
     --orange-glow-strong: rgba(255, 140, 0, 0.3);
