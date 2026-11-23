@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
@@ -43,6 +44,16 @@ Route::middleware('auth')->group(function (): void {
     // Paneles por rol (provisionales: B y C añadirán sus rutas)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function (): void {
         Route::view('/', 'dashboard')->name('home');
+
+        // CRUD de usuarios (solo admin y particular; técnicos y gestoras tienen su propio CRUD)
+        Route::resource('usuarios', UserController::class)
+            ->except(['show'])
+            ->names('users')
+            ->parameters(['usuarios' => 'user']);
+
+        Route::patch('/usuarios/{user}/restaurar', [UserController::class, 'restore'])
+            ->withTrashed()
+            ->name('users.restore');
     });
     
     Route::middleware('role:tecnico')->prefix('tecnico')->name('technician.')->group(function (): void {
