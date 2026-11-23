@@ -4,13 +4,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\Urgency;
+use App\Exceptions\Incident\IncidentException;
 use App\Models\Incident;
 use App\Models\Speciality;
 use App\Services\IncidentService;
 use App\Http\Requests\StoreIncidentRequest;
-use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 final class IncidentController extends Controller
@@ -56,7 +57,7 @@ final class IncidentController extends Controller
             return redirect()
                 ->route(Auth::user()->role->homeRoute())
                 ->with('success', 'Incidencia registrada correctamente.');
-        } catch (DomainException $e) {
+        } catch (IncidentException $e) {
             return back()
                 ->withInput()
                 ->withErrors(['service_date' => $e->getMessage()]);
@@ -68,8 +69,7 @@ final class IncidentController extends Controller
      */
     public function show(Incident $incident): View
     {
-        // Evitar IDOR: solo el cliente dueño de la incidencia puede verla aquí
-        abort_if($incident->client_id !== Auth::id(), 403);
+        Gate::authorize('view', $incident);
 
         $incident->load([
             'speciality',
@@ -83,17 +83,17 @@ final class IncidentController extends Controller
     }
 
     /**
-     * Cancela una incidencia si cumple el estado y las 48h de antelación.
+     * Cancela una incidencia propia si su estado y antelación lo permiten.
      */
     public function cancel(Incident $incident): RedirectResponse
     {
-        abort_if($incident->client_id !== Auth::id(), 403);
+        Gate::authorize('cancel', $incident);
 
         try {
             $this->incidentService->cancelByClient($incident, Auth::user());
 
             return back()->with('success', 'Incidencia cancelada correctamente.');
-        } catch (DomainException $e) {
+        } catch (IncidentException $e) {
             return back()->withErrors(['general' => $e->getMessage()]);
         }
     }
