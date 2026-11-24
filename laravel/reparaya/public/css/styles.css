@@ -277,3 +277,24 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover,
 input[type="time"]::-webkit-calendar-picker-indicator:hover {
     opacity: 1 !important;
 }
+
+/* Alertas Flash integradas en el tema oscuro */
+.alert-flash {
+    border-radius: 10px;
+    border: 1px solid transparent;
+    backdrop-filter: blur(6px);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.alert-flash.alert-success {
+    background-color: rgba(25, 135, 84, 0.16) !important;
+    border-color: rgba(46, 213, 115, 0.4) !important;
+    color: #7bed9f !important;
+}
+
+.alert-flash.alert-danger {
+    background-color: rgba(220, 53, 69, 0.16) !important;
+    border-color: rgba(255, 71, 87, 0.4) !important;
+    color: #ff6b81 !important;
+}

@@ -109,7 +109,23 @@
 
     {{-- MODAL: NUEVA PETICIÓN DE SERVICIO (reutilizando incidents.partials.form) --}}
     @auth
-        <div class="modal fade" id="nuevaIncidenciaModal" tabindex="-1" aria-labelledby="nuevaIncidenciaModalLabel" aria-hidden="true">
+        @php
+            $hasIncidentErrors = $errors->hasAny([
+                'speciality_id',
+                'community_id',
+                'urgency',
+                'service_date',
+                'address',
+                'description',
+            ]);
+        @endphp
+
+        <div class="modal fade"
+             id="nuevaIncidenciaModal"
+             tabindex="-1"
+             aria-labelledby="nuevaIncidenciaModalLabel"
+             aria-hidden="true"
+             @if ($hasIncidentErrors) data-auto-open="true" @endif>
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -124,17 +140,9 @@
                 </div>
             </div>
         </div>
-
-        {{-- Reapertura automática del modal si falla la validación al crear la incidencia --}}
-        @if ($errors->hasAny(['speciality_id', 'community_id', 'urgency', 'service_date', 'address', 'description']))
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const modalEl = document.getElementById('nuevaIncidenciaModal');
-                    if (modalEl && typeof bootstrap !== 'undefined') {
-                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
-                    }
-                });
-            </script>
-        @endif
     @endauth
+
+    @push('scripts')
+        <script src="{{ asset('js/home.js') }}"></script>
+    @endpush
 @endsection
