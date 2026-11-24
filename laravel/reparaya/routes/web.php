@@ -10,7 +10,13 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::view('/', 'home')->name('home');
+Route::get('/', function () {
+    $specialities = \App\Models\Speciality::orderBy('name')->get();
+    $communities = auth()->user()?->managementCompany?->communities()->orderBy('name')->get()
+        ?? collect();
+
+    return view('home', compact('specialities', 'communities'));
+})->name('home');
 
 // Sólo visitantes (un usuario autenticado es redirigido a su panel)
 Route::middleware('guest')->group(function (): void {

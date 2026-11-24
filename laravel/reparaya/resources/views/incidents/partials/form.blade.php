@@ -65,8 +65,9 @@
         <label for="address" class="form-label">Dirección</label>
         <input type="text" id="address" name="address" required maxlength="255"
             value="{{ old('address') }}" autocomplete="street-address"
+            placeholder="Calle, número, piso, ciudad"
             @class(['form-control', 'is-invalid' => $errors->has('address')])>
-        @error('address') <div class="invalid-feedback">
+            @error('address') <div class="invalid-feedback">
             {{ $message }}
         </div> @enderror
     </div>
