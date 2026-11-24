@@ -24,7 +24,7 @@
                             autofocus
                             autocomplete="email"
                             placeholder="ejemplo@correo.com"
-                            @class(['form-control', 'is-invalid' => old('auth_modal') === 'login' && $errors->has('email')])
+                            class="form-control {{ old('auth_modal') === 'login' && $errors->has('email') ? 'is-invalid' : '' }}"
                         >
                         @if (old('auth_modal') === 'login')
                             @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -40,7 +40,7 @@
                             required
                             autocomplete="current-password"
                             placeholder="******"
-                            @class(['form-control', 'is-invalid' => old('auth_modal') === 'login' && $errors->has('password')])
+                            class="form-control {{ old('auth_modal') === 'login' && $errors->has('password') ? 'is-invalid' : '' }}"
                         >
                         @if (old('auth_modal') === 'login')
                             @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror

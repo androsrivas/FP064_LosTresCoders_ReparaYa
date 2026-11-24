@@ -22,7 +22,7 @@
                             value="{{ old('auth_modal') === 'register' ? old('name') : '' }}"
                             required
                             autocomplete="name"
-                            @class(['form-control', 'is-invalid' => old('auth_modal') === 'register' && $errors->has('name')])
+                            class="form-control {{ old('auth_modal') === 'register' && $errors->has('name') ? 'is-invalid' : '' }}"
                         >
                         @if (old('auth_modal') === 'register')
                             @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -39,7 +39,7 @@
                             required
                             autocomplete="email"
                             placeholder="ejemplo@correo.com"
-                            @class(['form-control', 'is-invalid' => old('auth_modal') === 'register' && $errors->has('email')])
+                            class="form-control {{ old('auth_modal') === 'register' && $errors->has('email') ? 'is-invalid' : '' }}"
                         >
                         @if (old('auth_modal') === 'register')
                             @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -56,7 +56,7 @@
                             type="tel"
                             value="{{ old('auth_modal') === 'register' ? old('phone') : '' }}"
                             autocomplete="tel"
-                            @class(['form-control', 'is-invalid' => old('auth_modal') === 'register' && $errors->has('phone')])
+                            class="form-control {{ old('auth_modal') === 'register' && $errors->has('phone') ? 'is-invalid' : '' }}"
                         >
                         @if (old('auth_modal') === 'register')
                             @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -71,7 +71,7 @@
                             type="password"
                             required
                             autocomplete="new-password"
-                            @class(['form-control', 'is-invalid' => old('auth_modal') === 'register' && $errors->has('password')])
+                            class="form-control {{ old('auth_modal') === 'register' && $errors->has('password') ? 'is-invalid' : '' }}"
                         >
                         @if (old('auth_modal') === 'register')
                             @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
