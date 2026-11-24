@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Requests\Profile\UpdatePasswordRequest;
+use App\Models\Incident;
+use App\Models\Speciality;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,7 +20,26 @@ final class ProfileController extends Controller
 {
     public function show(Request $request): View 
     {
-        return view('profile.show', ['user' => $request->user()]);
+        $user = $request->user();
+        $isManager = $user->hasRole(UserRole::PropertyManager);
+
+        $communities = $isManager
+            ? ($user->managementCompany?->communities()->orderBy('name')->get() ?? collect())
+            : collect();
+
+        $incidentsQuery = Incident::with(['speciality', 'community', 'technician.user'])
+            ->latest();
+
+        if ($isManager) {
+            $incidentsQuery->whereIn('community_id', $communities->pluck('id'));
+        } else {
+            $incidentsQuery->where('client_id', $user->id);
+        }
+
+        $incidents = $incidentsQuery->get();
+        $specialities = Speciality::orderBy('name')->get();
+
+        return view('profile.show', compact('user', 'incidents', 'communities', 'specialities'));
     }
 
     public function edit(Request $request): View
