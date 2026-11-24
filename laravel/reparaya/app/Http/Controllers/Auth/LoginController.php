@@ -8,13 +8,12 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 
 final class LoginController extends Controller
 {
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        return view('auth.login');
+        return redirect()->route('home')->with('open_modal', 'login');
     }
 
     public function store(LoginRequest $request): RedirectResponse
@@ -31,6 +30,6 @@ final class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Has cerrado la sesión.');
+        return redirect()->route('home')->with('success', 'Has cerrado la sesión.');
     }
 }
