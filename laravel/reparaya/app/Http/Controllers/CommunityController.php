@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreCommunityRequest;
-use App\Http\Requests\UpdateCommunityRequest;
+use App\Http\Requests\Community\StoreCommunityRequest;
+use App\Http\Requests\Community\UpdateCommunityRequest;
 use App\Models\Community;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

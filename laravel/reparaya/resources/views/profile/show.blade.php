@@ -6,6 +6,9 @@
     /** @var \App\Models\User $user */
     $isManager = $user->hasRole(\App\Enums\UserRole::PropertyManager);
     $hasProfileErrors = $errors->hasAny(['name', 'email', 'phone']) || $errors->updatePassword->any();
+    $hasCreateCommunityErrors = $errors->createCommunity->any();
+    $hasUpdateCommunityErrors = $errors->updateCommunity->any();
+    $activeTab = session('active_tab', ($hasCreateCommunityErrors || $hasUpdateCommunityErrors) ? 'comunidades' : 'incidencias');
     $hasIncidentErrors = $errors->hasAny([
         'speciality_id',
         'community_id',
@@ -96,7 +99,7 @@
                     </div>
 
                     {{-- Panel dinámico de Gestora --}}
-                    <div class="perfil-panel perfil-panel-accent p-4">
+                    <div class="perfil-panel perfil-panel-accent p-4" id="gestoraPanel" data-initial-tab="{{ $activeTab }}">
                         <div class="perfil-panel-header d-flex align-items-center justify-content-between mb-3">
                             <h2 class="h5 fw-bold mb-0"><span class="text-yellow" id="gestoraSectionTitle">Incidencias de mis comunidades</span></h2>
                             <button type="button" class="btn btn-yellow btn-sm fw-bold"
@@ -112,30 +115,7 @@
 
                         {{-- Pestaña 2: Comunidades --}}
                         <div id="tab-comunidades" data-gestora-panel class="d-none">
-                            @if ($communities->isEmpty())
-                                <p class="text-white-50 text-center py-4 mb-0">No tienes comunidades registradas todavía.</p>
-                            @else
-                                <div class="table-responsive">
-                                    <table class="table table-dark table-hover align-middle mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>Comunidad</th>
-                                                <th>Dirección</th>
-                                                <th>CIF</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($communities as $community)
-                                                <tr>
-                                                    <td class="fw-semibold">{{ $community->name }}</td>
-                                                    <td>{{ $community->address ?? '-' }}</td>
-                                                    <td>{{ $community->cif ?? '-' }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @endif
+                            @include('communities.partials.table')
                         </div>
 
                         {{-- Pestaña 3: Liquidaciones --}}
@@ -284,6 +264,130 @@
             </div>
         </div>
     </div>
+
+    @if ($isManager)
+        {{-- MODAL 4: NUEVA COMUNIDAD --}}
+        <div class="modal fade" id="nuevaComunidadModal" tabindex="-1" aria-labelledby="nuevaComunidadModalLabel" aria-hidden="true"
+            @if ($hasCreateCommunityErrors) data-auto-open="true" @endif>
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="nuevaComunidadModalLabel">
+                            Nueva <span class="text-yellow">Comunidad</span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form method="POST" action="{{ route('communities.store') }}">
+                        @csrf
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="create_community_name" class="form-label small">Nombre de la comunidad</label>
+                                <input id="create_community_name" name="name" type="text"
+                                    value="{{ old('name') }}" required
+                                    @class(['form-control', 'is-invalid' => $errors->createCommunity->has('name')])>
+                                @error('name', 'createCommunity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="create_community_address" class="form-label small">Dirección</label>
+                                <input id="create_community_address" name="address" type="text"
+                                    value="{{ old('address') }}" required
+                                    @class(['form-control', 'is-invalid' => $errors->createCommunity->has('address')])>
+                                @error('address', 'createCommunity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-0">
+                                <label for="create_community_zone_id" class="form-label small">Zona</label>
+                                <select id="create_community_zone_id" name="zone_id" required
+                                    @class(['form-select', 'is-invalid' => $errors->createCommunity->has('zone_id')])>
+                                    <option value="">Selecciona una zona...</option>
+                                    @foreach ($zones as $zone)
+                                        <option value="{{ $zone->id }}" @selected((string) old('zone_id') === (string) $zone->id)>
+                                            {{ $zone->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('zone_id', 'createCommunity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-yellow btn-sm fw-bold">Guardar comunidad</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- MODAL 5: EDITAR COMUNIDAD --}}
+        <div class="modal fade" id="editCommunityModal" tabindex="-1" aria-labelledby="editCommunityModalLabel" aria-hidden="true"
+            @if ($hasUpdateCommunityErrors) data-auto-open="true" @endif>
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="editCommunityModalLabel">
+                            Editar <span class="text-yellow">Comunidad</span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form id="editCommunityForm" method="POST" action="{{ old('_community_action', '') }}">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="_community_action" id="edit_community_action" value="{{ old('_community_action', '') }}">
+                        <input type="hidden" name="_community_id" id="edit_community_id" value="{{ old('_community_id', '') }}">
+
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="edit_community_name" class="form-label small">Nombre de la comunidad</label>
+                                <input id="edit_community_name" name="name" type="text"
+                                    value="{{ old('name') }}" required
+                                    @class(['form-control', 'is-invalid' => $errors->updateCommunity->has('name')])>
+                                @error('name', 'updateCommunity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_community_address" class="form-label small">Dirección</label>
+                                <input id="edit_community_address" name="address" type="text"
+                                    value="{{ old('address') }}" required
+                                    @class(['form-control', 'is-invalid' => $errors->updateCommunity->has('address')])>
+                                @error('address', 'updateCommunity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-0">
+                                <label for="edit_community_zone_id" class="form-label small">Zona</label>
+                                <select id="edit_community_zone_id" name="zone_id" required
+                                    @class(['form-select', 'is-invalid' => $errors->updateCommunity->has('zone_id')])>
+                                    <option value="">Selecciona una zona...</option>
+                                    @foreach ($zones as $zone)
+                                        <option value="{{ $zone->id }}" @selected((string) old('zone_id') === (string) $zone->id)>
+                                            {{ $zone->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('zone_id', 'updateCommunity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-yellow btn-sm fw-bold">Actualizar comunidad</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 
     @push('scripts')
         <script src="{{ asset('js/incidents.js') }}"></script>

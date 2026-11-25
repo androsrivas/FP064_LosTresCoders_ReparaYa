@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Community;
 
 use App\Enums\UserRole;
 use App\Models\Community;

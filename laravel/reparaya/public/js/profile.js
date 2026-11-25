@@ -24,7 +24,7 @@ const sectionConfig = {
         title: 'Mis comunidades',
         btnText: '+ Nueva Comunidad',
         modalTarget: '#nuevaComunidadModal',
-        placeholder: 'Buscar por nombre, dirección o CIF...',
+        placeholder: 'Buscar por nombre, dirección o zona...',
     },
     liquidaciones: {
         title: 'Mis liquidaciones',
@@ -87,31 +87,56 @@ if (searchInput) {
     searchInput.addEventListener('input', filterActiveTable);
 }
 
+function activateGestoraTab(target) {
+    const config = sectionConfig[target];
+    if (!config) return;
+
+    tabButtons.forEach((b) => {
+        const active = b.dataset.gestoraTab === target;
+        b.classList.toggle('btn-yellow', active);
+        b.classList.toggle('btn-outline-yellow', !active);
+        b.classList.toggle('active', active);
+    });
+
+    tabPanels.forEach((panel) => {
+        panel.classList.toggle('d-none', panel.id !== `tab-${target}`);
+    });
+
+    if (sectionTitle) sectionTitle.textContent = config.title;
+    if (newBtn) {
+        newBtn.textContent = config.btnText;
+        newBtn.setAttribute('data-bs-target', config.modalTarget);
+    }
+    if (searchInput) {
+        searchInput.placeholder = config.placeholder;
+        filterActiveTable();
+    }
+}
+
 tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => activateGestoraTab(btn.dataset.gestoraTab));
+});
+
+const gestoraPanel = document.getElementById('gestoraPanel');
+if (gestoraPanel?.dataset.initialTab) {
+    activateGestoraTab(gestoraPanel.dataset.initialTab);
+}
+
+// 3. Rellenar modal de edición de comunidad
+document.querySelectorAll('.js-edit-community').forEach((btn) => {
     btn.addEventListener('click', () => {
-        const target = btn.dataset.gestoraTab;
-        const config = sectionConfig[target];
-        if (!config) return;
+        const form = document.getElementById('editCommunityForm');
+        if (!form) return;
 
-        tabButtons.forEach((b) => {
-            const active = b === btn;
-            b.classList.toggle('btn-yellow', active);
-            b.classList.toggle('btn-outline-yellow', !active);
-            b.classList.toggle('active', active);
-        });
+        const { action, id, name, address, zoneId } = btn.dataset;
 
-        tabPanels.forEach((panel) => {
-            panel.classList.toggle('d-none', panel.id !== `tab-${target}`);
-        });
+        form.action = action;
+        document.getElementById('edit_community_action').value = action;
+        document.getElementById('edit_community_id').value = id;
+        document.getElementById('edit_community_name').value = name;
+        document.getElementById('edit_community_address').value = address;
+        document.getElementById('edit_community_zone_id').value = zoneId ?? '';
 
-        if (sectionTitle) sectionTitle.textContent = config.title;
-        if (newBtn) {
-            newBtn.textContent = config.btnText;
-            newBtn.setAttribute('data-bs-target', config.modalTarget);
-        }
-        if (searchInput) {
-            searchInput.placeholder = config.placeholder;
-            filterActiveTable();
-        }
+        form.querySelectorAll('.is-invalid').forEach((el) => el.classList.remove('is-invalid'));
     });
 });
