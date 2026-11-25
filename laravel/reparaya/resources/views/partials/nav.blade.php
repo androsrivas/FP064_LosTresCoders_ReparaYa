@@ -25,10 +25,10 @@
 
                 <div class="d-flex align-items-center gap-3">
                     @auth
-                        <span class="text-white-50 small">
-                            Hola <strong class="text-white">{{ auth()->user()->name }}</strong>
-                            ({{ auth()->user()->role->label() }})
-                        </span>
+                        <a href="{{ route('profile.show') }}" title="Mi perfil"
+                            @class(['text-decoration-none small', 'text-white-50' => ! request()->routeIs('profile.*'), 'text-white' => request()->routeIs('profile.*')])>
+                            Hola <strong class="text-white">{{  auth()->user()->name }}</strong> ({{ auth()->user()->role->label() }})
+                        </a>
                         <form method="POST" action="{{ route('logout') }}" class="m-0">
                             @csrf
                             <button type="submit" class="btn btn-outline-yellow btn-sm">Cerrar sesión</button>
