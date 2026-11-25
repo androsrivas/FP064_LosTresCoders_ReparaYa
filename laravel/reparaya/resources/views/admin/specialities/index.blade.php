@@ -27,11 +27,15 @@
                         <th class="text-end">Salario base</th>
                         <th class="text-end">Precio base</th>
                         <th class="text-center">Técnicos</th>
+                        <th class="text-center">Incidencias</th>
                         <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($specialities as $speciality)
+                        @php
+                            $cannotDelete = $speciality->technicians_count > 0 || $speciality->incidents_count > 0;
+                        @endphp
                         <tr>
                             <td class="fw-semibold">{{ $speciality->name }}</td>
                             <td class="small text-muted">
@@ -40,6 +44,7 @@
                             <td class="text-end">{{ number_format((float) $speciality->base_salary, 2, ',', '.') }} €</td>
                             <td class="text-end">{{ number_format((float) $speciality->base_price, 2, ',', '.') }} €</td>
                             <td class="text-center">{{ $speciality->technicians_count }}</td>
+                            <td class="text-center">{{ $speciality->incidents_count }}</td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-2">
                                     <a href="{{ route('admin.specialities.edit', $speciality) }}"
@@ -48,13 +53,16 @@
                                     </a>
 
                                     <form method="POST" action="{{ route('admin.specialities.destroy', $speciality) }}"
-                                        onsubmit="return confirm('¿Seguro que deseas eliminar la especialidad «{{ $speciality->name }}»?');">
+                                        data-confirm-message="{{ '¿Seguro que deseas eliminar la especialidad «' . $speciality->name . '»?' }}"
+                                        onsubmit="return confirm(this.dataset.confirmMessage);">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            @disabled($speciality->technicians_count > 0 || $speciality->incidents_count > 0)>
-                                            Eliminar
-                                        </button>
+                                        <span @if ($cannotDelete) title="No se puede eliminar mientras tenga técnicos o incidencias asociadas" @endif>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                @disabled($cannotDelete)>
+                                                Eliminar
+                                            </button>
+                                        </span>
                                     </form>
                                 </div>
                             </td>

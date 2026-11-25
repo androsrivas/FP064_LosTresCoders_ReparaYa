@@ -24,7 +24,7 @@ final class TechnicianRequest extends FormRequest
         $userId = $technician?->user_id;
 
         return [
-            'full_name'     => ['required', 'string', 'max:150'],
+            'full_name'     => ['required', 'string', 'max:100'],
             'email'         => [
                 'required',
                 'string',
@@ -32,11 +32,12 @@ final class TechnicianRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($userId),
             ],
-            'phone'         => ['nullable', 'string', 'max:30'],
+            'phone'         => ['nullable', 'string', 'max:20'],
             'password'      => [
                 $technician ? 'nullable' : 'required',
                 'string',
                 'min:8',
+                'max:72',
                 'confirmed',
             ],
             'speciality_id' => ['required', 'integer', 'exists:specialities,id'],

@@ -67,7 +67,7 @@ final class TechnicianController extends Controller
         return view('admin.technicians.edit', compact('technician', 'specialities'));
     }
 
-    public function update(TechnicianRequest $request, Technician $technician): RedirectResponse
+ public function update(TechnicianRequest $request, Technician $technician): RedirectResponse
     {
         $data = $request->validated();
 
@@ -82,9 +82,19 @@ final class TechnicianController extends Controller
                 $userUpdates['password'] = $data['password'];
             }
 
-            $technician->user->update($userUpdates);
+            $userId = $technician->user_id;
+
+            if ($technician->user !== null) {
+                $technician->user->update($userUpdates);
+            } elseif (!empty($data['password'])) {
+                $user = new User($userUpdates);
+                $user->role = UserRole::Technician;
+                $user->save();
+                $userId = $user->id;
+            }
 
             $technician->update([
+                'user_id'       => $userId,
                 'full_name'     => $data['full_name'],
                 'speciality_id' => $data['speciality_id'],
                 'is_available'  => (bool) ($data['is_available'] ?? false),

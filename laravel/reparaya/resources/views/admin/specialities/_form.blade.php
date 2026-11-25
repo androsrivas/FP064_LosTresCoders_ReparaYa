@@ -19,6 +19,15 @@
     @enderror
 </div>
 
+<div class="mb-3">
+    <label for="responsibilities" class="form-label">Responsabilidades</label>
+    <textarea id="responsibilities" name="responsibilities" rows="3"
+        class="form-control @error('responsibilities') is-invalid @enderror">{{ old('responsibilities', $speciality->responsibilities ?? '') }}</textarea>
+    @error('responsibilities')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
 <div class="row mb-4">
     <div class="col-md-6 mb-3 mb-md-0">
         <label for="base_salary" class="form-label">

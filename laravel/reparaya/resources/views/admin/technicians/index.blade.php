@@ -53,8 +53,9 @@
                                         Editar
                                     </a>
 
-                                    <form method="POST" action="{{ route('admin.technicians.destroy', $technician) }}"
-                                        onsubmit="return confirm('¿Seguro que deseas eliminar al técnico «{{ $technician->full_name }}»?');">
+                                <form method="POST" action="{{ route('admin.technicians.destroy', $technician) }}"
+                                        data-confirm-message="{{ '¿Seguro que deseas eliminar al técnico «' . $technician->full_name . '»?' }}"
+                                        onsubmit="return confirm(this.dataset.confirmMessage);">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger"
