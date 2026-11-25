@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\ProfileController;
@@ -45,6 +46,18 @@ Route::middleware('auth')->group(function (): void {
         
         Route::patch('/incidencias/{incident}/cancelar', [IncidentController::class, 'cancel'])
             ->name('incidents.cancel');
+    });
+
+    // CRUD de comunidades (solo gestora)
+    Route::middleware('role:gestora')->group(function (): void {
+        Route::prefix('gestora')->name('manager.')->group(function (): void {
+            Route::get('/', DashboardController::class)->name('home');
+        });
+
+        Route::resource('comunidades', CommunityController::class)
+            ->only(['store', 'update', 'destroy'])
+            ->names('communities')
+            ->parameters(['comunidades' => 'community']);
     });
     
     // Paneles por rol (provisionales: B y C añadirán sus rutas)
