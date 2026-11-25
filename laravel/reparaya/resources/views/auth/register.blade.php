@@ -24,7 +24,7 @@
                     <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email"
                     @class(['form-control', 'is-invalid' => $errors->has('email')])>
                     @error('email')
-                        <div class="invalid-feedback">{{ $messages }}</div>                        
+                        <div class="invalid-feedback">{{ $message }}</div>                        
                     @enderror
                 </div>
 
@@ -33,7 +33,7 @@
                     <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" autocomplete="tel"
                     @class(['form-control', 'is-invalid' => $errors->has('phone')])>
                     @error('phone')
-                        <div class="invalid-feedback">{{ $messages }}</div>                        
+                        <div class="invalid-feedback">{{ $message }}</div>                        
                     @enderror
                 </div>
 
@@ -42,7 +42,7 @@
                     <input id="password" name="password" type="password" required autocomplete="new-password"
                     @class(['form-control', 'is-invalid' => $errors->has('password')])>
                     @error('password')
-                        <div class="invalid-feedback">{{ $messages }}</div>                        
+                        <div class="invalid-feedback">{{ $message }}</div>                        
                     @enderror
                 </div>
 
@@ -51,7 +51,7 @@
                     <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password" class="form-control">
                 </div>
 
-                <button type="submit" class="btn btn-yellow-100">Crear cuenta</button>
+                <button type="submit" class="btn btn-yellow">Crear cuenta</button>
             </form>
 
             <p class="mt-3 small">¿Ya tienes cuenta? <a href="{{ route('login') }}">Inicia sesión</a></p>

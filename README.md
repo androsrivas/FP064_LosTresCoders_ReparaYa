@@ -175,52 +175,13 @@ Aplicación en PHP nativo. No usa Composer ni frameworks.
 
 ### Producto 3 (`laravel/reparaya/`)
 
-Laravel tiene su *propio* `.env`, independiente del de la raíz.
+Aplicación en Laravel 13 con su propio `.env` y sus propias dependencias (Composer). La guía completa está en [`laravel/reparaya/README.md`](laravel/reparaya/README.md): configuración, datos de demostración, usuarios de prueba, tests y funcionalidades.
 
-#### 1. Configurar Laravel
+En resumen:
 
-```bash
-cp laravel/reparaya/.env.example laravel/reparaya/.env
-```
-
-Edita `laravel/reparaya/.env` y asegúrate de que tenga estos valores:
-
-```dotenv
-APP_URL=http://localhost:<WEB_PORT>/producto3   # ajusta el puerto a WEB_PORT
-
-DB_CONNECTION=mysql
-DB_HOST=db                                # nombre del servicio de Docker, NO localhost
-DB_PORT=3306
-DB_DATABASE=...                           # el mismo que DB_DATABASE de la raíz
-DB_USERNAME=...                           # el mismo que DB_USERNAME de la raíz
-DB_PASSWORD=...                           # el mismo que DB_PASSWORD de la raíz
-```
-
-> Las variables `DB_*` y `APP_ENV` también las inyecta `compose.yaml` al contenedor `web`, y **tienen prioridad** sobre las del `.env` de Laravel. Mantenlas coherentes.
-
-#### 2. Instalar dependencias y preparar la aplicación
-
-```bash
-# Dependencias PHP
-docker compose exec web bash -c "cd /var/www/laravel/reparaya && composer install"
-
-# Clave de la aplicación
-docker compose exec web bash -c "cd /var/www/laravel/reparaya && php artisan key:generate"
-
-# Permisos de escritura
-docker compose exec web bash -c "cd /var/www/laravel/reparaya && \
-    mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache && \
-    chown -R www-data:www-data storage bootstrap/cache && \
-    chmod -R ug+rwX storage bootstrap/cache"
-
-# Migraciones (crea las tablas, incluidas cache y sessions)
-docker compose exec web bash -c "cd /var/www/laravel/reparaya && php artisan migrate"
-```
-
-Si quieres datos de prueba (cuando haya *seeders*):
-```bash
-docker compose exec web bash -c "cd /var/www/laravel/reparaya && php artisan db:seed"
-```
+- Copia `laravel/reparaya/.env.example` a `laravel/reparaya/.env` y ajusta `APP_URL` y las variables `DB_*` (las mismas que en el `.env` raíz, con `DB_HOST=db`).
+- Dentro del contenedor `web`: `composer install`, `php artisan key:generate`, `php artisan migrate` y `php artisan db:seed`.
+- Para tener datos de prueba: `php artisan db:seed --class=DemoSeeder`.
 
 ### WordPress (`www/`)
 
@@ -420,7 +381,7 @@ WordPress queda instalado en la raíz del dominio (o en la ubicación que indiqu
 - **Nunca** se sube `.env`, `producto2/config/config.php`, `laravel/reparaya/.env`, `laravel/reparaya/vendor` ni `www/wp-config.php`. Verifica que `.gitignore` los excluye.
 - **WordPress no se versiona.** El núcleo, los temas y plugins descargados y las subidas se bajan en local (ver [WordPress](#wordpress-www)). Solo se versionarán los temas o plugins propios que se creen en el Producto 4.
 - Solo hay **un** repositorio Git, en la raíz. No debe haber ninguna carpeta `.git` dentro de `laravel/reparaya` ni de `producto2`.
-- Una rama por funcionalidad y *merge* a `main` cuando esté probada.
+- Una rama por funcionalidad, con *pull request* hacia la rama de integración del producto en curso (en el Producto 3, `migration/laravel`). Esa rama se fusiona en `main` en cada entrega. Detalles en el [README del Producto 3](laravel/reparaya/README.md#flujo-de-trabajo-con-git).
 - Commits pequeños y descriptivos en una línea, ej. `Añadir CRUD de clientes`. Cada integrante debe tener configurado su `user.name` y `user.email`.
 - Si añades una variable nueva en `.env`, añádela también en `.env.example` (sin el valor secreto).
 - Antes de cada commit, comprueba qué se añadiría con `git add -n .`.

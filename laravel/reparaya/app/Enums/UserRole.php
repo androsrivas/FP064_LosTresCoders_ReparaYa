@@ -44,6 +44,7 @@ enum UserRole: string
                 ['Panel', 'admin.home'],
                 ['Incidencias', 'admin.incidents.index'],
                 ['Calendario', 'admin.calendar'],
+                ['Usuarios', 'admin.users.index'],
                 ['Técnicos', 'admin.technicians.index'],
                 ['Servicios', 'admin.specialities.index'],
                 ['Gestoras', 'admin.management-companies.index'],
@@ -54,13 +55,13 @@ enum UserRole: string
                 ['Mi agenda', 'technician.home'],
             ],
             self::Customer => [
-                ['Mis avisos', 'customer.home'],
-                ['Nueva solicitud', 'customer.incidents.create'],
+                ['Inicio', 'customer.home'],
+                ['Mis incidencias', 'incidents.index'],
             ],
             self::PropertyManager => [
                 ['Mi panel', 'manager.home'],
                 ['Comunidades', 'manager.communities.index'],
-                ['Incidencias', 'manager.incidents.index'],
+                ['Incidencias', 'incidents.index'],
                 ['Liquidaciones', 'manager.settlements.index'],
             ],
         };
