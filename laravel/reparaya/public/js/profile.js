@@ -13,6 +13,8 @@ const sectionTitle = document.getElementById('gestoraSectionTitle');
 const newBtn = document.getElementById('gestoraNewBtn');
 const searchInput = document.getElementById('gestoraSearchInput');
 
+let selectedCommissionPeriod = null;
+
 const sectionConfig = {
     incidencias: {
         title: 'Incidencias de mis comunidades',
@@ -28,9 +30,9 @@ const sectionConfig = {
     },
     liquidaciones: {
         title: 'Mis liquidaciones',
-        btnText: '+ Nueva Liquidación',
-        modalTarget: '#nuevaLiquidacionModal',
-        placeholder: 'Buscar por período, comunidad, importe, estado...',
+        btnText: null,
+        modalTarget: null,
+        placeholder: 'Buscar por fecha, comunidad, servicio o importe...',
     },
 };
 
@@ -60,7 +62,15 @@ function filterActiveTable() {
             (td) => !td.querySelector('button, form')
         );
         const rowText = normalizeText(cells.map((td) => td.textContent).join(' '));
-        const matches = query === '' || rowText.includes(query);
+        const matchesQuery = query === '' || rowText.includes(query);
+
+        // Si estamos en liquidaciones y hay una tarjeta mensual seleccionada, filtramos también por período
+        const matchesPeriod =
+            activePanel.id !== 'tab-liquidaciones' ||
+            !selectedCommissionPeriod ||
+            row.dataset.period === selectedCommissionPeriod;
+
+        const matches = matchesQuery && matchesPeriod;
 
         row.classList.toggle('d-none', !matches);
         if (matches) visibleCount++;
@@ -76,7 +86,8 @@ function filterActiveTable() {
             emptyRow.innerHTML = `<td colspan="${colCount}" class="text-center text-white-50 py-4">No se encontraron resultados para "<span class="text-light"></span>".</td>`;
             tbody.appendChild(emptyRow);
         }
-        emptyRow.querySelector('span').textContent = searchInput.value.trim();
+        emptyRow.querySelector('span').textContent =
+            searchInput.value.trim() || selectedCommissionPeriod || '';
         emptyRow.classList.remove('d-none');
     } else if (emptyRow) {
         emptyRow.classList.add('d-none');
@@ -104,8 +115,13 @@ function activateGestoraTab(target) {
 
     if (sectionTitle) sectionTitle.textContent = config.title;
     if (newBtn) {
-        newBtn.textContent = config.btnText;
-        newBtn.setAttribute('data-bs-target', config.modalTarget);
+        if (config.btnText) {
+            newBtn.classList.remove('d-none');
+            newBtn.textContent = config.btnText;
+            newBtn.setAttribute('data-bs-target', config.modalTarget);
+        } else {
+            newBtn.classList.add('d-none');
+        }
     }
     if (searchInput) {
         searchInput.placeholder = config.placeholder;
@@ -140,3 +156,44 @@ document.querySelectorAll('.js-edit-community').forEach((btn) => {
         form.querySelectorAll('.is-invalid').forEach((el) => el.classList.remove('is-invalid'));
     });
 });
+
+// 4. Filtro mensual al pulsar en tarjetas del carrusel de liquidaciones
+const periodCards = document.querySelectorAll('[data-period-card]');
+const clearPeriodBtn = document.getElementById('clearPeriodFilter');
+
+const applyCommissionPeriodFilter = () => {
+    periodCards.forEach((card) => {
+        const isSelected = card.dataset.periodCard === selectedCommissionPeriod;
+        card.classList.toggle('border-warning', isSelected);
+        card.classList.toggle('border-secondary', !isSelected);
+    });
+
+    if (clearPeriodBtn) {
+        clearPeriodBtn.classList.toggle('d-none', !selectedCommissionPeriod);
+    }
+
+    filterActiveTable();
+};
+
+periodCards.forEach((card) => {
+    const togglePeriod = () => {
+        const period = card.dataset.periodCard;
+        selectedCommissionPeriod = selectedCommissionPeriod === period ? null : period;
+        applyCommissionPeriodFilter();
+    };
+
+    card.addEventListener('click', togglePeriod);
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            togglePeriod();
+        }
+    });
+});
+
+if (clearPeriodBtn) {
+    clearPeriodBtn.addEventListener('click', () => {
+        selectedCommissionPeriod = null;
+        applyCommissionPeriodFilter();
+    });
+}

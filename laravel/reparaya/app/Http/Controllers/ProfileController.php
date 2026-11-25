@@ -12,6 +12,7 @@ use App\Models\Zone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Carbon;
 
 /**
  * Perfil del usuario autenticado (cualquier rol).
@@ -32,6 +33,28 @@ final class ProfileController extends Controller
             ? Zone::orderBy('name')->get()
             : collect();
 
+        $commissions = $isManager
+            ? ($user->managementCompany?->commissions()
+                ->with(['incident.community', 'incident.speciality'])
+                ->orderByDesc('finished_at')
+                ->get() ?? collect())
+            : collect();
+
+        $monthlySettlements = $commissions
+            ->filter(fn ($commission) => $commission->finished_at !== null)
+            ->groupBy(fn ($commission) => $commission->finished_at->format('Y-m'))
+            ->map(function ($items, string $yearMonth) {
+                $date = Carbon::createFromFormat('Y-m', $yearMonth)->locale('es');
+
+                return [
+                    'period' => $yearMonth,
+                    'label' => ucfirst($date->translatedFormat('F Y')),
+                    'count' => $items->count(),
+                    'total' => $items->sum('amount'),
+                ];
+            })
+            ->values();
+
         $incidentsQuery = Incident::with(['speciality', 'community', 'technician.user'])
             ->latest();
 
@@ -44,7 +67,15 @@ final class ProfileController extends Controller
         $incidents = $incidentsQuery->get();
         $specialities = Speciality::orderBy('name')->get();
 
-        return view('profile.show', compact('user', 'incidents', 'communities', 'specialities', 'zones'));
+        return view('profile.show', compact(
+            'user', 
+            'incidents', 
+            'communities', 
+            'specialities', 
+            'zones', 
+            'commissions', 
+            'monthlySettlements'
+        ));
     }
 
     public function edit(Request $request): View

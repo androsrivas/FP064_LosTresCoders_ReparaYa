@@ -120,9 +120,7 @@
 
                         {{-- Pestaña 3: Liquidaciones --}}
                         <div id="tab-liquidaciones" data-gestora-panel class="d-none">
-                            <p class="text-white-50 text-center py-4 mb-0">
-                                Sección de liquidaciones lista para conectar con su controlador.
-                            </p>
+                            @include('commissions.partials.table')
                         </div>
                     </div>
                 @else
