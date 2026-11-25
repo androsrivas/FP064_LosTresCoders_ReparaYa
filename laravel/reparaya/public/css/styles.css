@@ -298,3 +298,25 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
     border-color: rgba(255, 71, 87, 0.4) !important;
     color: #ff6b81 !important;
 }
+
+/* Tablas integradas dentro de .perfil-panel */
+.perfil-panel .table,
+.perfil-panel .table-dark {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: var(--text-body) !important;
+    --bs-table-border-color: #2e3444 !important;
+    --bs-table-hover-bg: rgba(255, 183, 3, 0.05) !important;
+    --bs-table-hover-color: var(--text-primary) !important;
+    margin-bottom: 0 !important;
+}
+
+.perfil-panel .table > :not(caption) > * > *,
+.perfil-panel .table-dark > :not(caption) > * > * {
+    background-color: transparent !important;
+    border-bottom-color: #2e3444 !important;
+}
+
+.perfil-panel .table > tbody > tr:hover > *,
+.perfil-panel .table-dark > tbody > tr:hover > * {
+    background-color: rgba(9, 215, 252, 0.05) !important;
+}

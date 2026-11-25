@@ -17,7 +17,6 @@
             <thead>
                 <tr>
                     <th>Referencia</th>
-                    <th>Especialidad</th>
                     @if ($isManager)
                         <th>Comunidad</th>
                     @endif
@@ -34,7 +33,6 @@
                             <strong class="text-nowrap">{{ $incident->reference }}</strong><br>
                             <small class="text-white-50">{{ Str::limit($incident->description, 45) }}</small>
                         </td>
-                        <td class="text-nowrap">{{ $incident->speciality->name ?? '-' }}</td>
                         @if ($isManager)
                             <td>{{ $incident->community->name ?? '-' }}</td>
                         @endif
@@ -51,11 +49,6 @@
                         </td>
                         <td class="text-end text-nowrap">
                             <div class="d-inline-flex gap-1">
-                                <button type="button" class="btn btn-outline-yellow btn-sm"
-                                    data-detail-url="{{ route('incidents.show', $incident) }}">
-                                    Ver
-                                </button>
-
                                 @if (in_array($incident->status, $cancellable, true))
                                     <form action="{{ route('incidents.cancel', $incident) }}" method="POST"
                                         class="d-inline"
@@ -65,6 +58,10 @@
                                         <button type="submit" class="btn btn-outline-danger btn-sm">Cancelar</button>
                                     </form>
                                 @endif
+                                <button type="button" class="btn btn-outline-yellow btn-sm"
+                                    data-detail-url="{{ route('incidents.show', $incident) }}">
+                                    Ver
+                                </button>
                             </div>
                         </td>
                     </tr>
