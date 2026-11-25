@@ -8,6 +8,7 @@ use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Models\Incident;
 use App\Models\Speciality;
+use App\Models\Zone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,7 +25,11 @@ final class ProfileController extends Controller
         $isManager = $user->hasRole(UserRole::PropertyManager);
 
         $communities = $isManager
-            ? ($user->managementCompany?->communities()->orderBy('name')->get() ?? collect())
+            ? ($user->managementCompany?->communities()->with('zone')->orderBy('name')->get() ?? collect())
+            : collect();
+
+        $zones = $isManager
+            ? Zone::orderBy('name')->get()
             : collect();
 
         $incidentsQuery = Incident::with(['speciality', 'community', 'technician.user'])
@@ -39,7 +44,7 @@ final class ProfileController extends Controller
         $incidents = $incidentsQuery->get();
         $specialities = Speciality::orderBy('name')->get();
 
-        return view('profile.show', compact('user', 'incidents', 'communities', 'specialities'));
+        return view('profile.show', compact('user', 'incidents', 'communities', 'specialities', 'zones'));
     }
 
     public function edit(Request $request): View
