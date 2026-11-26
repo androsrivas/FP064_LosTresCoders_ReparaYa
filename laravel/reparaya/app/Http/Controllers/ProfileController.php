@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
  */
 final class ProfileController extends Controller
 {
-    public function show(Request $request): View 
+    public function show(Request $request): View
     {
         $user = $request->user();
         $isManager = $user->hasRole(UserRole::PropertyManager);
@@ -41,8 +41,8 @@ final class ProfileController extends Controller
             : collect();
 
         $monthlySettlements = $commissions
-            ->filter(fn ($commission) => $commission->finished_at !== null)
-            ->groupBy(fn ($commission) => $commission->finished_at->format('Y-m'))
+            ->filter(fn($commission) => $commission->finished_at !== null)
+            ->groupBy(fn($commission) => $commission->finished_at->format('Y-m'))
             ->map(function ($items, string $yearMonth) {
                 $date = Carbon::createFromFormat('Y-m', $yearMonth)->locale('es');
 
@@ -68,12 +68,12 @@ final class ProfileController extends Controller
         $specialities = Speciality::orderBy('name')->get();
 
         return view('profile.show', compact(
-            'user', 
-            'incidents', 
-            'communities', 
-            'specialities', 
-            'zones', 
-            'commissions', 
+            'user',
+            'incidents',
+            'communities',
+            'specialities',
+            'zones',
+            'commissions',
             'monthlySettlements'
         ));
     }
@@ -85,7 +85,19 @@ final class ProfileController extends Controller
 
     public function update(UpdateProfileRequest $request): RedirectResponse
     {
-        $request->user()->update($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
+
+        if ($user->managementCompany) {
+            if (array_key_exists('phone', $validated)) {
+                $user->managementCompany->update([
+                    'contact_phone' => $validated['phone'],
+                ]);
+                unset($validated['phone']);
+            }
+        }
+
+        $user->update($validated);
 
         return redirect()->route('profile.show')->with('success', 'Perfil actualizado.');
     }

@@ -33,7 +33,7 @@
 
                         <div class="mb-3">
                             <label for="phone" class="form-label">Teléfono <span class="text-white-50">(opcional)</span></label>
-                            <input id="phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}" autocomplete="tel"
+                            <input id="phone" name="phone" type="tel" value="{{ old('phone', $user->managementCompany?->contact_phone ?? $user->phone) }}" autocomplete="tel"
                                 @class(['form-control', 'is-invalid' => $errors->has('phone')])>
                             @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>

@@ -56,14 +56,10 @@
                         </li>
                         <li class="list-group-item text-light px-3 py-2">
                             <span class="text-white-50 d-block small">Teléfono:</span>
-                            <span class="fw-semibold">{{ $user->phone ?? 'No indicado' }}</span>
+                            <span class="fw-semibold">
+                                {{ ($user->managementCompany?->contact_phone ?? $user->phone) ?: 'No indicado' }}
+                            </span>
                         </li>
-                        @if ($isManager && $user->managementCompany)
-                            <li class="list-group-item text-light px-3 py-2">
-                                <span class="text-white-50 d-block small">Gestoría:</span>
-                                <span class="fw-semibold text-yellow">{{ $user->managementCompany->name }}</span>
-                            </li>
-                        @endif
                     </ul>
 
                     <div class="pt-2 border-top border-secondary text-end">
