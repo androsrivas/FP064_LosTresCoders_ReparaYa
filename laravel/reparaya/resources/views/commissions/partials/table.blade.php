@@ -7,31 +7,26 @@
     @if ($monthlySettlements->isNotEmpty())
         <div class="mb-4">
             <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="h6 fw-bold text-uppercase text-white-50 mb-0">Acumulado mensual</h3>
+
                 <div class="d-flex align-items-center gap-2">
-                    <h3 class="h6 fw-bold text-uppercase text-white-50 mb-0">Acumulado mensual</h3>
                     <button type="button" id="clearPeriodFilter" class="btn btn-sm btn-outline-warning py-0 px-2 d-none">
                         Ver todos los meses
                     </button>
-                </div>
 
-                @if ($monthlySettlements->count() > 3)
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Navegación de meses">
-                        <button type="button"
-                                class="btn btn-outline-secondary text-light"
-                                data-bs-target="#monthlySettlementsCarousel"
-                                data-bs-slide="prev"
-                                title="Meses más recientes">
-                            ‹
-                        </button>
-                        <button type="button"
-                                class="btn btn-outline-secondary text-light"
-                                data-bs-target="#monthlySettlementsCarousel"
-                                data-bs-slide="next"
-                                title="Meses anteriores">
-                            ›
-                        </button>
-                    </div>
-                @endif
+                    @if ($monthlySettlements->count() > 3)
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Navegación de meses">
+                            <button type="button" class="btn btn-outline-secondary text-light"
+                                data-bs-target="#monthlySettlementsCarousel" data-bs-slide="prev" title="Meses más recientes">
+                                ‹
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary text-light"
+                                data-bs-target="#monthlySettlementsCarousel" data-bs-slide="next" title="Meses anteriores">
+                                ›
+                            </button>
+                        </div>
+                    @endif
+                </div>
             </div>
 
             <div id="monthlySettlementsCarousel" class="carousel slide" data-bs-ride="false" data-bs-wrap="false">
@@ -41,15 +36,13 @@
                             <div class="row g-3">
                                 @foreach ($monthChunk as $month)
                                     <div class="col-12 col-md-4">
-                                        <div role="button"
-                                             tabindex="0"
-                                             data-period-card="{{ $month['period'] }}"
-                                             class="p-3 rounded border border-secondary bg-dark bg-opacity-50 h-100 period-summary-card"
-                                             title="Pulsa para filtrar los servicios de {{ $month['label'] }}">
+                                        <div role="button" tabindex="0" data-period-card="{{ $month['period'] }}"
+                                            class="p-3 rounded border border-secondary bg-dark bg-opacity-50 h-100 period-summary-card"
+                                            title="Pulsa para filtrar los servicios de {{ $month['label'] }}">
                                             <div class="d-flex align-items-center justify-content-between mb-1">
                                                 <span class="fw-bold text-light">{{ $month['label'] }}</span>
-                                                <span class="badge bg-secondary">
-                                                    {{ $month['count'] }} {{ $month['count'] === 1 ? 'servicio' : 'servicios' }}
+                                                <span class="badge bg-success text-white bg-opacity-75">
+                                                    {{ $month['count'] }} {{ $month['count'] === 1 ? 'Servicio' : 'Servicios' }}
                                                 </span>
                                             </div>
                                             <div class="fs-5 fw-bold text-yellow">
