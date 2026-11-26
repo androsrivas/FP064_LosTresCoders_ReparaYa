@@ -54,8 +54,10 @@ final class IncidentController extends Controller
         try {
             $this->incidentService->createForClient(Auth::user(), $request->validated());
 
+            $targetRoute = $request->validated('redirect_to') ?? Auth::user()->role->homeRoute();
+
             return redirect()
-                ->route(Auth::user()->role->homeRoute())
+                ->route($targetRoute)
                 ->with('success', 'Incidencia registrada correctamente.');
         } catch (IncidentException $e) {
             return back()

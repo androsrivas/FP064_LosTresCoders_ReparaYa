@@ -7,16 +7,11 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::get('/', function () {
-    $specialities = \App\Models\Speciality::orderBy('name')->get();
-    $communities = auth()->user()?->managementCompany?->communities()->orderBy('name')->get()
-        ?? collect();
-
-    return view('home', compact('specialities', 'communities'));
-})->name('home');
+Route::get('/', HomeController::class)->name('home');
 
 // Sólo visitantes (un usuario autenticado es redirigido a su panel)
 Route::middleware('guest')->group(function (): void {

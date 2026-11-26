@@ -266,7 +266,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    @include('incidents.partials.form')
+                    @include('incidents.partials.form', ['redirectTo' => 'profile.show'])
                 </div>
             </div>
         </div>
