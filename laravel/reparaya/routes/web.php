@@ -4,7 +4,6 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
@@ -34,7 +33,7 @@ Route::middleware('auth')->group(function (): void {
     // CRUD de incidencias (compartido por particular y gestora)
     Route::middleware('role:particular,gestora')->group(function (): void {
         Route::resource('incidencias', IncidentController::class)
-            ->only(['index', 'store', 'show'])
+            ->only(['store', 'show'])
             ->names('incidents')
             ->parameters(['incidencias' => 'incident']);
         
@@ -61,11 +60,4 @@ Route::middleware('auth')->group(function (): void {
         Route::view('/', 'dashboard')->name('home');
     });
     
-    Route::middleware('role:gestora')->prefix('gestora')->name('manager.')->group(function (): void {
-        Route::get('/', DashboardController::class)->name('home');
-    });
-    
-    Route::middleware('role:particular')->prefix('cliente')->name('customer.')->group(function (): void {
-        Route::get('/', DashboardController::class)->name('home');
-    });
 });

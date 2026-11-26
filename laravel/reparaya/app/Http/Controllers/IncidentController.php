@@ -23,19 +23,6 @@ final class IncidentController extends Controller
     }
 
     /**
-     * Listado de incidencias del cliente autenticado.
-     */
-    public function index(): View
-    {
-        $incidents = Incident::with(['speciality', 'technician.user', 'community'])
-            ->where('client_id', Auth::id())
-            ->orderByDesc('created_at')
-            ->get();
-
-        return view('incidents.index', compact('incidents'));
-    }
-
-    /**
      * Formulario de alta de nueva incidencia.
      */
     public function create(): View
