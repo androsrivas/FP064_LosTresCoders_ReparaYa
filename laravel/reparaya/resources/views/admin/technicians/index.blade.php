@@ -58,10 +58,12 @@
                                         onsubmit="return confirm(this.dataset.confirmMessage);">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            @disabled($technician->incidents_count > 0)>
-                                            Eliminar
-                                        </button>
+                                        <span @if ($technician->incidents_count > 0) title="No se puede eliminar mientras tenga incidencias asignadas" @endif>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                @disabled($technician->incidents_count > 0)>
+                                                Eliminar
+                                            </button>
+                                        </span>
                                     </form>
                                 </div>
                             </td>
