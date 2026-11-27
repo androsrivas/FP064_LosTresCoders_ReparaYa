@@ -207,6 +207,12 @@ Las 48 horas están definidas una sola vez, en `IncidentService::MIN_HOURS_ADVAN
 
 `CommissionCalculator::amount()` es el único punto donde se calcula la comisión: precio base × porcentaje de la gestora. Trabaja en céntimos (enteros) para evitar errores de redondeo de coma flotante, y redondea el medio céntimo hacia arriba.
 
+### Incidencias por zona 
+
+- El endpoint público `GET /api/servicios/zonas` agrega únicamente las incidencias en estado **Finalizada**.
+- **Incidencias de particulares (`"Sin zona"`):** como los clientes particulares no están asociados a ninguna comunidad de vecinos ni zona geográfica, sus incidencias finalizadas se agrupan bajo la etiqueta `"Sin zona"` (para que el bloque de WordPress sepa que puede llegar esa fila).
+- Si no existen incidencias finalizadas, la respuesta devuelve `"data": []` y `"total_servicios_realizados": 0`.
+
 ---
 
 ## Flujo de trabajo con Git

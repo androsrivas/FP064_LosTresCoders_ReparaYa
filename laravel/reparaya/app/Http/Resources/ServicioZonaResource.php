@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Http\Resources;
@@ -6,10 +7,10 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ServicioZonaResource extends JsonResource
+final class ServicioZonaResource extends JsonResource
 {
     /**
-     * Transforma cada fila agregada de servicio por zona en un array JSON limpio.
+     * Transforma cada fila agregada de servicios realizados por zona en un array JSON limpio.
      * No incluye datos personales de clientes, técnicos ni direcciones.
      *
      * @return array<string, mixed>
@@ -18,9 +19,8 @@ class ServicioZonaResource extends JsonResource
     {
         return [
             'zona' => (string) $this->zona,
-            'servicio' => (string) $this->servicio,
-            'total_incidencias' => (int) $this->total_incidencias,
-            'porcentaje' => round((float) $this->porcentaje, 2),
+            'servicios_realizados' => (int) $this->servicios_realizados,
+            'porcentaje_total' => round((float) $this->porcentaje_total, 2),
         ];
     }
 }

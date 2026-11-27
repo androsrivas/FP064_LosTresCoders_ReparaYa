@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
@@ -9,41 +10,34 @@ use App\Http\Resources\ServicioZonaResource;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
-class ServicioZonaController extends Controller
+final class ServicioZonaController extends Controller
 {
-    /**
-     * Devuelve el resumen agregado de incidencias finalizadas por zona y servicio.
-     * Endpoint público para WordPress: GET /api/servicios/zonas
-     */
+  
     public function index(): AnonymousResourceCollection
     {
-        $filas = DB::table('incidents')
-            ->join('specialities', 'incidents.speciality_id', '=', 'specialities.id')
+        $rows = DB::table('incidents')
             ->leftJoin('communities', 'incidents.community_id', '=', 'communities.id')
             ->leftJoin('zones', 'communities.zone_id', '=', 'zones.id')
             ->where('incidents.status', IncidentStatus::Finished->value)
             ->selectRaw("COALESCE(zones.name, 'Sin zona') as zona")
-            ->addSelect('specialities.name as servicio')
-            ->selectRaw('COUNT(incidents.id) as total_incidencias')
-            ->groupByRaw("COALESCE(zones.name, 'Sin zona'), specialities.name")
+            ->selectRaw('COUNT(incidents.id) as servicios_realizados')
+            ->groupByRaw("COALESCE(zones.name, 'Sin zona')")
+            ->orderByDesc('servicios_realizados')
             ->orderBy('zona')
-            ->orderByDesc('total_incidencias')
             ->get();
 
-        $totalGlobal = (int) $filas->sum('total_incidencias');
+        $total = (int) $rows->sum('servicios_realizados');
 
-        $filasConPorcentaje = $filas->map(function (object $fila) use ($totalGlobal): object {
-            $fila->porcentaje = $totalGlobal > 0
-                ? round(((int) $fila->total_incidencias / $totalGlobal) * 100, 2)
+        $rowsWithPercentage = $rows->map(function (object $row) use ($total): object {
+            $row->porcentaje_total = $total > 0
+                ? round(((int) $row->servicios_realizados / $total) * 100, 2)
                 : 0.0;
 
-            return $fila;
+            return $row;
         });
 
-        return ServicioZonaResource::collection($filasConPorcentaje)->additional([
-            'meta' => [
-                'total_incidencias' => $totalGlobal,
-            ],
+        return ServicioZonaResource::collection($rowsWithPercentage)->additional([
+            'total_servicios_realizados' => $total,
         ]);
     }
 }
