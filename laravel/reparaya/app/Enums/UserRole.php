@@ -26,8 +26,8 @@ enum UserRole: string
         return match ($this) {
             self::Admin => 'admin.home',
             self::Technician => 'technician.home',
-            self::Customer => 'customer.home',
-            self::PropertyManager => 'manager.home'
+            self::Customer => 'home',
+            self::PropertyManager => 'profile.show'
         };
     }
 
@@ -55,14 +55,10 @@ enum UserRole: string
                 ['Mi agenda', 'technician.home'],
             ],
             self::Customer => [
-                ['Inicio', 'customer.home'],
-                ['Mis incidencias', 'incidents.index'],
+                ['Mis Gestiones', 'profile.show'],
             ],
             self::PropertyManager => [
-                ['Mi panel', 'manager.home'],
-                ['Comunidades', 'manager.communities.index'],
-                ['Incidencias', 'incidents.index'],
-                ['Liquidaciones', 'manager.settlements.index'],
+                ['Mis Gestiones', 'profile.show'],
             ],
         };
     }

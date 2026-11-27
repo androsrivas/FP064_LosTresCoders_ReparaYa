@@ -53,6 +53,7 @@ class StoreIncidentRequest extends FormRequest
             'urgency'       => ['required', Rule::enum(Urgency::class)],
             'service_date'  => ['required', 'date', $minDateRule],
             'address'       => ['required', 'string', 'min:5', 'max:255'],
+            'redirect_to'   => ['nullable', 'string', 'in:profile.show,admin.home'],
         ];
     }
 

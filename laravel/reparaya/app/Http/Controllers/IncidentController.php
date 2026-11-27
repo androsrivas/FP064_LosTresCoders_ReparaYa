@@ -23,19 +23,6 @@ final class IncidentController extends Controller
     }
 
     /**
-     * Listado de incidencias del cliente autenticado.
-     */
-    public function index(): View
-    {
-        $incidents = Incident::with(['speciality', 'technician.user', 'community'])
-            ->where('client_id', Auth::id())
-            ->orderByDesc('created_at')
-            ->get();
-
-        return view('incidents.index', compact('incidents'));
-    }
-
-    /**
      * Formulario de alta de nueva incidencia.
      */
     public function create(): View
@@ -54,8 +41,10 @@ final class IncidentController extends Controller
         try {
             $this->incidentService->createForClient(Auth::user(), $request->validated());
 
+            $targetRoute = $request->validated('redirect_to') ?? Auth::user()->role->homeRoute();
+
             return redirect()
-                ->route(Auth::user()->role->homeRoute())
+                ->route($targetRoute)
                 ->with('success', 'Incidencia registrada correctamente.');
         } catch (IncidentException $e) {
             return back()

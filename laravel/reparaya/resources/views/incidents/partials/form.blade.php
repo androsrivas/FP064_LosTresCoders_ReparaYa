@@ -1,6 +1,9 @@
 {{-- Alta de incidencia (dashboard de particular y gestora) --}}
 <form method="POST" action="{{ route('incidents.store') }}" novalidate>
     @csrf
+    @if ($redirectTo ?? old('redirect_to'))
+        <input type="hidden" name="redirect_to" value="{{ old('redirect_to', $redirectTo) }}">
+    @endif
 
     <div class="mb-3">
         <label for="speciality_id" class="form-label">Especialidad</label>
@@ -65,8 +68,9 @@
         <label for="address" class="form-label">Dirección</label>
         <input type="text" id="address" name="address" required maxlength="255"
             value="{{ old('address') }}" autocomplete="street-address"
+            placeholder="Calle, número, piso"
             @class(['form-control', 'is-invalid' => $errors->has('address')])>
-        @error('address') <div class="invalid-feedback">
+            @error('address') <div class="invalid-feedback">
             {{ $message }}
         </div> @enderror
     </div>

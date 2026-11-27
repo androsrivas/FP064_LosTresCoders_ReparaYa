@@ -240,3 +240,83 @@ p {
     color: #a4b0be !important;
     border-color: rgba(164, 176, 190, 0.3) !important;
 }
+
+/* Esquema oscuro nativo para inputs de fecha/hora, selects y scrollbars */
+input[type="datetime-local"],
+input[type="date"],
+input[type="time"],
+.form-control,
+.form-select {
+    color-scheme: dark !important;
+}
+
+/* Placeholders visibles sobre fondo oscuro */
+.form-control::placeholder,
+textarea::placeholder,
+input::placeholder {
+    color: rgba(255, 255, 255, 0.45) !important;
+    opacity: 1;
+}
+
+/* Icono del calendario en blanco nítido para inputs de fecha/hora */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23e6edf3' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 16px 16px !important;
+    color: transparent !important;
+    filter: none !important;
+    opacity: 0.85 !important;
+    cursor: pointer !important;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1 !important;
+}
+
+/* Alertas Flash integradas en el tema oscuro */
+.alert-flash {
+    border-radius: 10px;
+    border: 1px solid transparent;
+    backdrop-filter: blur(6px);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.alert-flash.alert-success {
+    background-color: rgba(25, 135, 84, 0.16) !important;
+    border-color: rgba(46, 213, 115, 0.4) !important;
+    color: #7bed9f !important;
+}
+
+.alert-flash.alert-danger {
+    background-color: rgba(220, 53, 69, 0.16) !important;
+    border-color: rgba(255, 71, 87, 0.4) !important;
+    color: #ff6b81 !important;
+}
+
+/* Tablas integradas dentro de .perfil-panel */
+.perfil-panel .table,
+.perfil-panel .table-dark {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: var(--text-body) !important;
+    --bs-table-border-color: #2e3444 !important;
+    --bs-table-hover-bg: rgba(255, 183, 3, 0.05) !important;
+    --bs-table-hover-color: var(--text-primary) !important;
+    margin-bottom: 0 !important;
+}
+
+.perfil-panel .table > :not(caption) > * > *,
+.perfil-panel .table-dark > :not(caption) > * > * {
+    background-color: transparent !important;
+    border-bottom-color: #2e3444 !important;
+}
+
+.perfil-panel .table > tbody > tr:hover > *,
+.perfil-panel .table-dark > tbody > tr:hover > * {
+    background-color: rgba(9, 215, 252, 0.05) !important;
+}
